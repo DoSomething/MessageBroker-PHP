@@ -1,0 +1,10 @@
+{
+    "name": "mbc-import-logging",
+    "version": "0.0.1",
+    "description": "Consumer for User import logging.",
+    "dependencies": {
+      "amqp": "^0.2.0",
+      "php-unserialize": "*",
+      "node-curl": "*"
+    }
+}
