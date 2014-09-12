@@ -65,7 +65,7 @@ class MBC_ImportLogging
     $payloadDetails = unserialize($payload->body);
     
     $post = array(
-      'logging_timestamp' => $payloadDetails['log-timestamp']
+      'logging_timestamp' => isset($payloadDetails['log-timestamp']) ? $payloadDetails['log-timestamp'] : $payloadDetails['logged']
     );
     
     if (isset($payloadDetails['log-type']) && $payloadDetails['log-type'] == 'file-import') {
@@ -94,18 +94,12 @@ class MBC_ImportLogging
         $post['email_status'] = $payloadDetails['email-status'];
         $post['email_acquired_timestamp'] = $payloadDetails['mobile-error'];
       }
-      if (isset($payloadDetails['drupal_uid']) && $payloadDetails['drupal_uid'] != NULL) {
+      if (isset($payloadDetails['drupal-uid']) && $payloadDetails['drupal-uid'] != NULL) {
         $post['drupal_email'] = $payloadDetails['email'];
         $post['drupal_uid'] = $payloadDetails['drupal-uid'];
       }
 
     }
-    
-    
-$bla = FALSE;
-if ($bla) {
-  $bla = TRUE;
-}
 
     if (isset($endpoint)) {
       $loggingApiUrl = getenv('DS_IMPORT_LOGGING_API_HOST') . ':' . getenv('DS_IMPORT_LOGGING_API_PORT') . '/api' . $endpoint;
