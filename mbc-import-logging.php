@@ -102,7 +102,7 @@ class MBC_ImportLogging
     }
 
     if (isset($endpoint)) {
-      $loggingApiUrl = getenv('DS_IMPORT_LOGGING_API_HOST') . ':' . getenv('DS_IMPORT_LOGGING_API_PORT') . '/api' . $endpoint;
+      $loggingApiUrl = getenv('DS_IMPORT_LOGGING_API_HOST') . ':' . getenv('DS_IMPORT_LOGGING_API_PORT') . '/api/v1' . $endpoint;
   
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $loggingApiUrl);
