@@ -16,7 +16,7 @@ require __DIR__ . '/mb-config.inc';
 
 class MBC_ImportLogging
 {
-  
+
   /**
    * Message Broker connection to RabbitMQ
    */
@@ -35,7 +35,7 @@ class MBC_ImportLogging
    * @var array
    */
   private $statHat;
-  
+
   /**
    * Constructor for MBC_TransactionalEmail
    *
@@ -48,8 +48,8 @@ class MBC_ImportLogging
     $this->settings = $settings;
 
     // Stathat
- //   $this->statHat = new StatHat($this->settings['stathat_ez_key'], 'mbc-import-logging:');
- //   $this->statHat->setIsProduction(FALSE);
+    $this->statHat = new StatHat($this->settings['stathat_ez_key'], 'mbc-import-logging:');
+    $this->statHat->setIsProduction(FALSE);
   }
 
   /**
@@ -59,18 +59,23 @@ class MBC_ImportLogging
    *   The contents of the queue entry
    */
   public function updateLoggingAPI($payload) {
-    
+
     echo '------- MBC_ImportLogging - updateLoggingAPI() START #' . $payload->delivery_info['delivery_tag'] . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
 
     $payloadDetails = unserialize($payload->body);
-    
+
     $post = array(
       'logging_timestamp' => isset($payloadDetails['log-timestamp']) ? $payloadDetails['log-timestamp'] : $payloadDetails['logged']
     );
-    
+
+    // User import summary logging - track each batch
     if (isset($payloadDetails['log-type']) && $payloadDetails['log-type'] == 'file-import') {
 
-      $endpoint = '/userimport/niche/summary';
+      $endpoint = '/imports/summaries';
+      $cURLparameters['type'] = 'user';
+      $cURLparameters['exists'] = 1;
+      $cURLparameters['source'] = 'niche.com';
+
       if (isset($payloadDetails['target-CSV-file']) && $payloadDetails['target-CSV-file'] != NULL) {
         $post['target_CSV_file'] = $payloadDetails['target-CSV-file'];
       }
@@ -82,9 +87,14 @@ class MBC_ImportLogging
       }
 
     }
+    // Log user import existing details
     elseif (isset($payloadDetails['mobile']) || isset($payloadDetails['email']) || isset($payloadDetails['drupal_uid'])) {
 
-      $endpoint = '/userimport/existing/niche';
+      $endpoint = '/imports';
+      $cURLparameters['type'] = 'user';
+      $cURLparameters['exists'] = 1;
+      $cURLparameters['source'] = 'niche.com';
+
       if (isset($payloadDetails['mobile']) && $payloadDetails['mobile'] != NULL) {
         $post['phone'] = $payloadDetails['mobile'];
         $post['phone_status'] = $payloadDetails['mobile-error'];
@@ -92,7 +102,7 @@ class MBC_ImportLogging
       if (isset($payloadDetails['email']) && $payloadDetails['email'] != NULL) {
         $post['email'] = $payloadDetails['email'];
         $post['email_status'] = $payloadDetails['email-status'];
-        $post['email_acquired_timestamp'] = $payloadDetails['mobile-error'];
+        $post['email_acquired_timestamp'] = $payloadDetails['email-acquired'];
       }
       if (isset($payloadDetails['drupal-uid']) && $payloadDetails['drupal-uid'] != NULL) {
         $post['drupal_email'] = $payloadDetails['email'];
@@ -102,8 +112,8 @@ class MBC_ImportLogging
     }
 
     if (isset($endpoint)) {
-      $loggingApiUrl = getenv('DS_IMPORT_LOGGING_API_HOST') . ':' . getenv('DS_IMPORT_LOGGING_API_PORT') . '/api/v1' . $endpoint;
-  
+      $loggingApiUrl = getenv('DS_IMPORT_LOGGING_API_HOST') . ':' . getenv('DS_IMPORT_LOGGING_API_PORT') . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
+
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $loggingApiUrl);
       curl_setopt($ch, CURLOPT_POST, 1);
@@ -112,15 +122,11 @@ class MBC_ImportLogging
       $result = curl_exec($ch);
       curl_close($ch);
       
-      echo $loggingApiUrl, "\n";
-      echo print_r($post, TRUE), "\n";
-      echo print_r($result, TRUE), "\n\n";
-      
       // Only ack messages that the API has responded to
       if (is_string($result)) {
         $this->messageBroker->sendAck($payload);
       }
-  
+
       echo '------- MBC_ImportLogging - updateLoggingAPI() END #' . $payload->delivery_info['delivery_tag'] . date('D M j G:i:s T Y') . ' -------', "\n";
     }
     else {
