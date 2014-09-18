@@ -91,7 +91,7 @@ class MBC_ImportLogging
     elseif (isset($payloadDetails['mobile']) || isset($payloadDetails['email']) || isset($payloadDetails['drupal_uid'])) {
 
       $endpoint = '/imports';
-      $cURLparameters['type'] = 'user';
+      $cURLparameters['type'] = 'user_import';
       $cURLparameters['exists'] = 1;
       $cURLparameters['source'] = 'niche.com';
 
