@@ -6,6 +6,8 @@
  * UserAPI / database with user activity.
  */
 
+use DoSomething\MBStatTracker\StatHat;
+
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
 
