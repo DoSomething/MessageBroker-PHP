@@ -107,7 +107,9 @@ class MBC_ImportLogging
         $post['email_acquired_timestamp'] = $payloadDetails['email-acquired'];
       }
       if (isset($payloadDetails['drupal-uid']) && $payloadDetails['drupal-uid'] != NULL) {
-        $post['drupal_email'] = $payloadDetails['email'];
+        if (isset($payloadDetails['email'])) {
+          $post['drupal_email'] = $payloadDetails['email'];
+        }
         $post['drupal_uid'] = $payloadDetails['drupal-uid'];
       }
 
@@ -133,6 +135,7 @@ class MBC_ImportLogging
     }
     else {
       echo 'Error - endpoint not defined for call to mb-logging-api.', "\n";
+      print_r($payloadDetails);
     }
 
   }
