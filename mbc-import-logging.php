@@ -90,7 +90,7 @@ class MBC_ImportLogging
 
     }
     // Log user import existing details
-    elseif (isset($payloadDetails['mobile']) || isset($payloadDetails['email']) || isset($payloadDetails['drupal_uid'])) {
+    elseif (isset($payloadDetails['mobile']) || isset($payloadDetails['email']) || isset($payloadDetails['drupal-uid'])) {
 
       $endpoint = '/imports';
       $cURLparameters['type'] = 'user_import';
