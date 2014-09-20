@@ -100,11 +100,12 @@ class MBC_ImportLogging
       if (isset($payloadDetails['mobile']) && $payloadDetails['mobile'] != NULL) {
         $post['phone'] = $payloadDetails['mobile'];
         $post['phone_status'] = $payloadDetails['mobile-error'];
+        $post['phone_acquired'] = $payloadDetails['mobile-acquired'];
       }
       if (isset($payloadDetails['email']) && $payloadDetails['email'] != NULL) {
         $post['email'] = $payloadDetails['email'];
         $post['email_status'] = $payloadDetails['email-status'];
-        $post['email_acquired_timestamp'] = $payloadDetails['email-acquired'];
+        $post['email_acquired'] = $payloadDetails['email-acquired'];
       }
       if (isset($payloadDetails['drupal-uid']) && $payloadDetails['drupal-uid'] != NULL) {
         if (isset($payloadDetails['email'])) {
