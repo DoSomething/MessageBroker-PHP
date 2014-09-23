@@ -74,8 +74,7 @@ class MBC_ImportLogging
     if (isset($payloadDetails['log-type']) && $payloadDetails['log-type'] == 'file-import') {
 
       $endpoint = '/imports/summaries';
-      $cURLparameters['type'] = 'user';
-      $cURLparameters['exists'] = 1;
+      $cURLparameters['type'] = 'user_import';
       $cURLparameters['source'] = 'niche.com';
 
       if (isset($payloadDetails['target-CSV-file']) && $payloadDetails['target-CSV-file'] != NULL) {
@@ -84,7 +83,7 @@ class MBC_ImportLogging
       if (isset($payloadDetails['signup-count']) && $payloadDetails['signup-count'] != NULL) {
         $post['signup_count'] = $payloadDetails['signup-count'];
       }
-      if (isset($payloadDetails['skipped']) && $payloadDetails['skipped'] != NULL) {
+      if (isset($payloadDetails['skipped'])) {
         $post['skipped'] = $payloadDetails['skipped'];
       }
 
