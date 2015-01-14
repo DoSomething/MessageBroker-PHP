@@ -1,11 +1,12 @@
 <?php
 /**
- * mbc-user-campaign.php
+ * mbc-import-logging.php
  *
- * Collect user campaign activity from the userCampaignActivityQueue. Update the
- * UserAPI / database with user activity.
+ * Collect user import activity from the userImportExistingLoggingQueue. Update the
+ * LoggingAPI / database with import activity.
  */
 
+date_default_timezone_set('America/New_York');
 use DoSomething\MBStatTracker\StatHat;
 
 // Load up the Composer autoload magic
@@ -75,7 +76,7 @@ class MBC_ImportLogging
 
       $endpoint = '/imports/summaries';
       $cURLparameters['type'] = 'user_import';
-      $cURLparameters['source'] = 'niche.com';
+      $cURLparameters['source'] = $payloadDetails['source'];
 
       if (isset($payloadDetails['target-CSV-file']) && $payloadDetails['target-CSV-file'] != NULL) {
         $post['target_CSV_file'] = $payloadDetails['target-CSV-file'];
@@ -116,7 +117,7 @@ class MBC_ImportLogging
     }
 
     if (isset($endpoint)) {
-      $loggingApiUrl = getenv('DS_IMPORT_LOGGING_API_HOST') . ':' . getenv('DS_IMPORT_LOGGING_API_PORT') . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
+      $loggingApiUrl = getenv('DS_LOGGING_API_HOST') . ':' . getenv('DS_LOGGING_API_PORT') . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
 
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $loggingApiUrl);
@@ -125,7 +126,7 @@ class MBC_ImportLogging
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
       $result = curl_exec($ch);
       curl_close($ch);
-      
+
       // Only ack messages that the API has responded to
       if (is_string($result)) {
         $this->messageBroker->sendAck($payload);
@@ -182,6 +183,7 @@ $config = array(
 $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
 );
+
 
 echo '------- mbc-impoert-logging START - ' . date('D M j G:i:s T Y') . ' -------', "\n";
 
