@@ -2,8 +2,8 @@
 /**
  * mbc-import-logging.php
  *
- * Collect user import activity from the userImportExistingLoggingQueue. Update the
- * LoggingAPI / database with import activity.
+ * Collect user import activity from the userImportExistingLoggingQueue. Update
+ * the LoggingAPI / database with import activity via mb-logging.
  */
 
 date_default_timezone_set('America/New_York');
@@ -14,8 +14,8 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
-require __DIR__ . '/mb-secure-config.inc';
-require __DIR__ . '/mb-config.inc';
+require_once __DIR__ . '/mb-secure-config.inc';
+require_once __DIR__ . '/mb-config.inc';
 
 class MBC_ImportLogging
 {
@@ -63,7 +63,7 @@ class MBC_ImportLogging
    */
   public function updateLoggingAPI($payload) {
 
-    echo '------- MBC_ImportLogging - updateLoggingAPI() START #' . $payload->delivery_info['delivery_tag'] . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+    echo '------- MBC_ImportLogging - updateLoggingAPI() START #' . $payload->delivery_info['delivery_tag'] . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP+EOL;
 
     $payloadDetails = unserialize($payload->body);
 
@@ -86,6 +86,9 @@ class MBC_ImportLogging
       }
       if (isset($payloadDetails['skipped'])) {
         $post['skipped'] = $payloadDetails['skipped'];
+      }
+      if (isset($payloadDetails['source'])) {
+        $post['source'] = $payloadDetails['source'];
       }
 
     }
@@ -185,11 +188,11 @@ $settings = array(
 );
 
 
-echo '------- mbc-impoert-logging START - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+echo '------- mbc-impoert-logging START - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 // Kick off
 $mb = new MessageBroker($credentials, $config);
 $mb->consumeMessage(array(new MBC_ImportLogging($mb, $settings), 'updateLoggingAPI'));
 
 
-echo '------- mbc-impoert-logging END - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+echo '------- mbc-impoert-logging END - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
