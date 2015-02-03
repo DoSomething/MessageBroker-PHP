@@ -63,7 +63,7 @@ class MBC_ImportLogging
    */
   public function updateLoggingAPI($payload) {
 
-    echo '------- MBC_ImportLogging - updateLoggingAPI() START #' . $payload->delivery_info['delivery_tag'] . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP+EOL;
+    echo '------- MBC_ImportLogging - updateLoggingAPI() START #' . $payload->delivery_info['delivery_tag'] . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
     $payloadDetails = unserialize($payload->body);
 
@@ -98,7 +98,7 @@ class MBC_ImportLogging
       $endpoint = '/imports';
       $cURLparameters['type'] = 'user_import';
       $cURLparameters['exists'] = 1;
-      $cURLparameters['source'] = 'niche.com';
+      $cURLparameters['source'] = $payloadDetails['source'];
 
       if (isset($payloadDetails['mobile']) && $payloadDetails['mobile'] != NULL) {
         $post['phone'] = $payloadDetails['mobile'];
