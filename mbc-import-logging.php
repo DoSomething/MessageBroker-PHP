@@ -98,7 +98,8 @@ class MBC_ImportLogging
       $endpoint = '/imports';
       $cURLparameters['type'] = 'user_import';
       $cURLparameters['exists'] = 1;
-      $cURLparameters['source'] = $payloadDetails['source'];
+      $cURLparameters['source'] = 'niche';
+      // $cURLparameters['source'] = $payloadDetails['source'];
 
       if (isset($payloadDetails['mobile']) && $payloadDetails['mobile'] != NULL) {
         $post['phone'] = $payloadDetails['mobile'];
