@@ -78,6 +78,7 @@ class MBC_ImportLogging
       $cURLparameters['type'] = 'user_import';
       $cURLparameters['source'] = $payloadDetails['source'];
 
+      $post['source'] = $payloadDetails['source'];
       if (isset($payloadDetails['target-CSV-file']) && $payloadDetails['target-CSV-file'] != NULL) {
         $post['target_CSV_file'] = $payloadDetails['target-CSV-file'];
       }
@@ -87,9 +88,6 @@ class MBC_ImportLogging
       if (isset($payloadDetails['skipped'])) {
         $post['skipped'] = $payloadDetails['skipped'];
       }
-      if (isset($payloadDetails['source'])) {
-        $post['source'] = $payloadDetails['source'];
-      }
 
     }
     // Log user import existing details
@@ -98,9 +96,16 @@ class MBC_ImportLogging
       $endpoint = '/imports';
       $cURLparameters['type'] = 'user_import';
       $cURLparameters['exists'] = 1;
-      $cURLparameters['source'] = 'niche';
-      // $cURLparameters['source'] = $payloadDetails['source'];
+      $cURLparameters['source'] = isset($payloadDetails['source']) ? $payloadDetails['source'] : 'niche';
+      $cURLparameters['origin'] = $payloadDetails['origin']['name'] ;
+      $cURLparameters['processed_timestamp'] = $payloadDetails['origin']['processed'];
 
+      if (isset($payloadDetails['origin'])) {
+        $post['origin'] = array(
+          'name' => $payloadDetails['origin']['name'],
+          'processed_timestamp' => $payloadDetails['origin']['processed']
+        );
+      }
       if (isset($payloadDetails['mobile']) && $payloadDetails['mobile'] != NULL) {
         $post['phone'] = $payloadDetails['mobile'];
         $post['phone_status'] = $payloadDetails['mobile-error'];
