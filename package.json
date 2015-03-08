@@ -1,6 +1,6 @@
 {
     "name": "mbc-import-logging",
-    "version": "0.0.1",
+    "version": "0.1.2",
     "description": "Consumer for User import logging.",
     "dependencies": {
       "amqp": "^0.2.0",
