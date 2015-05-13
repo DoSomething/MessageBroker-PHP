@@ -113,6 +113,11 @@ class MBC_ImportLogging
       }
 
     }
+    else {
+      echo '- ERROR - Payload missing key values: ' . print_r($payloadDetails, TRUE), PHP_EOL;
+      $endpoint = NULL;
+      $this->messageBroker->sendAck($payload);
+    }
 
     if (isset($endpoint)) {
       $loggingApiUrl = getenv('DS_LOGGING_API_HOST') . ':' . getenv('DS_LOGGING_API_PORT') . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
@@ -130,11 +135,7 @@ class MBC_ImportLogging
         $this->messageBroker->sendAck($payload);
       }
 
-      echo '------- MBC_ImportLogging - updateLoggingAPI() END #' . $payload->delivery_info['delivery_tag'] . date('D M j G:i:s T Y') . ' -------', "\n";
-    }
-    else {
-      echo 'Error - endpoint not defined for call to mb-logging-api.', "\n";
-      print_r($payloadDetails);
+      echo '------- MBC_ImportLogging - updateLoggingAPI() END #' . $payload->delivery_info['delivery_tag'] . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
     }
 
   }
