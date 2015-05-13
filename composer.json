@@ -1,7 +1,7 @@
 {
     "name": "https://github.com/DoSomething/mbc-import-logging",
     "type": "project",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "description": "A consumer app for the Message Broker system that consumes ?? to log existing entries in the DoSomething user stores",
     "keywords": ["message broker"],
     "homepage": "https://github.com/DoSomething/mbc-import-logging",
@@ -14,8 +14,8 @@
     ],
     "require": {
         "php": ">= 5.3.0",
-        "videlalvaro/php-amqplib": "v2.1.0",
-        "DoSomething/messagebroker-phplib": "0.1.*",
+        "DoSomething/messagebroker-phplib": "0.2.*",
+        "dosomething/mb-toolbox": "0.4.*",
         "dosomething/mb-stat-tracker": "v0.0.3"
     },
     "require-dev": {
