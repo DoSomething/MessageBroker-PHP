@@ -10,13 +10,12 @@ date_default_timezone_set('America/New_York');
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-use DoSomething\MBStatTracker\StatHat;
 use DoSomething\MB_Toolbox\MB_Configuration;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
-require __DIR__ . '/messagebroker-config/mb-secure-config.inc';
-require_once __DIR__ . '/mb-config.inc';
+require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
+require_once __DIR__ . 'MBC_ImportLogging.class.inc';
 
 // Settings
 $credentials = array(
