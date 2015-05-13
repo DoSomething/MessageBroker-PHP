@@ -29,6 +29,7 @@ $credentials = array(
 
 $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
+  'use_stathat_tracking' => getenv('USE_STAT_TRACKING'),
 );
 
 $config = array();
