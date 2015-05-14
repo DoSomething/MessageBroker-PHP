@@ -1,6 +1,7 @@
 <?PHP
 
 use DoSomething\MBStatTracker\StatHat;
+use DoSomething\MB_Toolbox\MB_Toolbox;
 
 /**
  * MBC_ImportLogging class - functionality related to the Message Broker
@@ -29,6 +30,13 @@ class MBC_ImportLogging
   private $statHat;
 
   /**
+   * Setting from external services - Message Broker Toolbox.
+   *
+   * @var object
+   */
+  private $toolbox;
+
+  /**
    * Constructor for MBC_TransactionalEmail
    *
    * @param array $settings
@@ -38,6 +46,8 @@ class MBC_ImportLogging
 
     $this->messageBroker = $messageBroker;
     $this->settings = $settings;
+
+    $this->toolbox = new MB_Toolbox($settings);
 
     // Stathat
     $this->statHat = new StatHat($this->settings['stathat_ez_key'], 'mbc-import-logging:');
@@ -121,17 +131,10 @@ class MBC_ImportLogging
 
     if (isset($endpoint)) {
       $loggingApiUrl = getenv('DS_LOGGING_API_HOST') . ':' . getenv('DS_LOGGING_API_PORT') . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
+      $result = $this->toolbox->curlPOST($loggingApiUrl, $post);
 
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_URL, $loggingApiUrl);
-      curl_setopt($ch, CURLOPT_POST, 1);
-      curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post));
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-      $result = curl_exec($ch);
-      curl_close($ch);
-
-      // Only ack messages that the API has responded to
-      if (is_string($result)) {
+      // Only ack messages that the API has responded as "created" (201).
+      if ($result[1] == 201) {
         $this->messageBroker->sendAck($payload);
       }
 
