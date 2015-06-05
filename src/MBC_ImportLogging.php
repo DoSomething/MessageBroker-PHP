@@ -1,4 +1,9 @@
 <?PHP
+/**
+ * MBC_ImportLogging: Class to support logging user import activity.
+ */
+
+namespace DoSomething\MBC_ImportLogging;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
