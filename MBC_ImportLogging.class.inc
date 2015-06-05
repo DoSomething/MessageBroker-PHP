@@ -1,6 +1,6 @@
 <?PHP
 
-use DoSomething\MBStatTracker\StatHat;
+use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
 
 /**
@@ -43,15 +43,14 @@ class MBC_ImportLogging
    *   Settings from external services - StatHat
    */
   public function __construct($messageBroker, $settings) {
-
     $this->messageBroker = $messageBroker;
     $this->settings = $settings;
 
     $this->toolbox = new MB_Toolbox($settings);
-
-    // Stathat
-    $this->statHat = new StatHat($this->settings['stathat_ez_key'], 'mbc-import-logging:');
-    $this->statHat->setIsProduction(isset($settings['use_stathat_tracking']) ? $settings['use_stathat_tracking'] : FALSE);
+    $this->statHat = new StatHat([
+      'ez_key' => $settings['stathat_ez_key'],
+      'debug' => $settings['stathat_disable_tracking']
+    ]);
   }
 
   /**
@@ -62,7 +61,7 @@ class MBC_ImportLogging
    */
   public function updateLoggingAPI($payload) {
 
-    echo '------- MBC_ImportLogging - updateLoggingAPI() START #' . $payload->delivery_info['delivery_tag'] . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+    echo '------- MBC_ImportLogging - updateLoggingAPI() START #' . $payload->delivery_info['delivery_tag'] . ' - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
     $payloadDetails = unserialize($payload->body);
 
@@ -116,9 +115,7 @@ class MBC_ImportLogging
         $post['email_acquired'] = $payloadDetails['email-acquired'];
       }
       if (isset($payloadDetails['drupal-uid']) && $payloadDetails['drupal-uid'] != NULL) {
-        if (isset($payloadDetails['email'])) {
-          $post['drupal_email'] = $payloadDetails['email'];
-        }
+        $post['drupal_email'] = $payloadDetails['email'];
         $post['drupal_uid'] = $payloadDetails['drupal-uid'];
       }
 
@@ -130,15 +127,19 @@ class MBC_ImportLogging
     }
 
     if (isset($endpoint)) {
-      $loggingApiUrl = getenv('DS_LOGGING_API_HOST') . ':' . getenv('DS_LOGGING_API_PORT') . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
+      $loggingApiUrl = getenv('MB_LOGGING_API_HOST') . ':' . getenv('MB_LOGGING_API_PORT') . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
       $result = $this->toolbox->curlPOST($loggingApiUrl, $post);
 
       // Only ack messages that the API has responded as "created" (201).
       if ($result[1] == 201) {
+        $this->statHat->ezCount('mbc-import-logging:  updateLoggingAPI()', 1);
         $this->messageBroker->sendAck($payload);
       }
+      else {
+        $this->statHat->ezCount('mbc-import-logging:  ERROR updateLoggingAPI()', 1);
+      }
 
-      echo '------- MBC_ImportLogging - updateLoggingAPI() END #' . $payload->delivery_info['delivery_tag'] . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      echo '------- MBC_ImportLogging - updateLoggingAPI() END #' . $payload->delivery_info['delivery_tag'] . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
     }
 
   }
