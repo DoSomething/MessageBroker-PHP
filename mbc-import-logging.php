@@ -28,8 +28,11 @@ $credentials = array(
 
 $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
-  'use_stathat_tracking' => getenv('USE_STAT_TRACKING'),
+  'stathat_disable_tracking' => getenv('DISABLE_STAT_TRACKING'),
+  'mb_logging_api_host' => getenv('MB_LOGGING_API_HOST'),
+  'mb_logging_api_port' => getenv('MB_LOGGING_API_PORT'),
 );
+
 
 $config = array();
 $source = __DIR__ . '/messagebroker-config/mb_config.json';
@@ -58,7 +61,6 @@ $config['consume'] = array(
   'nowait' => $userImportExistingLogging->queues->userImportExistingLoggingQueue->consume->nowait,
   'exclusive' => $userImportExistingLogging->queues->userImportExistingLoggingQueue->consume->exclusive,
 );
-
 
 echo '------- mbc-impoert-logging START - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
