@@ -1,10 +1,10 @@
 {
-  "name": "https://github.com/DoSomething/mbc-import-logging",
+  "name": "mbc-logging-gateway",
   "type": "project",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A consumer app for the Message Broker system that consumes ?? to log existing entries in the DoSomething user stores",
   "keywords": ["message broker"],
-  "homepage": "https://github.com/DoSomething/mbc-import-logging",
+  "homepage": "https://github.com/DoSomething/mbc-logging-gateway",
   "license" : "MIT",
   "authors": [
     {
@@ -23,7 +23,7 @@
   },
   "autoload": {
     "psr-4": {
-      "DoSomething\\MBC_ImportLogging\\": "src/"
+      "DoSomething\\MBC_LoggingGateway\\": "src/"
     }
   },
   "scripts": {
