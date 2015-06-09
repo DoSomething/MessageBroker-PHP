@@ -11,7 +11,7 @@ date_default_timezone_set('America/New_York');
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Load configuration settings specific to this application
-require_once __DIR__ . '/mbc-a1-staertHere.config.inc';
+require_once __DIR__ . '/mbc-a1-startHere.config.inc';
 
 echo '------- mbc-a1-startHere START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
