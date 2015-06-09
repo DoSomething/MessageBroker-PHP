@@ -13,8 +13,8 @@ use DoSomething\MB_Toolbox\MB_Configuration;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
-require __DIR__ . '/messagebroker-config/mb-secure-config.inc';
-require __DIR__ . '/MBC_Image_Processor.class.inc';
+require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
+require_once __DIR__ . '/MBC_Image_Processor.class.inc';
 
 // Settings
 $credentials = array(
@@ -58,4 +58,4 @@ foreach ($transactionalExchange->queues->imageProcessingQueue->binding_patterns 
 
 // Kick off - blocking, waiting for messages in the queue
 $mb = new MessageBroker($credentials, $config);
-$mb->consumeMessage(array(new MBC_Image_Processor($mb, $settings), 'startHere'));
+$mb->consumeMessage(array(new MBC_Image_Processor($mb, $settings), 'consumeImageProcessingQueue'));
