@@ -1,11 +1,12 @@
 <?php
 /*
- * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
- * entries that match the campaign.*.* binding.
+ * MBC_A1_StartHere: ??
  */
 
+namespace DoSomething\MBC_A1_StartHere;
+
 use DoSomething\MB_Toolbox\MB_Toolbox;
-use DoSomething\MBStatTracker\StatHat;
+use DoSomething\StatHat\Client as StatHat;
 
 class MBC_A1_StartHere
 {
@@ -41,8 +42,10 @@ class MBC_A1_StartHere
     $this->settings = $settings;
 
     $this->toolbox = new MB_Toolbox($settings);
-    $this->statHat = new StatHat($settings['stathat_ez_key'], 'mbc-a1-startHere:');
-    $this->statHat->setIsProduction($settings['use_stathat_tracking'] ? $settings['use_stathat_tracking'] : FALSE);
+    $this->statHat = new StatHat([
+      'ez_key' => $settings['stathat_ez_key'],
+      'debug' => $settings['stathat_disable_tracking']
+    ]);
   }
 
   /**
@@ -74,14 +77,13 @@ class MBC_A1_StartHere
     // Log consumer activity to StatHat for monitoring
     $this->statHat->clearAddedStatNames();
     if ($result[1] == 200) {
-      $this->statHat->addStatName('success');
+      $this->statHat->ezCount('mbc-a1-startHere: success', 1);
     }
     else {
       echo '** FAILED to update ?? for email: ' . $post['email'], PHP_EOL;
       echo '------- mbc-a1-startHere - MBC_A1_StartHere->startHere: $post: ' . print_r($post, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-      $this->statHat->addStatName('update failed');
+      $this->statHat->ezCount('mbc-a1-startHere: update failed', 1);
     }
-    $this->statHat->reportCount(1);
   }
 
 }
