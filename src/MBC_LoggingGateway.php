@@ -223,9 +223,14 @@ class MBC_LoggingGateway
   }
 
   /**
+   * submitLogEntry: Submit log entries to mb-logging-api.
    *
-   * @param array $payloadDetails
-   *
+   * @param string $endPoint
+   *   The path on the mb-logging-api to submit the log entry.
+   * @param array $cURLparameters
+   *   Parameters in the POST path for the mb-logging-api to use to define the type of log entry.
+   * @param array $post
+   *   Collection of values to submit for logging entry.
    */
   private function submitLogEntry($endPoint, $cURLparameters, $post) {
 
