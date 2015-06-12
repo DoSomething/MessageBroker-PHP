@@ -10,8 +10,7 @@ cd ../messagebroker-config
 MBCONFIG=`pwd`
 
 # Back to mbp-user-import
-cd ../mbp-user-import
+cd ../mbc-logging-gateway
 
 # Create SymLink for mbp-user-import application to make reference to for all Message Broker configuration settings
 ln -s $MBCONFIG .
-
