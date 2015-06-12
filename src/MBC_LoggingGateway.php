@@ -59,7 +59,7 @@ class MBC_LoggingGateway
   }
 
   /**
-   * Triggered when loggingGatewayQueue contains a message. Deligate message
+   * Triggered when loggingGatewayQueue contains a message. Delegate message
    * processing to class specific to the logging message type.
    *
    * @param array $payload
@@ -98,7 +98,6 @@ class MBC_LoggingGateway
     $this->submitLogEntry($endPoint, $cURLparameters, $post);
 
     echo '------- MBC_LoggingGateway - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
-
   }
 
   /**
@@ -137,7 +136,7 @@ class MBC_LoggingGateway
   }
 
   /**
-   * logImportExistingUser: Format values for "'user-import-xxx" log entry.
+   * logImportExistingUser: Format values for "user-import-xxx" log entry.
    *
    * @param array $payloadDetails
    *   Values submitted in activity message to be processed to create "file-import" log entry.
@@ -189,12 +188,35 @@ class MBC_LoggingGateway
   }
 
   /**
+   * logVote: Format values for "vote" log entry.
    *
    * @param array $payloadDetails
+   *   Values submitted in activity message to be processed to create "vote" log entry.
+   * @param array $post
+   *   Collection of values to submit for logging entry.
    *
+   * @return string $endpoint
+   *   The cURUL POST URL to mb-logging-api.
+   * @return array $cURLparameters
+   *   The parameters to include in the cURL POST.
+   * @return array $post
+   *   Post values for the cURL POST.
    */
   private function logVote($payloadDetails) {
 
+    $endpoint = '/user/vote';
+    $cURLparameters['source'] = $payloadDetails['source'];
+
+    $post['email'] = $payloadDetails['email'];
+    $post['activity'] = 'vote';
+    $post['activity_date'] = $payloadDetails['activity_date'];
+    $post['activity_timestamp'] = $payloadDetails['activity_timestamp'];
+
+    if (isset($payloadDetails['activity_details'])) {
+      $post['activity_details'] = $payloadDetails['activity_details'];
+    }
+
+    return array($endpoint, $cURLparameters, $post);
   }
 
   /**
