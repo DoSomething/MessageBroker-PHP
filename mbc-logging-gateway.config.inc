@@ -8,8 +8,6 @@ use DoSomething\MB_Toolbox\MB_Configuration;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
-// Load configuration settings common to the Message Broker system
-// symlinks in the project directory point to the actual location of the files
 require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
 
 // Settings
