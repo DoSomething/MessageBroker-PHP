@@ -92,6 +92,9 @@ class MBC_LoggingGateway
         break;
 
       default:
+        echo '- ERROR - Payload missing key values: ' . print_r($payloadDetails, TRUE), PHP_EOL;
+        $endpoint = NULL;
+        $this->messageBroker->sendAck($payload);
 
     }
 
@@ -225,6 +228,18 @@ class MBC_LoggingGateway
    *
    */
   private function submitLogEntry($endPoint, $cURLparameters, $post) {
+
+    $loggingApiUrl = $this->settings['mb_logging_api_host'] . ':' . $this->settings['mb_logging_api_port'] . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
+    $result = $this->toolbox->curlPOST($loggingApiUrl, $post);
+
+    // Only ack messages that the API has responded as "created" (201).
+    if ($result[1] == 201) {
+      $this->statHat->ezCount('mbc-logging-gateway: submitLogEntry()', 1);
+      $this->messageBroker->sendAck($payload);
+    }
+    else {
+      $this->statHat->ezCount('mbc-logging-gatewa: ERROR submitLogEntry()', 1);
+    }
 
   }
 
