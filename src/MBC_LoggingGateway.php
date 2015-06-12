@@ -82,12 +82,12 @@ class MBC_LoggingGateway
       case 'user-import-att-ichannel':
       case 'user-import-hercampus':
       case 'user-import-teenlife':
-        list($endPoint, $post) = $this->logImportExistingUser($payloadDetails);
+        list($endPoint, $cURLparameters, $post) = $this->logImportExistingUser($payloadDetails, $post);
 
         break;
 
       case 'vote':
-        list($endPoint, $post) = $this->logVote($payloadDetails);
+        list($endPoint, $cURLparameters, $post) = $this->logVote($payloadDetails, $post);
 
         break;
 
@@ -102,10 +102,19 @@ class MBC_LoggingGateway
   }
 
   /**
-   * logUserImportFile: Format values to include in "file-import" log entry
+   * logUserImportFile: Format values for "file-import" log entry.
    *
    * @param array $payloadDetails
+   *   Values submitted in activity message to be processed to create "file-import" log entry.
+   * @param array $post
+   *   Collection of values to submit for logging entry.
    *
+   * @return string $endpoint
+   *   The cURUL POST URL to mb-logging-api.
+   * @return array $cURLparameters
+   *   The parameters to include in the cURL POST.
+   * @return array $post
+   *   Post values for the cURL POST.
    */
   private function logUserImportFile($payloadDetails, $post) {
 
@@ -125,16 +134,58 @@ class MBC_LoggingGateway
     }
 
     return array($endpoint, $cURLparameters, $post);
-
   }
 
   /**
+   * logImportExistingUser: Format values for "'user-import-xxx" log entry.
    *
    * @param array $payloadDetails
+   *   Values submitted in activity message to be processed to create "file-import" log entry.
+   * @param array $post
+   *   Collection of values to submit for logging entry.
    *
+   * @return string $endpoint
+   *   The cURUL POST URL to mb-logging-api.
+   * @return array $cURLparameters
+   *   The parameters to include in the cURL POST.
+   * @return array $post
+   *   Post values for the cURL POST.
    */
-  private function logImportExistingUser($payloadDetails) {
+  private function logImportExistingUser($payloadDetails, $post) {
 
+    $endpoint = '/imports';
+    $cURLparameters['type'] = 'user_import';
+    $cURLparameters['exists'] = 1;
+    $cURLparameters['source'] = isset($payloadDetails['source']) ? $payloadDetails['source'] : 'niche';
+    $cURLparameters['origin'] = $payloadDetails['origin']['name'] ;
+    $cURLparameters['processed_timestamp'] = $payloadDetails['origin']['processed'];
+
+    if (isset($payloadDetails['origin'])) {
+      $post['origin'] = array(
+        'name' => $payloadDetails['origin']['name'],
+        'processed_timestamp' => $payloadDetails['origin']['processed']
+      );
+    }
+    if (isset($payloadDetails['mobile']) && $payloadDetails['mobile'] != NULL) {
+      $post['phone'] = $payloadDetails['mobile'];
+      $post['phone_status'] = $payloadDetails['mobile-error'];
+      $post['phone_acquired'] = $payloadDetails['mobile-acquired'];
+    }
+    if (isset($payloadDetails['email']) && $payloadDetails['email'] != NULL) {
+      $post['email'] = $payloadDetails['email'];
+      $post['email_status'] = $payloadDetails['email-status'];
+      if (isset($payloadDetails['email-acquired'])) {
+        $post['email_acquired'] = $payloadDetails['email-acquired'];
+      }
+    }
+    if (isset($payloadDetails['drupal-uid']) && $payloadDetails['drupal-uid'] != NULL) {
+      if (isset($payloadDetails['email'])) {
+        $post['drupal_email'] = $payloadDetails['email'];
+      }
+      $post['drupal_uid'] = $payloadDetails['drupal-uid'];
+    }
+
+    return array($endpoint, $cURLparameters, $post);
   }
 
   /**
