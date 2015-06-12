@@ -27,22 +27,17 @@
     }
   },
   "scripts": {
-    "pre-package-install": [
-      "sudo su dosomething",
+    "pre-install-cmd": [
       "./bin/install.sh"
-    ],
-    "post-package-install": [
-      "./vendor/bin/phpunit"
     ],
     "pre-package-update": [
       "git checkout master",
       "git pull"
     ],
     "post-package-update": [
-      "./vendor/bin/phpunit"
+      "./vendor/bin/phpunit tests"
     ],
     "post-package-uninstall": [
-      "sudo su dosomething",
       "./bin/uninstall.sh"
     ]
   }
