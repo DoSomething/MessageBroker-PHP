@@ -74,7 +74,7 @@ class MBC_LoggingGateway
     switch ($payloadDetails['log-type']) {
 
       case 'file-import':
-        list($endPoint, $post) = $this->logUserImportFile($payloadDetails);
+        list($endPoint, $cURLparameters, $post) = $this->logUserImportFile($payloadDetails, $post);
 
         break;
 
@@ -95,18 +95,36 @@ class MBC_LoggingGateway
 
     }
 
-    $this->submitLogEntry($endPoint, $post);
+    $this->submitLogEntry($endPoint, $cURLparameters, $post);
 
     echo '------- MBC_LoggingGateway - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
   }
 
   /**
+   * logUserImportFile: Format values to include in "file-import" log entry
    *
    * @param array $payloadDetails
    *
    */
-  private function logUserImportFile($payloadDetails) {
+  private function logUserImportFile($payloadDetails, $post) {
+
+    $endpoint = '/imports/summaries';
+    $cURLparameters['type'] = 'user_import';
+    $cURLparameters['source'] = $payloadDetails['source'];
+
+    $post['source'] = $payloadDetails['source'];
+    if (isset($payloadDetails['target-CSV-file']) && $payloadDetails['target-CSV-file'] != NULL) {
+      $post['target_CSV_file'] = $payloadDetails['target-CSV-file'];
+    }
+    if (isset($payloadDetails['signup-count']) && $payloadDetails['signup-count'] != NULL) {
+      $post['signup_count'] = $payloadDetails['signup-count'];
+    }
+    if (isset($payloadDetails['skipped'])) {
+      $post['skipped'] = $payloadDetails['skipped'];
+    }
+
+    return array($endpoint, $cURLparameters, $post);
 
   }
 
@@ -125,6 +143,15 @@ class MBC_LoggingGateway
    *
    */
   private function logVote($payloadDetails) {
+
+  }
+
+  /**
+   *
+   * @param array $payloadDetails
+   *
+   */
+  private function submitLogEntry($endPoint, $cURLparameters, $post) {
 
   }
 
