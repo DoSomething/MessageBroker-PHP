@@ -118,7 +118,7 @@ class MBC_LoggingGateway
    * @return array $post
    *   Post values for the cURL POST.
    */
-  private function logUserImportFile($payloadDetails, $post) {
+  public function logUserImportFile($payloadDetails, $post) {
 
     $endpoint = '/imports/summaries';
     $cURLparameters['type'] = 'user_import';
@@ -153,7 +153,7 @@ class MBC_LoggingGateway
    * @return array $post
    *   Post values for the cURL POST.
    */
-  private function logImportExistingUser($payloadDetails, $post) {
+  public function logImportExistingUser($payloadDetails, $post) {
 
     $endpoint = '/imports';
     $cURLparameters['type'] = 'user_import';
@@ -205,7 +205,7 @@ class MBC_LoggingGateway
    * @return array $post
    *   Post values for the cURL POST.
    */
-  private function logVote($payloadDetails) {
+  public function logVote($payloadDetails) {
 
     $endpoint = '/user/vote';
     $cURLparameters['source'] = $payloadDetails['source'];
@@ -232,7 +232,7 @@ class MBC_LoggingGateway
    * @param array $post
    *   Collection of values to submit for logging entry.
    */
-  private function submitLogEntry($endPoint, $cURLparameters, $post) {
+  public function submitLogEntry($endPoint, $cURLparameters, $post) {
 
     $loggingApiUrl = $this->settings['mb_logging_api_host'] . ':' . $this->settings['mb_logging_api_port'] . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
     $result = $this->toolbox->curlPOST($loggingApiUrl, $post);

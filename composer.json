@@ -1,10 +1,10 @@
 {
-  "name": "https://github.com/DoSomething/mbc-import-logging",
+  "name": "mbc-logging-gateway",
   "type": "project",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A consumer app for the Message Broker system that consumes ?? to log existing entries in the DoSomething user stores",
   "keywords": ["message broker"],
-  "homepage": "https://github.com/DoSomething/mbc-import-logging",
+  "homepage": "https://github.com/DoSomething/mbc-logging-gateway",
   "license" : "MIT",
   "authors": [
     {
@@ -15,7 +15,7 @@
   "require": {
     "php": ">= 5.3.0",
     "DoSomething/messagebroker-phplib": "0.2.*",
-    "dosomething/mb-toolbox": "0.4.*",
+    "dosomething/mb-toolbox": "0.5.*",
     "dosomething/stathat": "1.*"
   },
   "require-dev": {
@@ -23,26 +23,21 @@
   },
   "autoload": {
     "psr-4": {
-      "DoSomething\\MBC_ImportLogging\\": "src/"
+      "DoSomething\\MBC_LoggingGateway\\": "src/"
     }
   },
   "scripts": {
-    "pre-package-install": [
-      "sudo su dosomething",
+    "pre-install-cmd": [
       "./bin/install.sh"
-    ],
-    "post-package-install": [
-      "./vendor/bin/phpunit"
     ],
     "pre-package-update": [
       "git checkout master",
       "git pull"
     ],
     "post-package-update": [
-      "./vendor/bin/phpunit"
+      "./vendor/bin/phpunit tests"
     ],
     "post-package-uninstall": [
-      "sudo su dosomething",
       "./bin/uninstall.sh"
     ]
   }
