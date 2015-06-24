@@ -1,13 +1,7 @@
-mbc-logging-gateway
+mbc-logging-processor
 ==================
 
-Consumer for the Message Broker system that process logging entries. Uses the mb-logging-api to create entries in the Mongo mb-logging database.
+On a timed bases, query logging entries for processing.
 
-Supported logging type:
-- 'file-import'
-- user-import-xxx:
-  - 'user-import-niche'
-  - 'user-import-att-ichannel'
-  - 'user-import-hercampus'
-  - 'user-import-teenlife'
-- 'vote'
+Supported processing types:
+- Query mb-logging->user-activities to trigger transactional events based on user activity log entries.
