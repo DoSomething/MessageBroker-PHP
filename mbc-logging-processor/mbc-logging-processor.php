@@ -17,10 +17,10 @@ use DoSomething\MBC_LoggingGateway\MBC_LoggingGateway;
 require_once __DIR__ . '/mbc-logging-gateway.config.inc';
 
 
-echo '------- mbc-impoert-logging START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+echo '------- mbc-logging-processor START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 // Kick off
-$mb = new MessageBroker($credentials, $config);
-$mb->consumeMessage(array(new MBC_LoggingGateway($mb, $settings), 'consumeQueue'));
+$mbcLoggingProcessor = new MBC_LoggingProcessor($credentials, $config, $settings);
+$mbcLoggingProcessor->processLoggedEvents();
 
-echo '------- mbc-impoert-logging END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+echo '------- mbc-logging-processor END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
