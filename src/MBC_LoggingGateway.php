@@ -69,12 +69,16 @@ class MBC_LoggingGateway
 
     echo '------- MBC_LoggingGateway - consumeQueue() START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
+    $endPoint = NULL;
+    $cURLparameters = NULL;
+    $post = NULL;
+
     $payloadDetails = unserialize($payload->body);
 
     switch ($payloadDetails['log-type']) {
 
       case 'file-import':
-        list($endPoint, $cURLparameters, $post) = $this->logUserImportFile($payloadDetails, $post);
+        list($endPoint, $cURLparameters, $post) = $this->logUserImportFile($payloadDetails);
 
         break;
 
@@ -82,12 +86,12 @@ class MBC_LoggingGateway
       case 'user-import-att-ichannel':
       case 'user-import-hercampus':
       case 'user-import-teenlife':
-        list($endPoint, $cURLparameters, $post) = $this->logImportExistingUser($payloadDetails, $post);
+        list($endPoint, $cURLparameters, $post) = $this->logImportExistingUser($payloadDetails);
 
         break;
 
       case 'vote':
-        list($endPoint, $cURLparameters, $post) = $this->logVote($payloadDetails, $post);
+        list($endPoint, $cURLparameters, $post) = $this->logActivity($payloadDetails);
 
         break;
 
@@ -98,8 +102,9 @@ class MBC_LoggingGateway
 
     }
 
-    $this->submitLogEntry($endPoint, $cURLparameters, $post);
-
+    if ($endPoint != NULL) {
+      $this->submitLogEntry($endPoint, $cURLparameters, $post, $payload);
+    }
     echo '------- MBC_LoggingGateway - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
   }
 
@@ -108,8 +113,6 @@ class MBC_LoggingGateway
    *
    * @param array $payloadDetails
    *   Values submitted in activity message to be processed to create "file-import" log entry.
-   * @param array $post
-   *   Collection of values to submit for logging entry.
    *
    * @return string $endpoint
    *   The cURUL POST URL to mb-logging-api.
@@ -118,12 +121,13 @@ class MBC_LoggingGateway
    * @return array $post
    *   Post values for the cURL POST.
    */
-  public function logUserImportFile($payloadDetails, $post) {
+  public function logUserImportFile($payloadDetails) {
 
     $endpoint = '/imports/summaries';
     $cURLparameters['type'] = 'user_import';
     $cURLparameters['source'] = $payloadDetails['source'];
 
+    $post = array();
     $post['source'] = $payloadDetails['source'];
     if (isset($payloadDetails['target-CSV-file']) && $payloadDetails['target-CSV-file'] != NULL) {
       $post['target_CSV_file'] = $payloadDetails['target-CSV-file'];
@@ -143,8 +147,6 @@ class MBC_LoggingGateway
    *
    * @param array $payloadDetails
    *   Values submitted in activity message to be processed to create "file-import" log entry.
-   * @param array $post
-   *   Collection of values to submit for logging entry.
    *
    * @return string $endpoint
    *   The cURUL POST URL to mb-logging-api.
@@ -153,7 +155,7 @@ class MBC_LoggingGateway
    * @return array $post
    *   Post values for the cURL POST.
    */
-  public function logImportExistingUser($payloadDetails, $post) {
+  public function logImportExistingUser($payloadDetails) {
 
     $endpoint = '/imports';
     $cURLparameters['type'] = 'user_import';
@@ -162,6 +164,7 @@ class MBC_LoggingGateway
     $cURLparameters['origin'] = $payloadDetails['origin']['name'] ;
     $cURLparameters['processed_timestamp'] = $payloadDetails['origin']['processed'];
 
+    $post = array();
     if (isset($payloadDetails['origin'])) {
       $post['origin'] = array(
         'name' => $payloadDetails['origin']['name'],
@@ -191,12 +194,11 @@ class MBC_LoggingGateway
   }
 
   /**
-   * logVote: Format values for "vote" log entry.
+   * logActivity: Format values for "activity" log entry. A "catch" all
+   * logging format that captures message payloads for future processing.
    *
    * @param array $payloadDetails
    *   Values submitted in activity message to be processed to create "vote" log entry.
-   * @param array $post
-   *   Collection of values to submit for logging entry.
    *
    * @return string $endpoint
    *   The cURUL POST URL to mb-logging-api.
@@ -205,18 +207,20 @@ class MBC_LoggingGateway
    * @return array $post
    *   Post values for the cURL POST.
    */
-  public function logVote($payloadDetails) {
+  public function logActivity($payloadDetails) {
 
-    $endpoint = '/user/vote';
-    $cURLparameters['source'] = $payloadDetails['source'];
+    $endpoint = '/user/activity';
+    $cURLparameters['type'] = $payloadDetails['activity'];
 
+    $post = array();
     $post['email'] = $payloadDetails['email'];
-    $post['activity'] = 'vote';
+    $post['activity'] = $payloadDetails['activity'];
+    $post['source'] = $payloadDetails['source'];
     $post['activity_date'] = $payloadDetails['activity_date'];
     $post['activity_timestamp'] = $payloadDetails['activity_timestamp'];
 
     if (isset($payloadDetails['activity_details'])) {
-      $post['activity_details'] = $payloadDetails['activity_details'];
+      $post['activity_details'] = serialize($payloadDetails['activity_details']);
     }
 
     return array($endpoint, $cURLparameters, $post);
@@ -228,13 +232,17 @@ class MBC_LoggingGateway
    * @param string $endPoint
    *   The path on the mb-logging-api to submit the log entry.
    * @param array $cURLparameters
-   *   Parameters in the POST path for the mb-logging-api to use to define the type of log entry.
+   *   Parameters in the POST path for the mb-logging-api to use to define the type
+   *   of log entry.
    * @param array $post
    *   Collection of values to submit for logging entry.
+   * @param array $payload
+   *   Orginal message payload from Rabbit server. Used to ack messages that have been
+   *   successully POSTed.
    */
-  public function submitLogEntry($endPoint, $cURLparameters, $post) {
+  public function submitLogEntry($endPoint, $cURLparameters, $post, $payload) {
 
-    $loggingApiUrl = $this->settings['mb_logging_api_host'] . ':' . $this->settings['mb_logging_api_port'] . '/api/v1' . $endpoint . '?' . http_build_query($cURLparameters);
+    $loggingApiUrl = $this->settings['mb_logging_api_host'] . ':' . $this->settings['mb_logging_api_port'] . '/api/v1' . $endPoint . '?' . http_build_query($cURLparameters);
     $result = $this->toolbox->curlPOST($loggingApiUrl, $post);
 
     // Only ack messages that the API has responded as "created" (201).
@@ -243,6 +251,8 @@ class MBC_LoggingGateway
       $this->messageBroker->sendAck($payload);
     }
     else {
+      echo '- ERROR, MBC_LoggingGateway->submitLogEntry(): Failed to POST to ' . $loggingApiUrl, PHP_EOL;
+      echo '  * Returned POST results: ' . print_r($result, TRUE), PHP_EOL;
       $this->statHat->ezCount('mbc-logging-gatewa: ERROR submitLogEntry()', 1);
     }
 
