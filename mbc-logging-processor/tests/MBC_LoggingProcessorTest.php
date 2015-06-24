@@ -8,29 +8,23 @@ use DoSomething\MBC_LoggingGateway\MBC_LoggingGateway;
   // https://getcomposer.org/doc/01-basic-usage.md
   $loader = require_once __DIR__ . '/../vendor/autoload.php';
  
-class  MBC_LoggingGatewayTest extends PHPUnit_Framework_TestCase {
+class  MBC_LoggingProcessoryTest extends PHPUnit_Framework_TestCase {
   
   public function setUp(){ }
   public function tearDown(){ }
  
-  public function testLogUserImportFile()
+  public function testProcessLoggedEvents()
   {
 
     date_default_timezone_set('America/New_York');
 
     // Load Message Broker settings used mb mbp-user-import.php
     define('CONFIG_PATH',  __DIR__ . '/../messagebroker-config');
-    require_once __DIR__ . '/../mbc-logging-gateway.config.inc';
+    require_once __DIR__ . '/../mbc-logging-processor.config.inc';
 
     // Create  MBP_UserImport object to access findNextTargetFile() method for testing
     $messageBroker = new MessageBroker($credentials, $config);
-    $mbcLoggingGateway = new MBC_LoggingGateway($messageBroker, $settings);
-    
-    list($endpoint, $cURLparameters, $post) = $mbcLoggingGateway->logUserImportFile($payloadDetails, $post);
-    echo PHP_EOL . PHP_EOL;
-    echo 'endpoint: ' . $endpoint, PHP_EOL;
-    echo 'cURLparameters: ' . print_r($cURLparameters, TRUE), PHP_EOL;
-    echo 'post: ' . print_r($post, TRUE), PHP_EOL;
+    $mbcLoggingGateway = new MBC_LoggingProcessor($messageBroker, $settings);
     
     $this->assertTrue(TRUE);
   }
