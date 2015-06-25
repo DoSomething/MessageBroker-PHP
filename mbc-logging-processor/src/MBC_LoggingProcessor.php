@@ -16,6 +16,8 @@ use DoSomething\MB_Toolbox\MB_Toolbox;
 class MBC_LoggingProcessor
 {
 
+  const LOGGING_API = '/api/v1';
+
   /**
    * Message Broker connection to RabbitMQ
    */
@@ -70,13 +72,73 @@ class MBC_LoggingProcessor
 
   /**
    * Cron job triggers gathering log entries to produce transactional events.
+   *
+   * @param interger $offset
+   *   The time in seconds from the current time to start the logging activity
+   *   query. This is the time value that the query will be repeated in the form
+   *   of a cron task.
+   * @param integer $interval
+   *   The amount of time in seconds from the $offset value.
+   *
+   * Typically these values will be the same.
    */
-  public function processLoggedEvents() {
+  public function processLoggedEvents($offset, $interval) {
 
     echo '------- MBC_LoggingProcessor - processLoggedEvents() START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
+    // Gather vote activity log entries for AGG every "$interval" seconds offset by "$offset" seconds.
+    $voteActivities = $this->gatherActivities('vote', 'AGG', $offset, $interval);
+
+    if ($voteActivities != FALSE) {
+      $this->createTransactionals($voteActivities);
+      $this->createMailChimpUsers($voteActivities);
+      $this->assignMailChimpGroup($voteActivities);
+    }
 
     echo '------- MBC_LoggingProcessor - processLoggedEvents() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+  }
+
+  /**
+   * Cron job triggers gathering log entries to produce transactional events.
+   *
+   * @param string $activity
+   *   The type of logged activity to be gathered.
+   * @param string $source
+   *   The name of source / site that the activity took place on.
+   * @param integer $offset
+   *   The time (in seconds) from the current time to start to query of the logged events.
+   * @param integer $interval
+   *   The time (in seconds) to end the query from the $offset time.
+   */
+  private function gatherActivities($activity, $source, $offset = NULL, $interval = NULL) {
+
+    $curlUrl = $this->settings['mb_logging_api_host'];
+    $port = $this->settings['mb_logging_api_port'];
+    if ($port != 0 && is_numeric($port)) {
+      $curlUrl .= ':' . (int) $port;
+    }
+
+    $params['type'] = $type;
+    $params['source'] = $source;
+    if (isset($offset)) {
+      $params['offset'] = $offset;
+    }
+    if (isset($interval)) {
+      $params['interval'] = $interval;
+    }
+
+    $loggingApiUrl = $curlUrl . self::LOGGING_API . '/user/activity?' . http_build_query($params);
+    $result = $this->toolbox->curlGET($loggingApiUrl);
+
+    if ($result[1] == 200) {
+      $voteActivities = $result[0];
+    }
+    else {
+      echo '- gatherActivities(): No results returned.', PHP_EOL;
+      $voteActivities = FALSE;
+    }
+
+    return $voteActivities;
   }
 
 }
