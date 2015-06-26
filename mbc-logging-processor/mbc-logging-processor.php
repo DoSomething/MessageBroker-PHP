@@ -25,24 +25,25 @@ if ($bla) {
 }
 
 // Kick off
-if (isset($_GET['interval'])) {
-  $interval = $_GET['interval'];
-}
-elseif (isset($argv[1])) {
-  $interval = $argv[1];
-}
 if (isset($_GET['offset'])) {
   $offset = $_GET['offset'];
 }
-elseif (isset($argv[2])) {
-  $offset = $argv[2];
+elseif (isset($argv[1])) {
+  $offset = $argv[1];
 }
+if (isset($_GET['interval'])) {
+  $interval = $_GET['interval'];
+}
+elseif (isset($argv[2])) {
+  $interval = $argv[2];
+}
+
 
 // Validate
 if (is_numeric($interval) && is_numeric($offset)) {
 
   $mbcLoggingProcessor = new MBC_LoggingProcessor($credentials, $config, $settings);
-  $mbcLoggingProcessor->processLoggedEvents($interval, $offset);
+  $mbcLoggingProcessor->processLoggedEvents($offset, $interval);
 
 }
 else {
