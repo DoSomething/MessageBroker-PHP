@@ -131,10 +131,16 @@ class MBC_LoggingProcessor
     $result = $this->toolbox->curlGET($loggingApiUrl);
 
     if ($result[1] == 201) {
-      $voteActivities = $result[0];
+      if (count($result[0]) > 0) {
+        $voteActivities = $result[0];
+      }
+      else {
+        echo '- No results returned from ' . $loggingApiUrl, PHP_EOL;
+        $voteActivities = FALSE;
+      }
     }
     else {
-      echo '- gatherActivities(): No results returned.', PHP_EOL;
+      echo '- ERROR returned from call to ' . $loggingApiUrl, PHP_EOL;
       $voteActivities = FALSE;
     }
 
