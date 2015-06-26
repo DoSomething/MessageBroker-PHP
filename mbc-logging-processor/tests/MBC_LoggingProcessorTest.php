@@ -8,7 +8,7 @@ use DoSomething\MBC_LoggingGateway\MBC_LoggingGateway;
   // https://getcomposer.org/doc/01-basic-usage.md
   $loader = require_once __DIR__ . '/../vendor/autoload.php';
  
-class  MBC_LoggingProcessoryTest extends PHPUnit_Framework_TestCase {
+class MBC_LoggingProcessoryTest extends PHPUnit_Framework_TestCase {
   
   public function setUp(){ }
   public function tearDown(){ }
