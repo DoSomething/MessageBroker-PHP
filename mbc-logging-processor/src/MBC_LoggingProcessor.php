@@ -19,9 +19,9 @@ class MBC_LoggingProcessor
   const LOGGING_API = '/api/v1';
 
   /**
-   * Message Broker connection to RabbitMQ
+   * Connection credentials for RabbitMQ.
    */
-  private $messageBroker;
+  private $credentials;
 
   /**
    * Setting from external services - Mailchimp.
@@ -59,7 +59,7 @@ class MBC_LoggingProcessor
    */
   public function __construct($credentials, $config, $settings) {
 
-    $this->messageBroker = new MessageBroker($credentials, $config);;
+    $this->credentials = $credentials;
     $this->settings = $settings;
     $this->config = $config;
 
@@ -99,7 +99,7 @@ class MBC_LoggingProcessor
   }
 
   /**
-   * Cron job triggers gathering log entries to produce transactional events.
+   * gatherActivitie: Cron job triggers gathering log entries to produce transactional events.
    *
    * @param string $activity
    *   The type of logged activity to be gathered.
@@ -139,6 +139,29 @@ class MBC_LoggingProcessor
     }
 
     return $voteActivities;
+  }
+
+  /**
+   * createTransactionals: Submit messages to the transactionalQueue to trigger transactional
+   * email messages.
+   *
+   * @param array $voteActivities
+   *   A list of all logged activities to generate email list from.
+   */
+  private function createTransactionals($voteActivities) {
+
+    $this->config['routingKey'] = 'agg.weeklydo.transactional';
+    $mb = new MessageBroker($this->credentials, $this->config);
+
+    foreach($voteActivities as $voteActivity) {
+      $payload = $voteActivity['activity_details'];
+      $voteActivity['email_template'] = 'agg2015-weekly-do-global';
+      $voteActivity['email_tags'] = array('agg', 'weekly-do-global');
+      $mb->publishMessage($payload);
+    }
+
+    $this->statHat->ezCount('mbp-logging-processor: MBC_LoggingProcessor: createTransactionals() - Weekly Do Internationl', 1);
+    echo $messageCount . ' transactional email sent.', PHP_EOL;
   }
 
 }
