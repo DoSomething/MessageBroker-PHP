@@ -118,7 +118,7 @@ class MBC_LoggingProcessor
       $curlUrl .= ':' . (int) $port;
     }
 
-    $params['type'] = $type;
+    $params['type'] = $activity;
     $params['source'] = $source;
     if (isset($offset)) {
       $params['offset'] = $offset;
@@ -130,7 +130,7 @@ class MBC_LoggingProcessor
     $loggingApiUrl = $curlUrl . self::LOGGING_API . '/user/activity?' . http_build_query($params);
     $result = $this->toolbox->curlGET($loggingApiUrl);
 
-    if ($result[1] == 200) {
+    if ($result[1] == 201) {
       $voteActivities = $result[0];
     }
     else {
@@ -151,18 +151,20 @@ class MBC_LoggingProcessor
   private function createTransactionals($voteActivities) {
 
     $this->config['routingKey'] = 'agg.weeklydo.transactional';
-    $mb = new MessageBroker($this->credentials, $this->config);
+    $mb = new \MessageBroker($this->credentials, $this->config);
 
-    foreach($voteActivities as $voteActivity) {
-      $payload = $voteActivity['activity_details'];
+    $logCount = 0;
+    foreach($voteActivities as $logCount => $voteActivity) {
+      $payload = unserialize($voteActivity->activity_details);
       $payload['email_template'] = 'agg2015-weekly-do-global';
       $payload['email_tags'] = array('AGG', 'weekly-do-global');
+      $payload = serialize($payload);
       $mb->publishMessage($payload);
     }
 
     unset($mb);
     $this->statHat->ezCount('mbp-logging-processor: MBC_LoggingProcessor: createTransactionals() - Weekly Do Internationl', 1);
-    echo $messageCount . ' transactional email sent.', PHP_EOL;
+    echo $logCount . ' transactional email sent.', PHP_EOL;
   }
 
   /**
@@ -172,22 +174,24 @@ class MBC_LoggingProcessor
    * @param array $voteActivities
    *   A list of all logged activities to generate submissions.
    */
-  private function createMailChimpUser($voteActivities) {
+  private function createMailChimpUsers($voteActivities) {
 
     $this->config['routingKey'] = 'user.registration.agg';
-    $mb = new MessageBroker($this->credentials, $this->config);
+    $mb = new \MessageBroker($this->credentials, $this->config);
 
-    foreach($voteActivities as $voteActivity) {
-      $payload = $voteActivity['activity_details'];
+    $logCount = 0;
+    foreach($voteActivities as $logCount => $voteActivity) {
+      $payload = unserialize($voteActivity->activity_details);
       $payload['mailchimp_list_id'] = 'f2fab1dfd4';
       $payload['mailchimp_grouping_id'] = '10677';
       $payload['mailchimp_group_name'] = 'AGG2015';
+      $payload = serialize($payload);
       $mb->publishMessage($payload);
     }
 
     unset($mb);
     $this->statHat->ezCount('mbp-logging-processor: MBC_LoggingProcessor: createMailChimpUser()', 1);
-    echo $messageCount . ' transactional email sent.', PHP_EOL;
+    echo $logCount . ' users queued for submission to MailChimp.', PHP_EOL;
   }
 
   /**
@@ -200,19 +204,21 @@ class MBC_LoggingProcessor
   private function assignMailChimpGroup($voteActivities) {
 
     $this->config['routingKey'] = 'campaign.signup.agg';
-    $mb = new MessageBroker($this->credentials, $this->config);
+    $mb = new \MessageBroker($this->credentials, $this->config);
 
-    foreach($voteActivities as $voteActivity) {
-      $payload = $voteActivity['activity_details'];
+    $logCount = 0;
+    foreach($voteActivities as $logCount => $voteActivity) {
+      $payload = unserialize($voteActivity->activity_details);
       $payload['mailchimp_list_id'] = 'f2fab1dfd4';
       $payload['mailchimp_grouping_id'] = '10677';
       $payload['mailchimp_group_name'] = 'AGG2015';
+      $payload = serialize($payload);
       $mb->publishMessage($payload);
     }
 
     unset($mb);
     $this->statHat->ezCount('mbp-logging-processor: MBC_LoggingProcessor: assignMailChimpGroup()', 1);
-    echo $messageCount . ' users assigned to MailChimp "International Non-Affiliates - AGG2015" interest group.', PHP_EOL;
+    echo $logCount . ' users assigned to MailChimp "International Non-Affiliates - AGG2015" interest group.', PHP_EOL;
   }
 
 }

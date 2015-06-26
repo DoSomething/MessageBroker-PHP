@@ -19,6 +19,11 @@ require_once __DIR__ . '/mbc-logging-processor.config.inc';
 
 echo '------- mbc-logging-processor START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
+$bla = FALSE;
+if ($bla) {
+  $bla = TRUE;
+}
+
 // Kick off
 if (isset($_GET['interval'])) {
   $interval = $_GET['interval'];
