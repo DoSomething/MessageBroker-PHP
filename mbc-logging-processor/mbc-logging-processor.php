@@ -14,7 +14,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 use DoSomething\MBC_LoggingGateway\MBC_LoggingGateway;
 
 // Load configuration settings specific to this application
-require_once __DIR__ . '/mbc-logging-gateway.config.inc';
+require_once __DIR__ . '/mbc-logging-processor.config.inc';
 
 
 echo '------- mbc-logging-processor START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
