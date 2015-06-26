@@ -146,7 +146,7 @@ class MBC_LoggingProcessor
    * email messages.
    *
    * @param array $voteActivities
-   *   A list of all logged activities to generate email list from.
+   *   A list of all logged activities to generate submissions.
    */
   private function createTransactionals($voteActivities) {
 
@@ -155,13 +155,64 @@ class MBC_LoggingProcessor
 
     foreach($voteActivities as $voteActivity) {
       $payload = $voteActivity['activity_details'];
-      $voteActivity['email_template'] = 'agg2015-weekly-do-global';
-      $voteActivity['email_tags'] = array('agg', 'weekly-do-global');
+      $payload['email_template'] = 'agg2015-weekly-do-global';
+      $payload['email_tags'] = array('AGG', 'weekly-do-global');
       $mb->publishMessage($payload);
     }
 
+    unset($mb);
     $this->statHat->ezCount('mbp-logging-processor: MBC_LoggingProcessor: createTransactionals() - Weekly Do Internationl', 1);
     echo $messageCount . ' transactional email sent.', PHP_EOL;
+  }
+
+  /**
+   * createMailChimpUser: Submit messages to the userRegistrationQueue to trigger
+   * MailChimp user registration.
+   *
+   * @param array $voteActivities
+   *   A list of all logged activities to generate submissions.
+   */
+  private function createMailChimpUser($voteActivities) {
+
+    $this->config['routingKey'] = 'user.registration.agg';
+    $mb = new MessageBroker($this->credentials, $this->config);
+
+    foreach($voteActivities as $voteActivity) {
+      $payload = $voteActivity['activity_details'];
+      $payload['mailchimp_list_id'] = 'f2fab1dfd4';
+      $payload['mailchimp_grouping_id'] = '10677';
+      $payload['mailchimp_group_name'] = 'AGG2015';
+      $mb->publishMessage($payload);
+    }
+
+    unset($mb);
+    $this->statHat->ezCount('mbp-logging-processor: MBC_LoggingProcessor: createMailChimpUser()', 1);
+    echo $messageCount . ' transactional email sent.', PHP_EOL;
+  }
+
+  /**
+   * assignMailChimpGroup: Submit messages to the mailchimpCampaignSignupQueue
+   * to trigger MailChimp interest group assignment.
+   *
+   * @param array $voteActivities
+   *   A list of all logged activities to generate submissions.
+   */
+  private function assignMailChimpGroup($voteActivities) {
+
+    $this->config['routingKey'] = 'campaign.signup.agg';
+    $mb = new MessageBroker($this->credentials, $this->config);
+
+    foreach($voteActivities as $voteActivity) {
+      $payload = $voteActivity['activity_details'];
+      $payload['mailchimp_list_id'] = 'f2fab1dfd4';
+      $payload['mailchimp_grouping_id'] = '10677';
+      $payload['mailchimp_group_name'] = 'AGG2015';
+      $mb->publishMessage($payload);
+    }
+
+    unset($mb);
+    $this->statHat->ezCount('mbp-logging-processor: MBC_LoggingProcessor: assignMailChimpGroup()', 1);
+    echo $messageCount . ' users assigned to MailChimp "International Non-Affiliates - AGG2015" interest group.', PHP_EOL;
   }
 
 }
