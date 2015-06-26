@@ -160,7 +160,8 @@ class MBC_LoggingProcessor
     $mb = new \MessageBroker($this->credentials, $this->config);
 
     $logCount = 0;
-    foreach($voteActivities as $logCount => $voteActivity) {
+    foreach($voteActivities as $voteActivity) {
+      $logCount++;
       $payload = unserialize($voteActivity->activity_details);
       $payload['email_template'] = 'agg2015-weekly-do-global';
       $payload['email_tags'] = array('AGG', 'weekly-do-global');
@@ -186,7 +187,8 @@ class MBC_LoggingProcessor
     $mb = new \MessageBroker($this->credentials, $this->config);
 
     $logCount = 0;
-    foreach($voteActivities as $logCount => $voteActivity) {
+    foreach($voteActivities as $voteActivity) {
+      $logCount++;
       $payload = unserialize($voteActivity->activity_details);
       $payload['mailchimp_list_id'] = 'f2fab1dfd4';
       $payload['mailchimp_grouping_id'] = '10677';
@@ -213,7 +215,8 @@ class MBC_LoggingProcessor
     $mb = new \MessageBroker($this->credentials, $this->config);
 
     $logCount = 0;
-    foreach($voteActivities as $logCount => $voteActivity) {
+    foreach($voteActivities as $voteActivity) {
+      $logCount++;
       $payload = unserialize($voteActivity->activity_details);
       $payload['mailchimp_list_id'] = 'f2fab1dfd4';
       $payload['mailchimp_grouping_id'] = '10677';
