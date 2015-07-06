@@ -7,7 +7,7 @@
 use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\MBStatTracker\StatHat;
 
-class MBC_Image_Processor
+class MBC_ImageProcessor
 {
 
   /**
