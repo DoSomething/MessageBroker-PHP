@@ -25,5 +25,17 @@
     "psr-4": {
       "DoSomething\\MBC_Image_Processor\\": "src/"
     }
+  },
+  "scripts": {
+    "pre-install-cmd": [
+      "./bin/install.sh"
+    ],
+    "pre-package-update": [
+      "git checkout master",
+      "git pull"
+    ],
+    "post-package-uninstall": [
+      "./bin/uninstall.sh"
+    ]
   }
 }
