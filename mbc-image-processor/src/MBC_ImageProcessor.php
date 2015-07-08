@@ -19,14 +19,7 @@ class MBC_ImageProcessor
    */
   public function process() {
 
-    // An example cURL POST to the Message Broker User API (mb-user-api) to store peristant
-    // Message Broker relivant data using the MB_Toolbox library.
-    $curlUrl = $this->settings['ds_user_api_host'];
-    $port = $this->settings['ds_user_api_port'];
-    if ($port != 0) {
-      $curlUrl .= ":$port";
-    }
-    $result = $this->toolbox->curlGETImage($curlUrl, $post);
+    $result = MB_Toolbox_cURL::curlGETImage($this->imagePath);
 
     // Log consumer activity to StatHat for monitoring
     $this->statHat->clearAddedStatNames();
