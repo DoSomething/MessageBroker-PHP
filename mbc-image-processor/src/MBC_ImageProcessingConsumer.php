@@ -15,7 +15,7 @@ class MBC_ImageProcessingConsumer extends MBC_BaseConsumer
   /**
    * Message Broker connection to RabbitMQ
    */
-  private $imagePath;
+  protected $imagePath;
 
   /**
    * Initial method triggered by blocked call in mbc-image-processor.php. The $payload is the
