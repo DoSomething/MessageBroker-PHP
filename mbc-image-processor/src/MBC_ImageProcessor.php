@@ -8,7 +8,7 @@ use DoSomething\MB_Toolbox\MB_Toolbox;
  * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
  * entries that match the campaign.*.* binding.
  */
-class MBC_ImageProcessor
+class MBC_ImageProcessor extends MBC_ImageProcessingConsumer
 {
 
   /**
@@ -27,7 +27,7 @@ class MBC_ImageProcessor
       $this->statHat->addStatName('success');
     }
     else {
-      echo '** FAILED to update ?? for email: ' . $post['email'], PHP_EOL;
+      echo '** FAILED to GET ' . $this->imagePath  . ' image to trigger image style builds.', PHP_EOL;
       echo '------- mbc-a1-startHere - MBC_A1_StartHere->startHere: $post: ' . print_r($post, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
       $this->statHat->addStatName('update failed');
     }
