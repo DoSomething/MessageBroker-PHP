@@ -1,6 +1,6 @@
 <?php
 
-namespace DoSomething;
+namespace DoSomething\MBC_ImageProcessor;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
@@ -63,7 +63,7 @@ abstract class MBC_BaseConsumer
    * @param array $settings
    *   Settings from internal and external services used by the application.
    */
-  protected function __construct($messageBroker, StatHat $statHat, MB_Toolbox $toolbox, $settings) {
+  public function __construct($messageBroker, StatHat $statHat, MB_Toolbox $toolbox, $settings) {
 
     $this->messageBroker = $messageBroker;
     $this->statHat = $statHat;
@@ -79,6 +79,7 @@ abstract class MBC_BaseConsumer
    *   The contents of the queue entry
    */
   protected function consumeQueue($payload) {
+
     $this->message = unserialize($payload->body);
   }
 
