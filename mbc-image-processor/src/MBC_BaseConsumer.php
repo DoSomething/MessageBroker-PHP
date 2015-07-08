@@ -64,8 +64,6 @@ abstract class MBC_BaseConsumer
    *   Settings from internal and external services used by the application.
    */
   protected function __construct($messageBroker, StatHat $statHat, MB_Toolbox $toolbox, $settings) {
-    
-     echo 'MBC_BaseConsumer __construct()', PHP_EOL;
 
     $this->messageBroker = $messageBroker;
     $this->statHat = $statHat;
