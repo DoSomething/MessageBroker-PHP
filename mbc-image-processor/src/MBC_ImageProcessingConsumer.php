@@ -3,7 +3,8 @@ namespace DoSomething\MBC_ImageProcessor;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
-use DoSomething\MMBC_ImageProcessor\MBC_ImageProcessor;
+use DoSomething\MBC_ImageProcessor\MBC_BaseConsumer;
+use DoSomething\MBC_ImageProcessor\MBC_ImageProcessor;
 
 /*
  * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
@@ -46,6 +47,13 @@ class MBC_ImageProcessingConsumer extends MBC_BaseConsumer
     $imageMarkup = $message['merge_vars']['REPORTBACK_IMAGE_MARKUP'];
     $imagePath = substr($imageMarkup, 10, strpos($imageMarkup, '.jpg?') + 5);
     $this->imagePath = $imagePath;
+  }
+
+  /**
+   * Sets values for processing based on contents of message from consumed queue.
+   */
+  protected function process() {
+
   }
 
 }
