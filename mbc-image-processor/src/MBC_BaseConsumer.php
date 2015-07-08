@@ -83,4 +83,14 @@ abstract class MBC_BaseConsumer
     $this->message = unserialize($payload->body);
   }
 
+  /**
+   * Sets values for processing based on contents of message from consumed queue.
+   */
+  abstract protected function setter();
+
+  /**
+   * Process message from consumed queue.
+   */
+  abstract protected function process();
+
 }
