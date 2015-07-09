@@ -14,7 +14,7 @@ class MBC_ImageProcessingConsumer extends MBC_BaseConsumer
 {
 
   /**
-   * Message Broker connection to RabbitMQ
+   * The image and http path to request.
    */
   protected $imagePath;
 
@@ -25,35 +25,47 @@ class MBC_ImageProcessingConsumer extends MBC_BaseConsumer
    * @param array $payload
    *   The contents of the queue entry
    */
-  private function consumeImageProcessingQueue() {
-    
+  public function consumeImageProcessingQueue($message) {
+
     echo '- mbc-image-processor - MBC_ImageProcessingConsumer->consumeImageProcessingQueue() START', PHP_EOL;
 
-    parent::consumeQueue();
+    parent::consumeQueue($message);
     $this->setter($this->message);
 
-    $ip = new MBC_ImageProcessor($this->statHat, $this->toolbox, $this->settings);
-    $ip->process();
+    $ip = new MBC_ImageProcessor($this->messageBroker,  $this->statHat,  $this->toolbox, $this->settings);
+    $ip->setImagePath ($this->imagePath);
+    $ip->process($this->imagePath);
+
+    // Log processing of image
+    // $ip->log();
+
+    // Destructor?
     unset($ip);
-    
+
     echo '- mbc-image-processor - MBC_ImageProcessingConsumer->consumeImageProcessingQueue() STOP', PHP_EOL;
   }
-  
+
   /**
    * Sets values ofr processing based on contents of message from consumed queue.
+   *
+   * @param array $message
+   *  The payload of the message being processed.
    */
-  private function setter($message) {
+  protected function setter($message) {
 
     $imageMarkup = $message['merge_vars']['REPORTBACK_IMAGE_MARKUP'];
-    $imagePath = substr($imageMarkup, 10, strpos($imageMarkup, '.jpg?') + 5);
+    $imgTagOffset = 10;
+    $imagePath = substr($imageMarkup, $imgTagOffset, strpos($imageMarkup, '.jpg?') + 4 - $imgTagOffset);
     $this->imagePath = $imagePath;
   }
 
   /**
-   * Sets values for processing based on contents of message from consumed queue.
+   * Method to process image.
+   *
+   * @param array $payload
+   *   The contents of the queue entry
    */
   protected function process() {
-
   }
 
 }
