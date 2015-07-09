@@ -46,7 +46,7 @@ abstract class MBC_BaseConsumer
    *
    * @var array
    */
-  protected $messge;
+  protected $message;
 
   /**
    * Constructor for MBC_BaseConsumer - all consumer applications should extend this base class.
@@ -78,15 +78,18 @@ abstract class MBC_BaseConsumer
    * @param array $payload
    *   The contents of the queue entry
    */
-  protected function consumeQueue($payload) {
+  public function consumeQueue($payload) {
 
     $this->message = unserialize($payload->body);
   }
 
   /**
    * Sets values for processing based on contents of message from consumed queue.
+   *
+   * @param array $message
+   *  The payload of the unseralized message being processed.
    */
-  abstract protected function setter();
+  abstract protected function setter($message);
 
   /**
    * Process message from consumed queue.
