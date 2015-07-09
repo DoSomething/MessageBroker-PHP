@@ -35,16 +35,15 @@ class MBC_ImageProcessor extends MBC_ImageProcessingConsumer
     $result = MB_Toolbox_cURL::curlGETImage($this->imagePath);
 
     // Log consumer activity to StatHat for monitoring
-    $this->statHat->clearAddedStatNames();
     if ($result[1] == 200) {
-      $this->statHat->addStatName('success');
+      $this->statHat->ezCount('mbc-image-processor: MBC_ImageProcessor->process()', 1);
     }
     else {
       echo '** FAILED to GET ' . $this->imagePath  . ' image to trigger image style builds.', PHP_EOL;
-      echo '------- mbc-a1-startHere - MBC_A1_StartHere->startHere: $post: ' . print_r($post, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-      $this->statHat->addStatName('update failed');
+      echo '------- mbc-image-processor - MBC_ImageProcessor->process(: $imagePath: ' . $this->imagePath . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      $this->statHat->ezCount('mbc-image-processor: MBC_ImageProcessor->process() FAILED', 1);
     }
-    $this->statHat->reportCount(1);
+
   }
 
 }
