@@ -3,6 +3,7 @@ namespace DoSomething\MBC_ImageProcessor;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
+use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
 
 /*
  * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
@@ -12,12 +13,24 @@ class MBC_ImageProcessor extends MBC_ImageProcessingConsumer
 {
 
   /**
-   * Method to process image details. Make requests to trigger image cache processing on the Drupal site.
-   *
-   * @param array $payload
-   *   The contents of the queue entry
+   * The image and http path to request.
    */
-  public function process() {
+  protected $imagePath;
+
+  /**
+   * Sets values ofr processing based on contents of message from consumed queue.
+   *
+   * @param array $message
+   *  The payload of the message being processed.
+   */
+  protected function setImagePath($imagePath) {
+    $this->imagePath = $imagePath;
+  }
+
+  /**
+   * Method to process image details. Make requests to trigger image cache processing on the Drupal site.
+   */
+  protected function process() {
 
     $result = MB_Toolbox_cURL::curlGETImage($this->imagePath);
 
@@ -32,7 +45,6 @@ class MBC_ImageProcessor extends MBC_ImageProcessingConsumer
       $this->statHat->addStatName('update failed');
     }
     $this->statHat->reportCount(1);
-    
   }
 
 }
