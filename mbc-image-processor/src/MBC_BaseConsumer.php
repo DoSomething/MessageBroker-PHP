@@ -121,6 +121,8 @@ abstract class MBC_BaseConsumer
     // Trigger processing delay when max message rate is exceeded
     if ($this->throttleMessageCount > $maxMessageRate) {
       sleep(MBC_BaseConsumer::THROTTLE_TIMEOUT);
+
+      echo '- Trottling activated, message rate: ' . $this->throttleMessageCount . '. Waiting for ' . MBC_BaseConsumer::THROTTLE_TIMEOUT . ' seconds.', PHP_EOL;
       $this->throttleMessageCount = 0;
     }
   }
