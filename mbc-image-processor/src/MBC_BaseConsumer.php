@@ -12,6 +12,9 @@ use DoSomething\MB_Toolbox\MB_Toolbox;
 abstract class MBC_BaseConsumer
 {
 
+   // The number of seconds to pause when throttling is triggered
+   const THROTTLE_TIMEOUT = 5;
+
   /**
    * Message Broker connection to RabbitMQ
    *
@@ -49,6 +52,21 @@ abstract class MBC_BaseConsumer
   protected $message;
 
   /**
+   * The number of messages that have been processed. Used to calculate the message rate
+   * to trigger throttling.
+   *
+   * @var integer
+   */
+  protected $throttleMessageCount = 0;
+
+   /**
+   * A second value to track the lapsed time to calculate the massage rate.
+   *
+   * @var integer
+   */
+  protected $throttleSecondStamp = NULL;
+
+  /**
    * Constructor for MBC_BaseConsumer - all consumer applications should extend this base class.
    *
    * @param object $messageBroker
@@ -81,6 +99,30 @@ abstract class MBC_BaseConsumer
   public function consumeQueue($payload) {
 
     $this->message = unserialize($payload->body);
+  }
+
+   /**
+   * Throddle the rate the consumer processes messages.
+   *
+   * @param integer $maxMessageRate
+   *   The number of messages to process per second before triggering a "pause". Higher values allow for greater
+   *   processing velosity / messages per second.
+   */
+  protected function throttle($maxMessageRate) {
+
+    $this->throttleMessageCount++;
+
+    // Reset the number of processed message by each second
+    if ($this->throttleSecondStamp != date('s')) {
+      $this->throttleSecondStamp = date('s');
+      $this->throttleMessageCount = 0;
+    }
+
+    // Trigger processing delay when max message rate is exceeded
+    if ($this->throttleMessageCount > $maxMessageRate) {
+      sleep(MBC_BaseConsumer::THROTTLE_TIMEOUT);
+      $this->throttleMessageCount = 0;
+    }
   }
 
   /**

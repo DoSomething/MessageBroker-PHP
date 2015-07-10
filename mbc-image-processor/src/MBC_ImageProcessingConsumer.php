@@ -29,6 +29,9 @@ class MBC_ImageProcessingConsumer extends MBC_BaseConsumer
 
     echo '- mbc-image-processor - MBC_ImageProcessingConsumer->consumeImageProcessingQueue() START', PHP_EOL;
 
+    // Limit the message rate per second to prevent overloading the Drupal app with image requeuests.
+    $this->throttle(5);
+
     parent::consumeQueue($message);
     $this->setter($this->message);
 
