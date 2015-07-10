@@ -55,7 +55,9 @@ class MBC_ImageProcessingConsumer extends MBC_BaseConsumer
 
     $imageMarkup = $message['merge_vars']['REPORTBACK_IMAGE_MARKUP'];
     $imgTagOffset = 10;
-    $imagePath = substr($imageMarkup, $imgTagOffset, strpos($imageMarkup, '.jpg?') + 4 - $imgTagOffset);
+    $imagePath = substr($imageMarkup, $imgTagOffset, strpos($imageMarkup, '?') - $imgTagOffset);
+    $imagePath = str_replace('https://dosomething-a.akamaihd.net', 'https://www.dosomething.org', $imagePath);
+
     $this->imagePath = $imagePath;
   }
 

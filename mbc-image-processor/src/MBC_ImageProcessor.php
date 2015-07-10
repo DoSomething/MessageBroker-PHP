@@ -31,7 +31,7 @@ class MBC_ImageProcessor extends MBC_ImageProcessingConsumer
    * Method to process image details. Make requests to trigger image cache processing on the Drupal site.
    *
    * Example image path:
-   * https://dosomething-a.akamaihd.net/sites/default/files/styles/300x300/public/reportbacks/362/uid_2751504-nid_362-0.jpg
+   * https://dosomething.org/sites/default/files/styles/300x300/public/reportbacks/362/uid_2751504-nid_362-0.jpg
    */
   protected function process() {
 
