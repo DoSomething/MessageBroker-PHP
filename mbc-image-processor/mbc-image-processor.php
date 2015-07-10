@@ -27,7 +27,6 @@ $sh = new StatHat([
 ]);
 $tb = new MB_Toolbox($settings);
 
-
 // Kick off - block, waiting for messages in queue
 echo '------- mbc-logging-gateway START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 $mb->consumeMessage(array(new MBC_ImageProcessingConsumer($mb, $sh, $tb, $settings), 'consumeImageProcessingQueue'));
