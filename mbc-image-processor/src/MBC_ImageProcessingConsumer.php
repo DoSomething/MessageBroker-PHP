@@ -3,14 +3,14 @@ namespace DoSomething\MBC_ImageProcessor;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
-use DoSomething\MBC_ImageProcessor\MBC_BaseConsumer;
+use DoSomething\MB_Toolbox\MB_Toolbox_BaseConsumer;
 use DoSomething\MBC_ImageProcessor\MBC_ImageProcessor;
 
 /*
  * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
  * entries that match the campaign.*.* binding.
  */
-class MBC_ImageProcessingConsumer extends MBC_BaseConsumer
+class MBC_ImageProcessingConsumer extends MB_Toolbox_BaseConsumer
 {
 
   /**
