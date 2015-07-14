@@ -43,7 +43,7 @@ class MBC_ImageProcessor extends MBC_ImageProcessingConsumer
     }
     else {
       echo '** FAILED to GET ' . $this->imagePath  . ' image to trigger image style builds.', PHP_EOL;
-      echo '------- mbc-image-processor - MBC_ImageProcessor->process(: $imagePath: ' . $this->imagePath . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      echo '------- mbc-image-processor - MBC_ImageProcessor->process() - $result: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
       $this->statHat->ezCount('mbc-image-processor: MBC_ImageProcessor->process() FAILED', 1);
     }
 
