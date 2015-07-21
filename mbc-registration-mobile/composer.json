@@ -1,0 +1,25 @@
+{
+    "name": "dosomething/mbc-registration-mobile",
+    "type": "project",
+    "version": "0.2.0",
+    "description": "A consumer app for the Message Broker system that consumes entries on the mobileCommonsQueue. Entries will produce new or update user accounts in Mobile Commons.",
+    "keywords": ["message broker"],
+    "homepage": "https://github.com/DoSomething/mbc-registration-mobile",
+    "license" : "MIT",
+    "authors": [
+    {
+      "name": "DoSomething and contributors",
+      "homepage": "http://www.dosomething.org"
+    }
+    ],
+    "require": {
+        "php": ">= 5.3.0",
+        "DoSomething/messagebroker-phplib": "0.2.*",
+        "dosomething/mb-toolbox": "0.4.*",
+        "dosomething/mb-stat-tracker": "v0.0.3",
+        "dosomething/mobilecommons-php": "1.0.*"
+    },
+    "require-dev": {
+      "phpunit/phpunit": "3.7.*"
+    }
+}
