@@ -1,0 +1,44 @@
+{
+  "name": "mbc-logging-gateway",
+  "type": "project",
+  "version": "0.4.0",
+  "description": "A consumer app for the Message Broker system that consumes ?? to log existing entries in the DoSomething user stores",
+  "keywords": ["message broker"],
+  "homepage": "https://github.com/DoSomething/mbc-logging-gateway",
+  "license" : "MIT",
+  "authors": [
+    {
+      "name": "DoSomething and contributors",
+      "homepage": "http://www.dosomething.org"
+    }
+  ],
+  "require": {
+    "php": ">= 5.3.0",
+    "DoSomething/messagebroker-phplib": "0.2.*",
+    "dosomething/mb-toolbox": "0.5.*",
+    "dosomething/stathat": "1.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.0.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "DoSomething\\MBC_LoggingGateway\\": "src/"
+    }
+  },
+  "scripts": {
+    "pre-install-cmd": [
+      "./bin/install.sh"
+    ],
+    "pre-package-update": [
+      "git checkout master",
+      "git pull"
+    ],
+    "post-package-update": [
+      "./vendor/bin/phpunit tests"
+    ],
+    "post-package-uninstall": [
+      "./bin/uninstall.sh"
+    ]
+  }
+}
