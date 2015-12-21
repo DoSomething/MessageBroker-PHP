@@ -101,7 +101,7 @@ class MBC_LoggingGateway
         break;
 
       default:
-        echo '- ERROR - Payload missing key values: ' . print_r($payloadDetails, TRUE), PHP_EOL;
+        echo '- ERROR - Payload missing log-type value: ' . print_r($payloadDetails, TRUE), PHP_EOL;
         $endpoint = NULL;
         $this->messageBroker->sendAck($payload);
 
