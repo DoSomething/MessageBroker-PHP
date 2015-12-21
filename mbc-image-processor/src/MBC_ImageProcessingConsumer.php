@@ -47,7 +47,7 @@ class MBC_ImageProcessingConsumer extends MB_Toolbox_BaseConsumer
     // Destructor?
     unset($ip);
 
-    echo '- mbc-image-processor - MBC_ImageProcessingConsumer->consumeImageProcessingQueue() STOP', PHP_EOL;
+    echo '- mbc-image-processor - MBC_ImageProcessingConsumer->consumeImageProcessingQueue() STOP', PHP_EOL . PHP_EOL;
   }
 
   /**
