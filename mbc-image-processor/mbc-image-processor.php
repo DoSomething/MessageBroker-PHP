@@ -2,8 +2,8 @@
 /**
  * mbc-image-processor
  *
- * Collect image details from the imageProcessingQueue. Use image path to make http request
- * to trigger generation of image styles within Drupal application.
+ * Collect image details from the imageProcessingQueue. Use image path to make a
+ * http request to trigger generation of image styles within Drupal application.
  */
 
 date_default_timezone_set('America/New_York');
