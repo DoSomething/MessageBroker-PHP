@@ -70,6 +70,7 @@ class MBC_ImageProcessingConsumer extends MB_Toolbox_BaseConsumer
       $this->imagePath = $imagePath;
     }
     else {
+      echo '- Non production path, skipping: ' . $imageMarkup, PHP_EOL;
       $this->imagePath = FALSE;
     }
   }
