@@ -1,6 +1,6 @@
 <?php
 /**
- * mbc-import-logging.php
+ * mbc-logging-processor
  *
  * Collect user import activity from the userImportExistingLoggingQueue. Update
  * the LoggingAPI / database with import activity via mb-logging.
