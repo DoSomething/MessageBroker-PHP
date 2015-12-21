@@ -28,11 +28,6 @@ class MBC_ImageProcessingConsumer extends MB_Toolbox_BaseConsumer
   public function consumeImageProcessingQueue($message) {
 
     echo '- mbc-image-processor - MBC_ImageProcessingConsumer->consumeImageProcessingQueue() START', PHP_EOL;
-    
-    $bla = FALSE;
-if ($bla) {
-  $bla = TRUE;
-}
 
     // Limit the message rate per second to prevent overloading the Drupal app with image requeuests.
     $this->throttle(10);
@@ -40,9 +35,11 @@ if ($bla) {
     parent::consumeQueue($message);
     $this->setter($this->message);
 
-    $ip = new MBC_ImageProcessor($this->messageBroker,  $this->statHat,  $this->toolbox, $this->settings);
-    $ip->setImagePath ($this->imagePath);
-    $ip->process($this->imagePath);
+    if ($this->imagePath != FALSE) {
+      $ip = new MBC_ImageProcessor($this->messageBroker,  $this->statHat,  $this->toolbox, $this->settings);
+      $ip->setImagePath ($this->imagePath);
+      $ip->process($this->imagePath);
+    }
 
     // Log processing of image
     // $ip->log();
@@ -62,11 +59,19 @@ if ($bla) {
   protected function setter($message) {
 
     $imageMarkup = $message['merge_vars']['REPORTBACK_IMAGE_MARKUP'];
-    $imgTagOffset = 10;
-    $imagePath = substr($imageMarkup, $imgTagOffset, strpos($imageMarkup, '?itok=') + 4);
-    $imagePath = str_replace('https://dosomething-a.akamaihd.net', 'https://www.dosomething.org', $imagePath);
 
-    $this->imagePath = $imagePath;
+    // Skip if request id for non production path
+    if (strpos($imageMarkup, 'https://www.dosomething.org') > 0) {
+
+      $imgTagOffset = 10;
+      $imagePath = substr($imageMarkup, $imgTagOffset, strpos($imageMarkup, '?itok=') + 4);
+      $imagePath = str_replace('https://dosomething-a.akamaihd.net', 'https://www.dosomething.org', $imagePath);
+
+      $this->imagePath = $imagePath;
+    }
+    else {
+      $this->imagePath = FALSE;
+    }
   }
 
   /**
