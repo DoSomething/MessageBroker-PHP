@@ -39,6 +39,7 @@ class MBC_ImageProcessor extends MBC_ImageProcessingConsumer
 
     // Log consumer activity to StatHat for monitoring
     if ($result[1] == 200) {
+      echo '- MBC_ImageProcessor->process() success.', PHP_EOL;
       $this->statHat->ezCount('mbc-image-processor: MBC_ImageProcessor->process()', 1);
     }
     else {
