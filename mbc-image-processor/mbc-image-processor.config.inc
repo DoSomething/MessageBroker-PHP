@@ -1,6 +1,6 @@
 <?php
 /**
- * Message Broker configuration settings for mbc-import-logging
+ * Message Broker configuration settings for mbc-image-processor.
  */
 
 
