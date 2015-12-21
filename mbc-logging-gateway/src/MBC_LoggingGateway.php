@@ -95,8 +95,13 @@ class MBC_LoggingGateway
 
         break;
 
+      case 'transactional':
+        list($endPoint, $cURLparameters, $post) = $this->logTransactional($payloadDetails);
+
+        break;
+
       default:
-        echo '- ERROR - Payload missing key values: ' . print_r($payloadDetails, TRUE), PHP_EOL;
+        echo '- ERROR - Payload missing log-type value: ' . print_r($payloadDetails, TRUE), PHP_EOL;
         $endpoint = NULL;
         $this->messageBroker->sendAck($payload);
 
@@ -221,6 +226,37 @@ class MBC_LoggingGateway
 
     if (isset($payloadDetails['activity_details'])) {
       $post['activity_details'] = serialize($payloadDetails['activity_details']);
+    }
+
+    return array($endpoint, $cURLparameters, $post);
+  }
+
+  /**
+   * logTransactional: Format values for "transactional" log entry.
+   *
+   * @param array $payloadDetails
+   *   Values submitted in activity message to be processed to create "vote" log entry.
+   *
+   * @return string $endpoint
+   *   The cURUL POST URL to mb-logging-api.
+   * @return array $cURLparameters
+   *   The parameters to include in the cURL POST.
+   * @return array $post
+   *   Post values for the cURL POST.
+   */
+  public function logTransactional($payloadDetails) {
+
+    $endpoint = '/user/transactional';
+    $cURLparameters['email'] = $payloadDetails['email'];
+    $cURLparameters['activity'] = $payloadDetails['activity'];
+
+    $post = array();
+    $post['source'] = $payloadDetails['source'];
+    $post['activity_timestamp'] = $payloadDetails['activity_timestamp'];
+    $post['message'] = serialize($payloadDetails);
+
+    if (isset($payloadDetails['mobile'])) {
+      $post['mobile'] = $payloadDetails['mobile'];
     }
 
     return array($endpoint, $cURLparameters, $post);
