@@ -39,12 +39,12 @@ class MBC_ImageProcessor extends MBC_ImageProcessingConsumer
 
     // Log consumer activity to StatHat for monitoring
     if ($result[1] == 200) {
-      echo '- MBC_ImageProcessor->process() success.', PHP_EOL;
+      echo '- MBC_ImageProcessor->process() success: ' . $this->imagePath, PHP_EOL;
       $this->statHat->ezCount('mbc-image-processor: MBC_ImageProcessor->process()', 1);
     }
     else {
-      echo '** FAILED to GET ' . $this->imagePath  . ' image to trigger image style builds.', PHP_EOL;
-      echo '------- mbc-image-processor - MBC_ImageProcessor->process() - $result: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      echo '** ' .  date('D M j G:i:s T Y') . ' - FAILED to GET ' . $this->imagePath  . ' image to trigger image style builds.', PHP_EOL;
+      echo '- Response code: ' . $result[1], PHP_EOL . PHP_EOL;
       $this->statHat->ezCount('mbc-image-processor: MBC_ImageProcessor->process() FAILED', 1);
     }
 
