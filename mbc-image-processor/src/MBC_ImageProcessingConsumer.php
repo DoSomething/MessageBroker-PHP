@@ -28,6 +28,11 @@ class MBC_ImageProcessingConsumer extends MB_Toolbox_BaseConsumer
   public function consumeImageProcessingQueue($message) {
 
     echo '- mbc-image-processor - MBC_ImageProcessingConsumer->consumeImageProcessingQueue() START', PHP_EOL;
+    
+    $bla = FALSE;
+if ($bla) {
+  $bla = TRUE;
+}
 
     // Limit the message rate per second to prevent overloading the Drupal app with image requeuests.
     $this->throttle(10);
@@ -58,7 +63,7 @@ class MBC_ImageProcessingConsumer extends MB_Toolbox_BaseConsumer
 
     $imageMarkup = $message['merge_vars']['REPORTBACK_IMAGE_MARKUP'];
     $imgTagOffset = 10;
-    $imagePath = substr($imageMarkup, $imgTagOffset, strpos($imageMarkup, '?') - $imgTagOffset);
+    $imagePath = substr($imageMarkup, $imgTagOffset, strpos($imageMarkup, '?itok=') + 4);
     $imagePath = str_replace('https://dosomething-a.akamaihd.net', 'https://www.dosomething.org', $imagePath);
 
     $this->imagePath = $imagePath;
