@@ -7,6 +7,7 @@ namespace DoSomething\MBC_LoggingGateway;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
+use \Exception;
 
 /**
  * MBC_LoggingGateway class - functionality related to the Message Broker
@@ -14,6 +15,7 @@ use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
  */
 class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
 {
+  const MB_LOGGING_API = '/api/v1';
 
   /**
    * Message Broker Toolbox cURL utilities.
@@ -21,6 +23,13 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
    * @var object $mbToolboxCURL
    */
   private $mbToolboxCURL;
+
+  /**
+   * mb-logging-api configuration settings.
+   *
+   * @var array $mbLoggingAPIConfig
+   */
+  private $mbLoggingAPIConfig;
 
   /**
    * The mb-logging-api endpoint to submit logging entry to.
@@ -50,6 +59,7 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
 
     parent::__construct();
     $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
+    $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
   }
 
   /**
@@ -239,16 +249,17 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
    */
   protected function process() {
 
-    $loggingApiUrl = $this->settings['mb_logging_api_host'] . ':' . $this->settings['mb_logging_api_port'] . '/api/v1' . $endPoint . '?' . http_build_query($cURLparameters);
+    $loggingApiUrl  = $this->buildcURL($this->mbLoggingAPIConfig);
+    $loggingApiUrl .=  self::MB_LOGGING_API . $this->endPoint . '?' . http_build_query($this->cURLparameters);
     $result = $this->mbToolboxCURL->curlPOST($loggingApiUrl, $post);
 
     // Only ack messages that the API has responded as "created" (201).
     if ($result[1] == 201) {
       // $this->statHat->ezCount('mbc-logging-gateway: submitLogEntry()', 1);
-      $this->messageBroker->sendAck($payload);
+      $this->messageBroker->sendAck($this->message['payload']);
     }
     else {
-      echo '- ERROR, MBC_LoggingGateway->submitLogEntry(): Failed to POST to ' . $loggingApiUrl, PHP_EOL;
+      echo '- ERROR, MBC_LoggingGateway->process(): Failed to POST to ' . $loggingApiUrl, PHP_EOL;
       echo '  * Returned POST results: ' . print_r($result, TRUE), PHP_EOL;
       // $this->statHat->ezCount('mbc-logging-gatewa: ERROR submitLogEntry()', 1);
     }
@@ -395,4 +406,26 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
     return array($endpoint, $cURLparameters, $post);
   }
 
+  /**
+   * buildURL - Common construction utility for URLs of API paths.
+   *
+   * @todo: Move to MB_Toolbox_cURL class.
+   *
+   * @param array $settings
+   *   "host" and "port" setting
+   */
+  private function buildcURL($settings) {
+
+    if (isset($settings['host'])) {
+      $curlUrl = $settings['host'];
+      $port = $settings['port'];
+      if ($port > 0 && is_numeric($port)) {
+        $curlUrl .= ':' . (int) $port;
+      }
+      return $curlUrl;
+    }
+    else {
+      throw new Exception('buildcURL required host setting missing.');
+    }
+  }
 }
