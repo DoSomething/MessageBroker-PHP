@@ -23,23 +23,23 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
   private $mbToolboxCURL;
 
   /**
+   * The mb-logging-api endpoint to submit logging entry to.
    *
-   *
-   * @var object $endPoint
+   * @var string $endPoint
    */
   private $endPoint;
 
   /**
+   * Parameters to be submitted with logging request.
    *
-   *
-   * @var object $cURLparameters
+   * @var array $cURLparameters
    */
   private $cURLparameters;
 
   /**
+   * POST values for submission to mb-logging-api andpoint POST request.
    *
-   *
-   * @var object $post
+   * @var array $post
    */
   private $post;
 
@@ -53,8 +53,7 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * Triggered when loggingGatewayQueue contains a message. Delegate message
-   * processing to class specific to the logging message type.
+   * Triggered when loggingGatewayQueue contains a message.
    *
    * @param array $payload
    *   The contents of the queue entry
@@ -153,16 +152,47 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
       case 'user-import-hercampus':
       case 'user-import-teenlife':
 
+        if (!(isset($this->message['origin']['name']))) {
+          echo '- canProcess() ERROR: [origin][name] not set.', PHP_EOL;
+          return FALSE;
+        }
+        if (!(isset($this->message['origin']['processed']))) {
+          echo '- canProcess() ERROR: [origin][processed] not set.', PHP_EOL;
+          return FALSE;
+        }
         break;
 
       case 'vote':
 
+        if (!(isset($this->message['email']))) {
+          echo '- canProcess() vote ERROR: email not set.', PHP_EOL;
+          return FALSE;
+        }
+        if (!(isset($this->message['activity']))) {
+          echo '- canProcess() vote ERROR: activity not set.', PHP_EOL;
+          return FALSE;
+        }
+        if (!(isset($this->message['activity_date']))) {
+          echo '- canProcess() vote ERROR: activity_date not set.', PHP_EOL;
+          return FALSE;
+        }
+        if (!(isset($this->message['activity_timestamp']))) {
+          echo '- canProcess() vote ERROR: activity_timestamp not set.', PHP_EOL;
+          return FALSE;
+        }
         break;
 
       case 'transactional':
 
+        if (!(isset($this->message['email']))) {
+          echo '- canProcess() transactional ERROR: email not set.', PHP_EOL;
+          return FALSE;
+        }
+        if (!(isset($this->message['activity_timestamp']))) {
+          echo '- canProcess() transactional ERROR: activity_timestamp not set.', PHP_EOL;
+          return FALSE;
+        }
         break;
-
     }
 
     return TRUE;
@@ -210,7 +240,7 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
   protected function process() {
 
     $loggingApiUrl = $this->settings['mb_logging_api_host'] . ':' . $this->settings['mb_logging_api_port'] . '/api/v1' . $endPoint . '?' . http_build_query($cURLparameters);
-    $result = $this->toolbox->curlPOST($loggingApiUrl, $post);
+    $result = $this->mbToolboxCURL->curlPOST($loggingApiUrl, $post);
 
     // Only ack messages that the API has responded as "created" (201).
     if ($result[1] == 201) {
@@ -270,17 +300,15 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
     $endpoint = '/imports';
     $cURLparameters['type'] = 'user_import';
     $cURLparameters['exists'] = 1;
-    $cURLparameters['source'] = isset($payloadDetails['source']) ? $payloadDetails['source'] : 'niche';
+    $cURLparameters['source'] = $payloadDetails['source'];
     $cURLparameters['origin'] = $payloadDetails['origin']['name'] ;
     $cURLparameters['processed_timestamp'] = $payloadDetails['origin']['processed'];
 
     $post = array();
-    if (isset($payloadDetails['origin'])) {
-      $post['origin'] = array(
-        'name' => $payloadDetails['origin']['name'],
-        'processed_timestamp' => $payloadDetails['origin']['processed']
-      );
-    }
+    $post['origin'] = array(
+      'name' => $payloadDetails['origin']['name'],
+      'processed_timestamp' => $payloadDetails['origin']['processed']
+    );
     if (isset($payloadDetails['mobile']) && $payloadDetails['mobile'] != NULL) {
       $post['phone'] = $payloadDetails['mobile'];
       $post['phone_status'] = $payloadDetails['mobile-error'];
