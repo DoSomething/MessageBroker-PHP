@@ -6,56 +6,50 @@
 namespace DoSomething\MBC_LoggingGateway;
 
 use DoSomething\StatHat\Client as StatHat;
-use DoSomething\MB_Toolbox\MB_Toolbox;
+use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
 
 /**
  * MBC_LoggingGateway class - functionality related to the Message Broker
  * consumer mbc-logging-gateway.
  */
-class MBC_LoggingGateway
+class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
 {
 
   /**
-   * Message Broker connection to RabbitMQ
+   * Message Broker Toolbox cURL utilities.
+   *
+   * @var object $mbToolboxCURL
    */
-  private $messageBroker;
+  private $mbToolboxCURL;
 
   /**
-   * Setting from external services - Mailchimp.
    *
-   * @var array
+   *
+   * @var object $endPoint
    */
-  private $settings;
+  private $endPoint;
 
   /**
-   * Setting from external services - Mailchimp.
    *
-   * @var array
+   *
+   * @var object $cURLparameters
    */
-  private $statHat;
+  private $cURLparameters;
 
   /**
-   * Setting from external services - Message Broker Toolbox.
    *
-   * @var object
+   *
+   * @var object $post
    */
-  private $toolbox;
+  private $post;
 
   /**
-   * Constructor for MBC_TransactionalEmail
-   *
-   * @param array $settings
-   *   Settings from external services - StatHat
+   * Constructor for MBC_LoggingGateway
    */
-  public function __construct($messageBroker, $settings) {
-    $this->messageBroker = $messageBroker;
-    $this->settings = $settings;
+  public function __construct() {
 
-    $this->toolbox = new MB_Toolbox($settings);
-    $this->statHat = new StatHat([
-      'ez_key' => $settings['stathat_ez_key'],
-      'debug' => $settings['stathat_disable_tracking']
-    ]);
+    parent::__construct();
+    $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
   }
 
   /**
@@ -65,20 +59,127 @@ class MBC_LoggingGateway
    * @param array $payload
    *   The contents of the queue entry
    */
-  public function consumeQueue($payload) {
+  public function consumeLoggingGatewayQueue($payload) {
 
     echo '------- MBC_LoggingGateway - consumeQueue() START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
-    $endPoint = NULL;
-    $cURLparameters = NULL;
-    $post = NULL;
+    parent::consumeQueue($payload);
+    $this->logConsumption('email');
 
-    $payloadDetails = unserialize($payload->body);
+    if ($this->canProcess()) {
 
-    switch ($payloadDetails['log-type']) {
+      try {
+
+        $this->setter($this->message);
+        $this->process();
+      }
+      catch(Exception $e) {
+        echo 'Error sending logging request to mb-logging-api. Error: ' . $e->getMessage();
+
+        // @todo: Send copy of message to "dead message queue" with details of the original processing: date,
+        // origin queue, processing app. The "dead messages" queue can be used to monitor health.
+      }
+
+    }
+    else {
+      echo '- ' . $this->message['log-type'] . ' can\'t be processed, holding in queue.', PHP_EOL;
+
+      // @todo: Send copy of message to "dead message queue" with details of the original processing: date,
+      // origin queue, processing app. The "dead messages" queue can be used to monitor health.
+
+    }
+
+    // @todo: Throttle the number of consumers running. Based on the number of messages
+    // waiting to be processed start / stop consumers. Make "reactive"!
+    $queueMessages = parent::queueStatus('transactionalQueue');
+    echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
+    echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
+
+    echo '------- MBC_LoggingGateway - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+  }
+
+  /**
+   * Conditions to test before processing the message.
+   *
+   * @return boolean
+   */
+  protected function canProcess() {
+
+    if (!(isset($this->message['log-type']))) {
+      echo '- canProcess() ERROR: log-type not set.', PHP_EOL;
+      return FALSE;
+    }
+
+    $supportedLogTypes = [
+      'file-import',
+      'user-import-niche',
+      'user-import-att-ichannel',
+      'user-import-hercampus',
+      'user-import-teenlife',
+      'vote',
+      'transactional',
+    ];
+    if (!(in_array($this->message['log-type'], $supportedLogTypes))) {
+      echo '- canProcess() ERROR: Unsupported log-type: ' . $this->message['log-type'], PHP_EOL;
+      return FALSE;
+    }
+
+    if (!(isset($this->message['source']))) {
+      echo '- canProcess() ERROR: source not set.', PHP_EOL;
+      return FALSE;
+    }
+
+    // log-type specific requirements
+    switch ($this->message['log-type']) {
 
       case 'file-import':
-        list($endPoint, $cURLparameters, $post) = $this->logUserImportFile($payloadDetails);
+
+        if (!(isset($this->message['target-CSV-file']))) {
+          echo '- canProcess() ERROR: file-import target-CSV-file not set.', PHP_EOL;
+          return FALSE;
+        }
+        if (!(isset($this->message['signup_count']))) {
+          echo '- canProcess() ERROR: file-import signup_count not set.', PHP_EOL;
+          return FALSE;
+        }
+        if (!(isset($this->message['skipped']))) {
+          echo '- canProcess() ERROR: file-import skipped not set.', PHP_EOL;
+          return FALSE;
+        }
+        break;
+
+      case 'user-import-niche':
+      case 'user-import-att-ichannel':
+      case 'user-import-hercampus':
+      case 'user-import-teenlife':
+
+        break;
+
+      case 'vote':
+
+        break;
+
+      case 'transactional':
+
+        break;
+
+    }
+
+    return TRUE;
+  }
+
+  /**
+   * Construct values for submission to email service.
+   *
+   * @param array $message
+   *   The message to process based on what was collected from the queue being processed.
+   */
+  protected function setter($message) {
+
+   switch ($payloadDetails['log-type']) {
+
+      case 'file-import':
+        list($endPoint, $cURLparameters, $post) = $this->logUserImportFile($this->payloadDetails);
 
         break;
 
@@ -86,31 +187,41 @@ class MBC_LoggingGateway
       case 'user-import-att-ichannel':
       case 'user-import-hercampus':
       case 'user-import-teenlife':
-        list($endPoint, $cURLparameters, $post) = $this->logImportExistingUser($payloadDetails);
-
+        list($endPoint, $cURLparameters, $post) = $this->logImportExistingUser($this->payloadDetails);
         break;
 
       case 'vote':
-        list($endPoint, $cURLparameters, $post) = $this->logActivity($payloadDetails);
-
+        list($endPoint, $cURLparameters, $post) = $this->logActivity($this->payloadDetails);
         break;
 
       case 'transactional':
-        list($endPoint, $cURLparameters, $post) = $this->logTransactional($payloadDetails);
-
-        break;
-
-      default:
-        echo '- ERROR - Payload missing log-type value: ' . print_r($payloadDetails, TRUE), PHP_EOL;
-        $endpoint = NULL;
-        $this->messageBroker->sendAck($payload);
+        list($endPoint, $cURLparameters, $post) = $this->logTransactional($this->payloadDetails);
 
     }
 
-    if ($endPoint != NULL) {
-      $this->submitLogEntry($endPoint, $cURLparameters, $post, $payload);
+    $this->endPoint = $endPoint;
+    $this->cURLparameters = $cURLparameters;
+    $this->post = $post;
+  }
+
+  /**
+   * process(): Gather message settings into submission to mb-logging-api
+   */
+  protected function process() {
+
+    $loggingApiUrl = $this->settings['mb_logging_api_host'] . ':' . $this->settings['mb_logging_api_port'] . '/api/v1' . $endPoint . '?' . http_build_query($cURLparameters);
+    $result = $this->toolbox->curlPOST($loggingApiUrl, $post);
+
+    // Only ack messages that the API has responded as "created" (201).
+    if ($result[1] == 201) {
+      // $this->statHat->ezCount('mbc-logging-gateway: submitLogEntry()', 1);
+      $this->messageBroker->sendAck($payload);
     }
-    echo '------- MBC_LoggingGateway - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+    else {
+      echo '- ERROR, MBC_LoggingGateway->submitLogEntry(): Failed to POST to ' . $loggingApiUrl, PHP_EOL;
+      echo '  * Returned POST results: ' . print_r($result, TRUE), PHP_EOL;
+      // $this->statHat->ezCount('mbc-logging-gatewa: ERROR submitLogEntry()', 1);
+    }
   }
 
   /**
@@ -134,15 +245,9 @@ class MBC_LoggingGateway
 
     $post = array();
     $post['source'] = $payloadDetails['source'];
-    if (isset($payloadDetails['target-CSV-file']) && $payloadDetails['target-CSV-file'] != NULL) {
-      $post['target_CSV_file'] = $payloadDetails['target-CSV-file'];
-    }
-    if (isset($payloadDetails['signup-count']) && $payloadDetails['signup-count'] != NULL) {
-      $post['signup_count'] = $payloadDetails['signup-count'];
-    }
-    if (isset($payloadDetails['skipped'])) {
-      $post['skipped'] = $payloadDetails['skipped'];
-    }
+    $post['target_CSV_file'] = $payloadDetails['target-CSV-file'];
+    $post['signup_count'] = $payloadDetails['signup-count'];
+    $post['skipped'] = $payloadDetails['skipped'];
 
     return array($endpoint, $cURLparameters, $post);
   }
@@ -260,38 +365,6 @@ class MBC_LoggingGateway
     }
 
     return array($endpoint, $cURLparameters, $post);
-  }
-
-  /**
-   * submitLogEntry: Submit log entries to mb-logging-api.
-   *
-   * @param string $endPoint
-   *   The path on the mb-logging-api to submit the log entry.
-   * @param array $cURLparameters
-   *   Parameters in the POST path for the mb-logging-api to use to define the type
-   *   of log entry.
-   * @param array $post
-   *   Collection of values to submit for logging entry.
-   * @param array $payload
-   *   Orginal message payload from Rabbit server. Used to ack messages that have been
-   *   successully POSTed.
-   */
-  public function submitLogEntry($endPoint, $cURLparameters, $post, $payload) {
-
-    $loggingApiUrl = $this->settings['mb_logging_api_host'] . ':' . $this->settings['mb_logging_api_port'] . '/api/v1' . $endPoint . '?' . http_build_query($cURLparameters);
-    $result = $this->toolbox->curlPOST($loggingApiUrl, $post);
-
-    // Only ack messages that the API has responded as "created" (201).
-    if ($result[1] == 201) {
-      $this->statHat->ezCount('mbc-logging-gateway: submitLogEntry()', 1);
-      $this->messageBroker->sendAck($payload);
-    }
-    else {
-      echo '- ERROR, MBC_LoggingGateway->submitLogEntry(): Failed to POST to ' . $loggingApiUrl, PHP_EOL;
-      echo '  * Returned POST results: ' . print_r($result, TRUE), PHP_EOL;
-      $this->statHat->ezCount('mbc-logging-gatewa: ERROR submitLogEntry()', 1);
-    }
-
   }
 
 }
