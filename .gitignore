@@ -4,7 +4,7 @@ messagebroker-config
 # Ignor composer working files
 composer.phar
 composer.lock
-/vendor/
+vendor/
 
 # Ignor testing working files
 tests/phpunit.xml
