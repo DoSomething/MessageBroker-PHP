@@ -33,6 +33,10 @@ $mbConfig->setProperty('rabbitapi_credentials', [
   'username' => getenv("MB_RABBITMQ_MANAGEMENT_API_USERNAME"),
   'password' => getenv("MB_RABBITMQ_MANAGEMENT_API_PASSWORD"),
 ]);
+$mbConfig->setProperty('mb_logging_api_config', [
+  'host' => getenv("MB_LOGGING_API_HOST"),
+  'port' => getenv('MB_LOGGING_API_PORT')
+]);
 
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbRabbitConfig = $mbConfig->constructConfig('directLoggingGateway', array('loggingGatewayQueue'));
