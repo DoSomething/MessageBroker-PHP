@@ -16,7 +16,7 @@ use \Exception;
  * MBC_LoggingGateway class - functionality related to the Message Broker
  * consumer mbc-logging-gateway.
  */
-class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
+class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
 {
   const MB_LOGGING_API = '/api/v1';
 
