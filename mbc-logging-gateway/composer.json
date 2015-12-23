@@ -2,9 +2,9 @@
   "name": "mbc-logging-gateway",
   "type": "project",
   "version": "0.4.0",
-  "description": "A consumer app for the Message Broker system that consumes ?? to log existing entries in the DoSomething user stores",
+  "description": "A consumer app for the Message Broker system that consumes loggingGatewayQueue to log entries to the mb-logging-api.",
   "keywords": ["message broker"],
-  "homepage": "https://github.com/DoSomething/mbc-logging-gateway",
+  "homepage": "https://github.com/DoSomething/MessageBroker-PHP/tree/master/mbc-logging-gateway",
   "license" : "MIT",
   "authors": [
     {
