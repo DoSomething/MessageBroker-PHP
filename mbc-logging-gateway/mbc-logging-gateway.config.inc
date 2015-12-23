@@ -27,12 +27,6 @@ $mbConfig->setProperty('rabbit_credentials', [
   'password' => getenv("RABBITMQ_PASSWORD"),
   'vhost' => getenv("RABBITMQ_VHOST"),
 ]);
-$mbConfig->setProperty('rabbitapi_credentials', [
-  'host' =>  getenv("MB_RABBITMQ_MANAGEMENT_API_HOST"),
-  'port' => getenv("MB_RABBITMQ_MANAGEMENT_API_PORT"),
-  'username' => getenv("MB_RABBITMQ_MANAGEMENT_API_USERNAME"),
-  'password' => getenv("MB_RABBITMQ_MANAGEMENT_API_PASSWORD"),
-]);
 $mbConfig->setProperty('mb_logging_api_config', [
   'host' => getenv("MB_LOGGING_API_HOST"),
   'port' => getenv('MB_LOGGING_API_PORT')
