@@ -26,6 +26,6 @@ echo '------- mbc-impoert-logging START - ' . date('j D M Y G:i:s T') . ' ------
 
 
 $mb = $mbConfig->getProperty('messageBroker');
-$mb->consumeMessage(array(new MBC_LoggingGateway(), 'consumeLoggingGatewayQueue'), QOS_SIZE);
+$mb->consumeMessage(array(new MBC_LoggingGateway_Consumer(), 'consumeLoggingGatewayQueue'), QOS_SIZE);
 
 echo '------- mbc-impoert-logging END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
