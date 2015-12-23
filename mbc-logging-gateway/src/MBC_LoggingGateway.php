@@ -76,7 +76,7 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
     echo '------- MBC_LoggingGateway - consumeQueue() START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
     parent::consumeQueue($payload);
-    $this->logConsumption('email');
+    $this->logConsumption('log-type');
 
     if ($this->canProcess()) {
 
@@ -407,6 +407,26 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
     }
 
     return array($endpoint, $cURLparameters, $post);
+  }
+
+  /**
+   * logConsumption(): Extend to log the status of processing a specific message
+   * element as well as the message source.
+   *
+   * @param string $targetName
+   */
+  protected function logConsumption($targetName) {
+
+    if (isset($this->message[$targetName]) && $targetName != NULL) {
+      echo '** Consuming ' . $targetName;
+      if (isset($this->message['source'])) {
+        echo ' from: ' .  $this->message['source'], PHP_EOL;
+      } else {
+        echo ', source not defined.', PHP_EOL;
+      }
+    } else {
+      echo '- logConsumption tagetName: "' . $targetName . '" not defined.', PHP_EOL;
+    }
   }
 
   /**
