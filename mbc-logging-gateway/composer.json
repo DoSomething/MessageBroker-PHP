@@ -1,7 +1,7 @@
 {
   "name": "mbc-logging-gateway",
   "type": "project",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A consumer app for the Message Broker system that consumes loggingGatewayQueue to log entries to the mb-logging-api.",
   "keywords": ["message broker"],
   "homepage": "https://github.com/DoSomething/MessageBroker-PHP/tree/master/mbc-logging-gateway",
