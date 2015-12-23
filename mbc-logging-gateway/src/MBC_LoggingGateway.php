@@ -104,8 +104,6 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
     // @todo: Throttle the number of consumers running. Based on the number of messages
     // waiting to be processed start / stop consumers. Make "reactive"!
     $queueMessages = parent::queueStatus('loggingGatewayQueue');
-    echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
-    echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
 
     echo '------- MBC_LoggingGateway - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
   }
