@@ -15,7 +15,7 @@ define('QOS_SIZE', 1);
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-use DoSomething\MBC_LoggingGateway\MBC_LoggingGateway;
+use DoSomething\MBC_LoggingGateway\MBC_LoggingGateway_Consumer;
 
 // Load configuration settings specific to this application
 require_once __DIR__ . '/mbc-logging-gateway.config.inc';
