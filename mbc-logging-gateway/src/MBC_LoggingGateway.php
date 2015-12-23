@@ -148,8 +148,8 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
           echo '- canProcess() ERROR: file-import target-CSV-file not set.', PHP_EOL;
           return FALSE;
         }
-        if (!(isset($this->message['signup_count']))) {
-          echo '- canProcess() ERROR: file-import signup_count not set.', PHP_EOL;
+        if (!(isset($this->message['signup-count']))) {
+          echo '- canProcess() ERROR: file-import signup-count not set.', PHP_EOL;
           return FALSE;
         }
         if (!(isset($this->message['skipped']))) {
