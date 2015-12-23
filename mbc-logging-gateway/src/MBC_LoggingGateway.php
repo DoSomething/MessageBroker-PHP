@@ -5,8 +5,11 @@
 
 namespace DoSomething\MBC_LoggingGateway;
 
+use DoSomething\MB_Toolbox\MB_Configuration;
 use DoSomething\StatHat\Client as StatHat;
+use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
+use DoSomething\MB_Toolbox\MB_Toolbox_BaseConsumer;
 use \Exception;
 
 /**
