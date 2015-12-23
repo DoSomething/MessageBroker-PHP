@@ -39,7 +39,7 @@ $mbConfig->setProperty('mb_logging_api_config', [
 ]);
 
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
-$mbRabbitConfig = $mbConfig->constructConfig('directLoggingGateway', array('loggingGatewayQueue'));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('directLoggingGateway', array('loggingGatewayQueue'));
 $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
 $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
