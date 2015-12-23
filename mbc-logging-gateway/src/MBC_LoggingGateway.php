@@ -103,7 +103,7 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
 
     // @todo: Throttle the number of consumers running. Based on the number of messages
     // waiting to be processed start / stop consumers. Make "reactive"!
-    $queueMessages = parent::queueStatus('transactionalQueue');
+    $queueMessages = parent::queueStatus('loggingGatewayQueue');
     echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
     echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
 
@@ -219,10 +219,10 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
    */
   protected function setter($message) {
 
-   switch ($payloadDetails['log-type']) {
+   switch ($message['log-type']) {
 
       case 'file-import':
-        list($endPoint, $cURLparameters, $post) = $this->logUserImportFile($this->payloadDetails);
+        list($endPoint, $cURLparameters, $post) = $this->logUserImportFile($message);
 
         break;
 
@@ -230,15 +230,15 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
       case 'user-import-att-ichannel':
       case 'user-import-hercampus':
       case 'user-import-teenlife':
-        list($endPoint, $cURLparameters, $post) = $this->logImportExistingUser($this->payloadDetails);
+        list($endPoint, $cURLparameters, $post) = $this->logImportExistingUser($message);
         break;
 
       case 'vote':
-        list($endPoint, $cURLparameters, $post) = $this->logActivity($this->payloadDetails);
+        list($endPoint, $cURLparameters, $post) = $this->logActivity($message);
         break;
 
       case 'transactional':
-        list($endPoint, $cURLparameters, $post) = $this->logTransactional($this->payloadDetails);
+        list($endPoint, $cURLparameters, $post) = $this->logTransactional($message);
 
     }
 
@@ -254,7 +254,7 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
 
     $loggingApiUrl  = $this->buildcURL($this->mbLoggingAPIConfig);
     $loggingApiUrl .=  self::MB_LOGGING_API . $this->endPoint . '?' . http_build_query($this->cURLparameters);
-    $result = $this->mbToolboxCURL->curlPOST($loggingApiUrl, $post);
+    $result = $this->mbToolboxCURL->curlPOST($loggingApiUrl, $this->post);
 
     // Only ack messages that the API has responded as "created" (201).
     if ($result[1] == 201) {
