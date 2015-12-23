@@ -21,10 +21,11 @@ use DoSomething\MBC_LoggingGateway\MBC_LoggingGateway;
 require_once __DIR__ . '/mbc-logging-gateway.config.inc';
 
 
+// Kick off
 echo '------- mbc-impoert-logging START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
-// Kick off
-$mb = new MessageBroker($credentials, $config);
-$mb->consumeMessage(array(new MBC_LoggingGateway($mb, $settings), 'consumeQueue'), QOS_SIZE);
+
+$mb = $mbConfig->getProperty('messageBroker');
+$mb->consumeMessage(array(new MBC_LoggingGateway(), 'consumeLoggingGatewayQueue'), QOS_SIZE);
 
 echo '------- mbc-impoert-logging END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
