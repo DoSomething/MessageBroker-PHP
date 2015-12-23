@@ -415,9 +415,9 @@ class MBC_LoggingGateway extends MB_Toolbox_BaseConsumer
    *
    * @param string $targetName
    */
-  protected function logConsumption($targetName) {
+  protected function logConsumption($targetName = NULL) {
 
-    if (isset($this->message[$targetName]) && $targetName != NULL) {
+    if ($targetName != NULL) {
       echo '** Consuming ' . $targetName;
       if (isset($this->message['source'])) {
         echo ' from: ' .  $this->message['source'], PHP_EOL;
