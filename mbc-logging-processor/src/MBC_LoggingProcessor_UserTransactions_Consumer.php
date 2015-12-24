@@ -39,7 +39,6 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
 
     parent::__construct();
     $this->mbLoggingGateway = $this->mbConfig->getProperty('messageBroker_LoggingGateway');
-
   }
 
   /**
@@ -123,19 +122,19 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
     $this->submission['log-type'] = 'transactional';
     $this->submission['activity'] = $message['activity'];
     $this->submission['activity_timestamp'] = $message['activity_timestamp'];
-    $this->submission['message'] = seralize($message['original']);
+    $this->submission['message'] = serialize($message['original']);
 
     if (isset($message['mobile'])) {
       $this->submission['mobile'] = $message['mobile'];
     }
     if (isset($message['origin'])) {
-      $this->submission['origin'] = $message['origin'];
+      $this->submission['source'] = $message['origin'];
     }
     elseif (isset($message['user_country']) && ($message['user_country'] == 'MX' || $message['user_country'] == 'BR')) {
-      $this->submission['origin'] = $message['user_country'];
+      $this->submission['source'] = $message['user_country'];
     }
     elseif (isset($message['application_id'])) {
-      $this->submission['origin'] = $message['origin'];
+      $this->submission['source'] = $message['application_id'];
     }
   }
 
@@ -144,7 +143,7 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
    */
   protected function process() {
 
-    $message = seralize($this->submission);
+    $message = serialize($this->submission);
     $this->mbLoggingGateway->publish($message);
 
     // $this->statHat->ezCount('mbc-logging-processor: process()', 1);
@@ -161,10 +160,11 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
 
     if (isset($this->message[$targetName]) && $targetName != NULL) {
       echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName];
-      if (isset($this->message['user_country']) && isset($this->message['activity'])) {
-        echo ' from: ' .  $this->message['user_country'] . ' doing: ' . $this->message['activity'], PHP_EOL;
-      } else {
-        echo ', user_country and activity not defined.', PHP_EOL;
+      if (isset($this->message['user_country'])) {
+        echo ' from: ' .  $this->message['user_country'];
+      }
+      if (isset($this->message['activity'])) {
+        echo ' doing: ' .  $this->message['activity'];
       }
     } else {
       echo '- logConsumption tagetName: "' . $targetName . '" not defined.', PHP_EOL;
