@@ -119,6 +119,7 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
   protected function setter($message) {
 
     $this->submission = [];
+    $this->submission['email'] = $message['email'];
     $this->submission['log-type'] = 'transactional';
     $this->submission['activity'] = $message['activity'];
     $this->submission['activity_timestamp'] = $message['activity_timestamp'];
