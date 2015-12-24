@@ -17,42 +17,20 @@ use \Exception;
  */
 class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseConsumer
 {
-  const MB_LOGGING_API = '/api/v1';
 
   /**
-   * Message Broker Toolbox cURL utilities.
+   * Connection to loggingGatewayExchange.
    *
-   * @var object $mbToolboxCURL
+   * @var object $mbLoggingGateway
    */
-  private $mbToolboxCURL;
+  private $mbLoggingGateway;
 
   /**
-   * mb-logging-api configuration settings.
+   * Values for message to be sent to LoggingGatewayExchange.
    *
-   * @var array $mbLoggingAPIConfig
+   * @var array $submission
    */
-  private $mbLoggingAPIConfig;
-
-  /**
-   * The mb-logging-api endpoint to submit logging entry to.
-   *
-   * @var string $endPoint
-   */
-  private $endPoint;
-
-  /**
-   * Parameters to be submitted with logging request.
-   *
-   * @var array $cURLparameters
-   */
-  private $cURLparameters;
-
-  /**
-   * POST values for submission to mb-logging-api andpoint POST request.
-   *
-   * @var array $post
-   */
-  private $post;
+  private $submission;
 
   /**
    * Constructor for MBC_LoggingGateway
@@ -60,8 +38,8 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
   public function __construct() {
 
     parent::__construct();
-    $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
-    $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
+    $this->mbLoggingGateway = $this->mbConfig->getProperty('messageBroker_LoggingGateway');
+
   }
 
   /**
@@ -140,14 +118,10 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
    *   The message to process based on what was collected from the queue being processed.
    */
   protected function setter($message) {
-    
-    $this->endPoint = 'user/transactonal';
-    $this->cURLparameters = [
-      'email' => $message['email'],
-      'activity' => $message['activity'],
-    ];
 
     $this->submission = [];
+    $this->submission['log-type'] = 'transactional';
+    $this->submission['activity'] = $message['activity'];
     $this->submission['activity_timestamp'] = $message['activity_timestamp'];
     $this->submission['message'] = seralize($message['original']);
 
@@ -170,20 +144,11 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
    */
   protected function process() {
 
-    $loggingApiUrl  = $this->buildcURL($this->mbLoggingAPIConfig);
-    $loggingApiUrl .=  self::MB_LOGGING_API . $this->endPoint . '?' . http_build_query($this->cURLparameters);
-    $result = $this->mbToolboxCURL->curlPOST($loggingApiUrl, $this->submission);
+    $message = seralize($this->submission);
+    $this->mbLoggingGateway->publish($message);
 
-    // Only ack messages that the API has responded as "created" (201).
-    if ($result[1] == 201) {
-      // $this->statHat->ezCount('mbc-logging-gateway: submitLogEntry()', 1);
-      $this->messageBroker->sendAck($this->message['payload']);
-    }
-    else {
-      echo '- ERROR, MBC_LoggingGateway->process(): Failed to POST to ' . $loggingApiUrl, PHP_EOL;
-      echo '  * Returned POST results: ' . print_r($result, TRUE), PHP_EOL;
-      // $this->statHat->ezCount('mbc-logging-gatewa: ERROR submitLogEntry()', 1);
-    }
+    // $this->statHat->ezCount('mbc-logging-processor: process()', 1);
+    $this->messageBroker->sendAck($this->message['payload']);
   }
 
   /**
