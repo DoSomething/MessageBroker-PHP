@@ -170,6 +170,7 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
       if (isset($this->message['activity'])) {
         echo ' doing: ' .  $this->message['activity'];
       }
+      echo PHP_EOL;
     } else {
       echo '- logConsumption tagetName: "' . $targetName . '" not defined.', PHP_EOL;
     }
