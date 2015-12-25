@@ -101,6 +101,8 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
       'user_password',
       'campaign_signup',
       'campaign_reportback',
+      'user_welcome-niche',
+      'user_password-niche',
     ];
     if (!(in_array($this->message['activity'], $transactionActivities))) {
       echo '- canProcess(), activity not user transaction.', PHP_EOL;
