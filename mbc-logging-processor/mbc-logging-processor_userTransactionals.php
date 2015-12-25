@@ -16,14 +16,14 @@ define('QOS_SIZE', 1);
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-use DoSomething\MBC_RegistrationEmail\MBC_LoggingProcessor_UserTransactions_Consumer;
+use DoSomething\MBC_LoggingProcessor\MBC_LoggingProcessor_UserTransactions_Consumer;
 
-require_once __DIR__ . '/mbc-logging-gatway_userTransactions.config.inc';
+require_once __DIR__ . '/mbc-logging-processor_userTransactionals.config.inc';
 
 // Kick off
-echo '------- mbc-logging-gatway_userTransactions START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+echo '------- mbc-logging-processor_userTransactions START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 $mb = $mbConfig->getProperty('messageBroker');
 $mb->consumeMessage(array(new MBC_LoggingProcessor_UserTransactions_Consumer(), 'consumeLoggingQueue'), QOS_SIZE);
 
-echo '-------mbc-logging-gatway_userTransactions END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+echo '-------mbc-logging-processor_userTransactions END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;

@@ -1,10 +1,10 @@
 {
   "name": "mbc-logging-processor",
   "type": "project",
-  "version": "0.1.0",
-  "description": "A consumer application for the Message Broker system that processes log existing entries to trigger transactional event.",
+  "version": "0.2.0",
+  "description": "A consumer application for the Message Broker system that processes user transactions log and / or trigger future transactional events.",
   "keywords": ["message broker"],
-  "homepage": "https://github.com/DoSomething/messagebroker-ds-PHP/tree/master/mbc-logging-processor",
+  "homepage": "https://github.com/DoSomething/MessageBroker-PHP/tree/master/mbc-logging-processor",
   "license" : "MIT",
   "authors": [
     {
@@ -15,7 +15,7 @@
   "require": {
     "php": ">= 5.3.0",
     "DoSomething/messagebroker-phplib": "0.2.*",
-    "dosomething/mb-toolbox": "0.5.*",
+    "dosomething/mb-toolbox": "0.8.*",
     "dosomething/stathat": "1.*"
   },
   "require-dev": {
