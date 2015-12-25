@@ -128,7 +128,10 @@ class MBC_LoggingProcessor_UserTransactions_Consumer extends MB_Toolbox_BaseCons
     if (isset($message['mobile'])) {
       $this->submission['mobile'] = $message['mobile'];
     }
-    if (isset($message['origin'])) {
+    if (isset($message['source'])) {
+      $this->submission['source'] = $message['source'];
+    }
+    elseif (isset($message['origin'])) {
       $this->submission['source'] = $message['origin'];
     }
     elseif (isset($message['user_country']) && ($message['user_country'] == 'MX' || $message['user_country'] == 'BR')) {
