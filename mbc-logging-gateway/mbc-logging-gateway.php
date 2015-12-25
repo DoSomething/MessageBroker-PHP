@@ -24,7 +24,6 @@ require_once __DIR__ . '/mbc-logging-gateway.config.inc';
 // Kick off
 echo '------- mbc-impoert-logging START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
-
 $mb = $mbConfig->getProperty('messageBroker');
 $mb->consumeMessage(array(new MBC_LoggingGateway_Consumer(), 'consumeLoggingGatewayQueue'), QOS_SIZE);
 

@@ -398,7 +398,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
     $post = array();
     $post['source'] = $payloadDetails['source'];
     $post['activity_timestamp'] = $payloadDetails['activity_timestamp'];
-    $post['message'] = serialize($payloadDetails);
+    $post['message'] = $payloadDetails['message'];
 
     if (isset($payloadDetails['mobile'])) {
       $post['mobile'] = $payloadDetails['mobile'];
