@@ -44,8 +44,8 @@ $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $m
 
 // Create connection to exchange and queue for sending of transactional logging
 // messages.
-$messageBrokerConfig_Transactionals = $mbConfig->constructRabbitConfig('directLoggingGateway', array('loggingGatewayQueue'));
-$mbConfig->setProperty('messageBroker_LoggingGateway', new MessageBroker($rabbitCredentials, $messageBrokerConfig_Transactionals));
+$messageBrokerConfig = $mbConfig->constructRabbitConfig('directLoggingGateway', array('loggingGatewayQueue'));
+$mbConfig->setProperty('messageBroker_LoggingGateway', new MessageBroker($rabbitCredentials, $messageBrokerConfig));
 
 // RabbitMQ Management API connection to maintain queue status.
 $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
