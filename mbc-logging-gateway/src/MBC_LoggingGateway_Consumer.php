@@ -250,7 +250,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
    */
   protected function process() {
 
-    $loggingApiUrl  = $this->buildcURL($this->mbLoggingAPIConfig);
+    $loggingApiUrl  = $this->mbToolboxCURL->buildcURL($this->mbLoggingAPIConfig);
     $loggingApiUrl .=  self::MB_LOGGING_API . $this->endPoint . '?' . http_build_query($this->cURLparameters);
     $result = $this->mbToolboxCURL->curlPOST($loggingApiUrl, $this->post);
 
@@ -424,29 +424,6 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
       }
     } else {
       echo '- logConsumption tagetName: "' . $targetName . '" not defined.', PHP_EOL;
-    }
-  }
-
-  /**
-   * buildURL - Common construction utility for URLs of API paths.
-   *
-   * @todo: Move to MB_Toolbox_cURL class.
-   *
-   * @param array $settings
-   *   "host" and "port" setting
-   */
-  private function buildcURL($settings) {
-
-    if (isset($settings['host'])) {
-      $curlUrl = $settings['host'];
-      $port = $settings['port'];
-      if ($port > 0 && is_numeric($port)) {
-        $curlUrl .= ':' . (int) $port;
-      }
-      return $curlUrl;
-    }
-    else {
-      throw new Exception('buildcURL required host setting missing.');
     }
   }
 }
