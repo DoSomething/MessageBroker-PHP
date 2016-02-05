@@ -204,6 +204,11 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
           return FALSE;
         }
         break;
+
+      default:
+
+        throw new Exception('Unsupported log-type of type not set: ' . $this->message['log-type']);
+        break;
     }
 
     return TRUE;
