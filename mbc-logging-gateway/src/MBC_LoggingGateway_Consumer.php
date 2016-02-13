@@ -86,10 +86,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
         $this->process();
       }
       catch(Exception $e) {
-        echo 'Error sending logging request to mb-logging-api. Error: ' . $e->getMessage();
-
-        // @todo: Send copy of message to "dead message queue" with details of the original processing: date,
-        // origin queue, processing app. The "dead messages" queue can be used to monitor health.
+        echo 'Error sending logging request to mb-logging-api, holding in queue.. Error: ' . $e->getMessage();
       }
 
     }
@@ -159,6 +156,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
         break;
 
       case 'user-import-niche':
+      case 'user-import-afterschool':
       case 'user-import-att-ichannel':
       case 'user-import-hercampus':
       case 'user-import-teenlife':
@@ -230,6 +228,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
         break;
 
       case 'user-import-niche':
+      case 'user-import-afterschool':
       case 'user-import-att-ichannel':
       case 'user-import-hercampus':
       case 'user-import-teenlife':
