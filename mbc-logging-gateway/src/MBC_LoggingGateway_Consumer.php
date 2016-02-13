@@ -120,6 +120,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
     $supportedLogTypes = [
       'file-import',
       'user-import-niche',
+      'user-import-afterschool',
       'user-import-att-ichannel',
       'user-import-hercampus',
       'user-import-teenlife',
