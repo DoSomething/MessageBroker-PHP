@@ -27,11 +27,11 @@ class MBP_LoggingReports_Users
   private $mbToolboxCURL;
 
   /**
-   * mb-logging-api configuration settings.
+   * mb-logging-api base URL.
    *
-   * @var array $mbLoggingAPIConfig
+   * @var array $mbLoggingAPIUrl
    */
-  private $mbLoggingAPIConfig;
+  private $mbLoggingAPIUrl;
 
   /**
    * Setting from external services - Mailchimp.
@@ -48,23 +48,52 @@ class MBP_LoggingReports_Users
     parent:: __construct();
     $this->mbConfig = MB_Configuration::getInstance();
     $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
-    $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
+    $mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
+    $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['mb_logging_api_host'] . ':' . $mbLoggingAPIConfig['mb_logging_api_port'];
     $this->statHat = $this->mbConfig->getProperty('statHat');
   }
 
   /**
-   * Controller for report generation.
+   * report() - Request a report be sent.
+   *
+   * @param string $type
+   *  The type or collection of types of report to generate
+   * @param array $recipients
+   *   List of addresses (email and/or SMS phone numbers)
+   */
+  public function report($type, $recipients = []) {
+
+    switch($type) {
+
+      case 'nicheRunningMonth':
+
+        $reportData['userImportCSV'] = $this->collectData('userImportCSV', 'niche');
+        $reportData['existingUsers'] = $this->collectData('existingUsers', 'niche');
+        $composedReportMarkup = $this->composedReportMarkup($reportData);
+        break;
+
+      default:
+
+        throw new Exception('Unsupported report type: ' . $type);
+        break;
+    }
+
+    $this->dispatchReport($composedReportMarkup, $recipients);
+  }
+
+  /**
+   * Controller for report data collection.
    *
    * @param string $type
    *   The type of report generate: userImportCSV, existingUsers, (additional format to follow)
    * @param string $source
-   *   The name of the user import source: Niche, AfterSchool, All
+   *   The name of the user import source: niche, afterschool, all
    * @param string $startDate
    *   The date to start reports from. Defaults to start of month
    * @param string $endDate
    *   The date to end reports from. Defaults to start of today.
    */
-  public function generateReport($type, $source = 'all', $startDate = null, $endDate = null) {
+  private function collectData($type, $source = 'all', $startDate = null, $endDate = null) {
 
     if ($type = 'user' && !in_array($source, $this->allowedSources)) {
       throw new Exception('Unsupported source: ' . $source);
@@ -74,153 +103,80 @@ class MBP_LoggingReports_Users
       $startDateStamp = date('Y-m', strtotime($targetStartDate)) . '-01';;
     }
     else {
-      $startDateStamp = '';
+      $startDateStamp = strtotime('first day of this month');
     }
     if ($endDate == null) {
       $endDateStamp = date('Y-m', strtotime($targetStartDate . ' + 1 month')) . '-01';
     }
     else {
-      $endDateStamp = '';
+      $endDateStamp = strtotime('today midnight');
     }
 
     // Existing user imports from $source
     if ($type = 'userImportCSV') {
-      $userImportCSVEntries = $this->collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp);
-      $composedReportData = $this->composeReport($userImportCSVEntries);
+      $reportData = $this->collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp);
     }
 
     if ($type = 'existingUsers') {
-      $existingUserImportLogEntries = $this->collectExistingUserImportLogEntries($source, $startDateStamp, $endDateStamp);
-      $composedReportData = $this->composeExistingUserImportLogEntriesReport($existingUserImportLogEntries);
+      $reportData = $this->collectExistingUserImportLogEntries($source, $startDateStamp, $endDateStamp);
     }
 
-    if (!empty($composedReportData)) {
-      $this->dispatchReport($composedReportData);
+    if (!empty($reportData)) {
+      return $reportData;
     }
     else {
       throw new Exception('composedReportData not defined.');
     }
   }
 
-  
-  
-  
   /**
    * Collect duplicate user import log entries.
    *
-   * @param startDate string
-   *   The date to start reports from
-   * @param endDate string
-   *   The date to end reports from
+   * @param string $source
+   *   The target source - one of niche, afterschool
+   * @param integer startDateStamp
+   *   The datestamp to start reports from
+   * @param integer endDateStamp
+   *   The datestamp to end reports from
+   *
    * @return array
    *   Collected log entries
    */
-  private function collectImportLogEntries($startDate = null, $endDate = null, $source = 'all') {
+  private function collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp) {
 
-    // Define source list
-    if ($source == 'all') {
-      $sources = $this->gatherSources($duration, $targetStartDate);
-    }
-    else {
-      $sources[0] = $source;
-    }
+    $targetStartDate = date('Y-m-d', $startDateStamp);
+    $targetEndDate = date('Y-m-d', $endDateStamp);
+    $curlUrl = $this->mbLoggingAPIUrl . '/api/v1/imports?type=user_import&source=' . strtolower($source) . '&origin_start=' . $targetStartDate . '&origin_end=' . $targetEndDate;
 
-    $stats = array();
-    $types = array('user_import', 'summary');
-    if ($targetStartDate == 0) {
-      $targetStartDate = date('Y-m-d');
-    }
+    $results = $this->mbToolboxCURL->curlGET($curlUrl);
 
-    if ($duration == 'day') {
-      $targetEndDate = date('Y-m-d', strtotime($targetStartDate . ' + 2 day'));
-    }
-    elseif ($duration == 'week') {
-      $targetDate = $targetStartDate;
-      $targetStartDate = date('Y-m-d', strtotime($targetDate . ' - 6 day'));
-      $targetEndDate = date('Y-m-d', strtotime($targetDate . ' + 2 day'));
-    }
-    elseif ($duration == 'month') {
-      $targetStartDate = date('Y-m', strtotime($targetStartDate)) . '-01';
-      $targetStartDate = date('Y-m-d', strtotime($targetStartDate . ' + 1 day'));
-      $targetEndDate = date('Y-m', strtotime($targetStartDate . ' + 1 month')) . '-01';
-      $targetEndDate = date('Y-m-d', strtotime($targetEndDate . ' + 2 day'));
-    }
-    else {
-      $targetEndDate = 0;
-    }
-    $stats['targetStartDate'] = $targetStartDate;
+    $stats[$source]['startDate'] = $targetStartDate;
+    $stats[$source]['endDate'] = $targetEndDate;
+    $stats[$source]['total'] = count($results);
 
-    $baseUrl = getenv('DS_LOGGING_API_HOST') . ':' . getenv('DS_LOGGING_API_PORT');
+    foreach ($results as $resultCount => $result) {
 
-    foreach ($sources as $source) {
-      foreach ($types as $type) {
-
-        if ($type == 'user_import') {
-          $loggingApiUrl = $baseUrl . '/api/v1/imports/' . $targetStartDate . '/' . $targetEndDate . '?type=user_import&exists=1&source=' . $source;
-        }
-        else {
-          $loggingApiUrl = $baseUrl . '/api/v1/imports/summaries/' . $targetStartDate . '/' . $targetEndDate . '?type=user_import&exists=1&source=' . $source;
-        }
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $loggingApiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $jsonResult = curl_exec($ch);
-        curl_close($ch);
-        $results = json_decode($jsonResult);
-
-        if ($type == 'user_import') {
-
-          $stats[$source]['existingMailchimpUser'] = 0;
-          $stats[$source]['mobileCommonsUserError_existing'] = 0;
-          $stats[$source]['mobileCommonsUserError_undeliverable'] = 0;
-          $stats[$source]['mobileCommonsUserError_noSubscriptions'] = 0;
-          $stats[$source]['mobileCommonsUserError_other'] = 0;
-          $stats[$source]['existingDrupalUser'] = 0;
-          $stats[$source]['totalExisting'] = 0;
-          $resultCount = 0;
-
-          foreach ($results as $resultCount => $result) {
-
-            if (isset($result->email)) {
-              $stats[$source]['existingMailchimpUser']++;
-            }
-            if (isset($result->phone)) {
-              if ($result->phone->status == 'Active Subscriber') {
-                $stats[$source]['mobileCommonsUserError_existing']++;
-              }
-              elseif ($result->phone->status == 'Undeliverable') {
-                $stats[$source]['mobileCommonsUserError_undeliverable']++;
-              }
-              elseif ($result->phone->status == 'No Subscriptions') {
-                $stats[$source]['mobileCommonsUserError_noSubscriptions']++;
-              }
-              else {
-                $stats[$source]['mobileCommonsUserError_other']++;
-              }
-            }
-            if (isset($result->drupal)) {
-              $stats[$source]['existingDrupalUser']++;
-            }
-
-          }
-          $stats[$source]['totalExisting'] = $resultCount - $stats[$source]['mobileCommonsUserError_undeliverable'];
-
-        }
-        else {
-
-          foreach ($results as $result) {
-            $stats[$source]['summaries'][] = array(
-              'target_CSV_file' => $result->target_CSV_file,
-              'logged_date' => $result->logged_date,
-              'signup_count' => $result->signup_count,
-              'skipped' => $result->skipped
-            );
-          }
-
-        }
-
+      if (isset($result->email)) {
+        $stats[$source]['existingMailchimpUser']++;
       }
+      if (isset($result->phone)) {
+        if ($result->phone->status == 'Active Subscriber') {
+          $stats[$source]['mobileCommonsUserError_existing']++;
+        }
+        elseif ($result->phone->status == 'Undeliverable') {
+          $stats[$source]['mobileCommonsUserError_undeliverable']++;
+        }
+        elseif ($result->phone->status == 'No Subscriptions') {
+          $stats[$source]['mobileCommonsUserError_noSubscriptions']++;
+        }
+        else {
+          $stats[$source]['mobileCommonsUserError_other']++;
+        }
+      }
+      if (isset($result->drupal)) {
+        $stats[$source]['existingDrupalUser']++;
+      }
+
     }
 
     return $stats;
