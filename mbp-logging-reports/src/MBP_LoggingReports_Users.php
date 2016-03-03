@@ -20,6 +20,13 @@ class MBP_LoggingReports_Users
   const MB_LOGGING_API = '/api/v1';
 
   /**
+   * Message Broker connection to send messages to send email request for report message.
+   *
+   * @var object $messageBroker_Subscribes
+   */
+  protected $messageBroker;
+
+  /**
    * Message Broker Toolbox cURL utilities.
    *
    * @var object $mbToolboxCURL
@@ -41,16 +48,24 @@ class MBP_LoggingReports_Users
   private $statHat;
 
   /**
+   * List of allowed sources currently supported.
+   *
+   * @var array
+   */
+  private $allowedSources;
+
+  /**
    * Constructor for MBC_LoggingReports
    */
   public function __construct() {
-    
-    parent:: __construct();
+
     $this->mbConfig = MB_Configuration::getInstance();
+    $this->messageBroker = $this->mbConfig->getProperty('messageBroker');
     $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
     $mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
-    $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['mb_logging_api_host'] . ':' . $mbLoggingAPIConfig['mb_logging_api_port'];
+    $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['host'] . ':' . $mbLoggingAPIConfig['port'];
     $this->statHat = $this->mbConfig->getProperty('statHat');
+    $this->allowedSources = unserialize(ALLOWED_SOURCES);
   }
 
   /**
@@ -63,7 +78,7 @@ class MBP_LoggingReports_Users
    * @param array $recipients
    *   List of addresses (email and/or SMS phone numbers)
    */
-  public function report($type, $source, $recipients) {
+  public function report($type, $source, $recipients = null) {
 
     switch($type) {
 
@@ -98,19 +113,19 @@ class MBP_LoggingReports_Users
    * @param string $endDate
    *   The date to end reports from. Defaults to start of today.
    */
-  private function collectData($type, $source = 'all', $startDate = null, $endDate = null) {
+  private function collectData($type, $source, $startDate = null, $endDate = null) {
 
-    if ($type = 'user' && !in_array($source, $this->allowedSources)) {
+    if (!in_array($source, $this->allowedSources)) {
       throw new Exception('Unsupported source: ' . $source);
     }
 
-    if ($startDate == null) {
+    if ($startDate != null) {
       $startDateStamp = date('Y-m', strtotime($targetStartDate)) . '-01';;
     }
     else {
       $startDateStamp = strtotime('first day of this month');
     }
-    if ($endDate == null) {
+    if ($endDate != null) {
       $endDateStamp = date('Y-m', strtotime($targetStartDate . ' + 1 month')) . '-01';
     }
     else {
@@ -149,22 +164,28 @@ class MBP_LoggingReports_Users
    */
   private function collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp) {
 
+    $stats[$source]['filesProcessed'] = 0;
+    $stats[$source]['usersProcessed'] = 0;
+
     $targetStartDate = date('Y-m-d', $startDateStamp);
     $targetEndDate = date('Y-m-d', $endDateStamp);
     $curlUrl = $this->mbLoggingAPIUrl . '/api/v1/imports/summaries?type=user_import&source=' . strtolower($source) . '&origin_start=' . $targetStartDate . '&origin_end=' . $targetEndDate;
 
     $results = $this->mbToolboxCURL->curlGET($curlUrl);
-    $numberOfFiles = count($results) - 1;
+    if ($results[1] != 200) {
+      throw new Exception('Call to ' . $curlUrl . ' returned: ' . $results[1]);
+    }
+    $numberOfFiles = count($results[0]) - 1;
 
     $stats[$source]['startDate'] = $targetStartDate;
     $stats[$source]['endDate'] = $targetEndDate;
     $stats[$source]['numberOfFiles'] = $numberOfFiles;
-    $stats[$source]['firstFile'] = $results[0]['target_CSV_file'];
-    $stats[$source]['lastFile'] = $results[$numberOfFiles]['target_CSV_file'];;
+    $stats[$source]['firstFile'] = $results[0][0]->target_CSV_file;
+    $stats[$source]['lastFile'] = $results[0][$numberOfFiles]->target_CSV_file;
 
-    foreach ($results as $resultCount => $result) {
+    foreach ($results[0] as $resultCount => $result) {
       $stats[$source]['filesProcessed']++;
-      $stats[$source]['usersProcessed'] += $result['signup_count'];
+      $stats[$source]['usersProcessed'] += $result->signup_count;
     }
 
     return $stats;
@@ -190,12 +211,15 @@ class MBP_LoggingReports_Users
     $curlUrl = $this->mbLoggingAPIUrl . '/api/v1/imports?type=user_import&source=' . strtolower($source) . '&origin_start=' . $targetStartDate . '&origin_end=' . $targetEndDate;
 
     $results = $this->mbToolboxCURL->curlGET($curlUrl);
+    if ($results[1] != 200) {
+      throw new Exception('Call to ' . $curlUrl . ' returned: ' . $results[1]);
+    }
 
     $stats[$source]['startDate'] = $targetStartDate;
     $stats[$source]['endDate'] = $targetEndDate;
     $stats[$source]['total'] = count($results);
 
-    foreach ($results as $resultCount => $result) {
+    foreach ($results[0] as $resultCount => $result) {
 
       if (isset($result->email)) {
         $stats[$source]['existingMailchimpUser']++;
