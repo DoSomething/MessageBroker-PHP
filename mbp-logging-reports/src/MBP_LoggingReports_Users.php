@@ -57,19 +57,21 @@ class MBP_LoggingReports_Users
    * report() - Request a report be sent.
    *
    * @param string $type
-   *  The type or collection of types of report to generate
+   *   The type or collection of types of report to generate
+   * @param string $source
+   *   The import source: Niche or After School
    * @param array $recipients
    *   List of addresses (email and/or SMS phone numbers)
    */
-  public function report($type, $recipients = []) {
+  public function report($type, $source, $recipients) {
 
     switch($type) {
 
-      case 'nicheRunningMonth':
+      case 'runningMonth':
 
-        $reportData['userImportCSV'] = $this->collectData('userImportCSV', 'niche');
-        $reportData['existingUsers'] = $this->collectData('existingUsers', 'niche');
-        $composedReportMarkup = $this->composedReportMarkup($reportData);
+        $reportData['userImportCSV'] = $this->collectData('userImportCSV', $source);
+        $reportData['existingUsers'] = $this->collectData('existingUsers', $source);
+        $composedReport = $this->composedReportMarkup($reportData);
         break;
 
       default:
@@ -78,7 +80,10 @@ class MBP_LoggingReports_Users
         break;
     }
 
-    $this->dispatchReport($composedReportMarkup, $recipients);
+    if (empty($recipients)) {
+      $recipients = $this->getRecipients();
+    }
+    $this->dispatchReport($composedReport, $recipients);
   }
 
   /**
@@ -114,11 +119,11 @@ class MBP_LoggingReports_Users
 
     // Existing user imports from $source
     if ($type = 'userImportCSV') {
-      $reportData = $this->collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp);
+      $reportData['userImportCSV'] = $this->collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp);
     }
 
     if ($type = 'existingUsers') {
-      $reportData = $this->collectExistingUserImportLogEntries($source, $startDateStamp, $endDateStamp);
+      $reportData['existingUsers'] = $this->collectExistingUserImportLogEntries($source, $startDateStamp, $endDateStamp);
     }
 
     if (!empty($reportData)) {
@@ -127,6 +132,42 @@ class MBP_LoggingReports_Users
     else {
       throw new Exception('composedReportData not defined.');
     }
+  }
+
+  /**
+   * Collect log entries on processed CSV files.
+   *
+   * @param string $source
+   *   The target source - one of niche, afterschool
+   * @param integer startDateStamp
+   *   The datestamp to start reports from
+   * @param integer endDateStamp
+   *   The datestamp to end reports from
+   *
+   * @return array
+   *   Collected log entries
+   */
+  private function collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp) {
+
+    $targetStartDate = date('Y-m-d', $startDateStamp);
+    $targetEndDate = date('Y-m-d', $endDateStamp);
+    $curlUrl = $this->mbLoggingAPIUrl . '/api/v1/imports/summaries?type=user_import&source=' . strtolower($source) . '&origin_start=' . $targetStartDate . '&origin_end=' . $targetEndDate;
+
+    $results = $this->mbToolboxCURL->curlGET($curlUrl);
+    $numberOfFiles = count($results) - 1;
+
+    $stats[$source]['startDate'] = $targetStartDate;
+    $stats[$source]['endDate'] = $targetEndDate;
+    $stats[$source]['numberOfFiles'] = $numberOfFiles;
+    $stats[$source]['firstFile'] = $results[0]['target_CSV_file'];
+    $stats[$source]['lastFile'] = $results[$numberOfFiles]['target_CSV_file'];;
+
+    foreach ($results as $resultCount => $result) {
+      $stats[$source]['filesProcessed']++;
+      $stats[$source]['usersProcessed'] += $result['signup_count'];
+    }
+
+    return $stats;
   }
 
   /**
@@ -142,7 +183,7 @@ class MBP_LoggingReports_Users
    * @return array
    *   Collected log entries
    */
-  private function collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp) {
+  private function collectExistingUserImportLogEntries($source, $startDateStamp, $endDateStamp) {
 
     $targetStartDate = date('Y-m-d', $startDateStamp);
     $targetEndDate = date('Y-m-d', $endDateStamp);
@@ -192,132 +233,50 @@ class MBP_LoggingReports_Users
    * @return string
    *   The text to be displayed in the report.
    */
-  private function composeReport($stats) {
+  private function composedReportMarkup($reportData) {
 
     $reportContents = '';
 
-    foreach ($stats as $source => $statDetails) {
-      if (isset($statDetails[$source]['summaries'])) {
-        $summaryContents  = '<h3>Import Summary</h1>' . "\n";
-        $summaryContents .= '<table padding="1" style="width:100%; border: 1px solid lightgrey; margin-bottom: 1em;">' . "\n";
-        $summaryContents .= '  <tr style="background-color: black; color: white;">' . "\n";
-        $summaryContents .= '    <td>Import File</td>' . "\n";
-        $summaryContents .= '    <td>Import Submissions</td>' . "\n";
-        $summaryContents .= '    <td>Skipped</td>' . "\n";
-        $summaryContents .= '    <td>Existing DS Users</td>' . "\n";
-        $summaryContents .= '    <td>New Users</td>' . "\n";
-        $summaryContents .= '  </tr>' . "\n";
-        $signup_total = 0;
-        foreach($statDetails[$source]['summaries'] as $summaryCount => $summary) {
-          $signup_total += $summary['signup_count'];
-          $newUsersImported = $signup_total - $summary['skipped'] - $statDetails[$source]['totalExisting'];
-          $summaryContents .= '  <tr>' . "\n";
-          $summaryContents .= '    <td>' . $summary['target_CSV_file'] . '</td>' . "\n";
-          $summaryContents .= '    <td>' . $summary['signup_count'] . '</td>' . "\n";
-          $summaryContents .= '    <td>' . $summary['skipped'] . '</td>' . "\n";
-
-          // Only display totals on last row
-          if ($summaryCount == count($statDetails[$source]['summaries']) - 1) {
-            $summaryContents .= '    <td>' . $statDetails[$source]['totalExisting'] . '</td>' . "\n";
-            $summaryContents .= '    <td>' . $newUsersImported . '</td>' . "\n";
-          }
-          else {
-            $summaryContents .= '    <td>&nbsp;</td>' . "\n";
-            $summaryContents .= '    <td>&nbsp;</td>' . "\n";
-          }
-
-          $summaryContents .= '  </tr>' . "\n";
-        }
-        $summaryContents .= '</table>' . "\n";
-        $reportContents .= $summaryContents;
-      }
-
-      $existingMobileCommonsTotal = 0;
-      $existingMobileCommons = '';
-
-      if (isset($statDetails[$source]['mobileCommonsUserError_undeliverable'])) {
-        $existingMobileCommons .= 'Undeliverable: ' . $statDetails[$source]['mobileCommonsUserError_undeliverable'] . '<br /><br />';
-      }
-      if (isset($statDetails[$source]['mobileCommonsUserError_existing'])) {
-        $existingMobileCommonsTotal += $statDetails[$source]['mobileCommonsUserError_existing'];
-        $existingMobileCommons .= 'Existing: ' . $statDetails[$source]['mobileCommonsUserError_existing'] . '<br />';
-      }
-      if (isset($statDetails[$source]['mobileCommonsUserError_noSubscriptions'])) {
-        $existingMobileCommonsTotal += $statDetails[$source]['mobileCommonsUserError_noSubscriptions'];
-        $existingMobileCommons .= 'No Subscription: ' . $statDetails[$source]['mobileCommonsUserError_noSubscriptions'] . '<br />';
-      }
-      if (isset($statDetails[$source]['mobileCommonsUserError_other']) && $statDetails[$source]['mobileCommonsUserError_other'] > 0) {
-        $existingMobileCommonsTotal += $statDetails[$source]['mobileCommonsUserError_other'];
-        $existingMobileCommons .= 'Other: ' . $statDetails[$source]['mobileCommonsUserError_other'] . '<br />';
-      }
-
-      if ($existingMobileCommonsTotal > 0) {
-        $existingMobileCommons .= '=============== <br />';
-        $existingMobileCommons .= 'Total: ' . $existingMobileCommonsTotal;
-      }
-
-      if (isset($statDetails[$source]['totalExisting']) && $statDetails[$source]['totalExisting'] != 0) {
-
-        $existingContent  = '<h3>Existing User Details</h1>' . "\n";
-        $existingContent .= '<table padding="1" style="width:100%; border: 1px solid lightgrey; margin-bottom: 1em;">' . "\n";
-        $existingContent .= '  <tr style="background-color: black; color: white;">' . "\n";
-        $existingContent .= '    <td>Mailchimp</td>' . "\n";
-        $existingContent .= '    <td>Drupal</td>' . "\n";
-        $existingContent .= '    <td>Mobile Commons</td>' . "\n";
-        $existingContent .= '    <td>Total Existing</td>' . "\n";
-        $existingContent .= '  </tr>' . "\n";
-
-        $existingContent .= '  <tr>' . "\n";
-        $existingContent .= '    <td>' . $statDetails[$source]['existingMailchimpUser'] . '</td>' . "\n";
-        $existingContent .= '    <td>' . $statDetails[$source]['existingDrupalUser'] . '</td>' . "\n";
-        $existingContent .= '    <td>' . $existingMobileCommons . '</td>' . "\n";
-        $existingContent .= '    <td>' . $statDetails[$source]['totalExisting']  . '</td>' . "\n";
-        $existingContent .= '  </tr>' . "\n";
-
-        $existingContent .= '</table>' . "\n";
-        $reportContents .= $existingContent;
-
-      }
-      else {
-        $reportContents = 'Oppps, nothing was logged since ' . $statDetails[$source]['targetStartDate'] . '.';
-      }
+    foreach ($reportData['source'] as $source => $data) {
+      $reportContents = 'Report contents: '. $source;
     }
 
     return $reportContents;
   }
 
   /**
-   * Send report to appropriate managers.
+   * Compose the contents of the existing users import report content.
    *
-   * @param existingUsersReport string
-   *   Details of the summary log entries for each import batch.
+   * @param stats array
+   *   Details of the user accounts that existed in Mailchimp, Mobile Common
+   *   and/or Drupal at the time of import.
+   *
+   * @return string
+   *   The text to be displayed in the report.
    */
-  private function dispatchReport($existingUsersReport) {
-    
-    $memberCount = $this->toolbox->getDSMemberCount();
+  private function getRecipients() {
 
-    $tos = array(
-      0 => array(
+    $to = [
+      [
         'email' => 'dlee@dosomething.org',
         'name' => 'Dee'
-      ),
-      1 => array(
-        'email' => 'mlidey@dosomething.org',
-        'name' => 'Marah'
-      ),
-      2 => array(
-        'email' => 'mholford@dosomething.org',
-        'name' => 'Matt'
-      ),
-      3 => array(
-        'email' => 'jbladt@dosomething.org',
-        'name' => 'Jeff'
-      ),
-      4 => array(
-        'email' => 'juy@dosomething.org',
-        'name' => 'Jonathan'
-      ),
-    );
+      ],
+    ];
+
+    return $to;
+  }
+
+  /**
+   * Send report to appropriate managers.
+   *
+   * @param string $existingUsersReport string
+   *   Details of the summary log entries for each import batch.
+   * @param array $recipients
+   *   A list of users to send the report to.
+   */
+  private function dispatchReport($composedReport, $recipients) {
+    
+    $memberCount = $this->toolbox->getDSMemberCount();
 
     foreach ($tos as $to) {
       $message = array(
