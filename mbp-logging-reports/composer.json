@@ -23,7 +23,7 @@
   },
   "autoload": {
     "psr-4": {
-      "DoSomething\\MBC_LoggingReports\\": "src/"
+      "DoSomething\\MBP_LoggingReports\\": "src/"
     }
   },
   "scripts": {
