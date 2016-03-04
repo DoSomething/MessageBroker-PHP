@@ -217,7 +217,7 @@ class MBP_LoggingReports_Users
 
     $stats[$source]['startDate'] = $targetStartDate;
     $stats[$source]['endDate'] = $targetEndDate;
-    $stats[$source]['total'] = count($results);
+    $stats[$source]['total'] = count($results[0]);
 
     foreach ($results[0] as $resultCount => $result) {
 
