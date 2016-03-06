@@ -73,6 +73,7 @@ class MBP_LoggingReports_Users
     $mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
     $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['host'] . ':' . $mbLoggingAPIConfig['port'];
     $this->statHat = $this->mbConfig->getProperty('statHat');
+    $this->slack = $this->mbConfig->getProperty('slack');
     $this->allowedSources = unserialize(ALLOWED_SOURCES);
   }
 
@@ -107,7 +108,8 @@ class MBP_LoggingReports_Users
       $recipients = $this->getRecipients();
     }
 
-    $this->dispatchReport($composedReport, $recipients);
+    $this->dispatchReport($composedReport['email'], $recipients);
+    $this->dispatchSlackAlert($composedReport['slack'], ['@dee']);
   }
 
   /**
@@ -274,21 +276,35 @@ class MBP_LoggingReports_Users
    */
   private function composedReportMarkup($reportData) {
 
-    $reportContents  = '<table style="width: 100%; white-space:nowrap; border: 1px solid black; padding: 3px;">' . PHP_EOL;
-    $reportContents .= '  <tr><td>Users Processed</td><td>Existing Users</td><td>New Users</td></tr>' . PHP_EOL;
-
     foreach ($reportData as $source => $data) {
 
-      $reportTitle  = '<h1>' . $source . '</h1>' . PHP_EOL;
-      $reportTitle .= $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . PHP_EOL;
+      // Email
+      $reportContentsEmail  = '<table style="width: 100%; white-space:nowrap; border: 1px solid black; padding: 3px;">' . PHP_EOL;
+      $reportContentsEmail .= '  <tr><td>Users Processed</td><td>Existing Users</td><td>New Users</td></tr>' . PHP_EOL;
+
+      $reportRange  = $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . PHP_EOL;
+      $reportTitleEmail  = '<h1>' . $source . '</h1>' . PHP_EOL;
+      $reportTitleEmail .= $reportRange;
 
       $newUsers = $data['userImportCSV']['usersProcessed'] - $data['existingUsers']['total'];
-      $reportContents .= '  <tr><td>' . $data['userImportCSV']['usersProcessed'] . '</td><td>' .  $data['existingUsers']['total'] . '</td><td>' . $newUsers . '</td></tr>' . PHP_EOL;
+      $reportContentsEmail .= '  <tr><td>' . $data['userImportCSV']['usersProcessed'] . '</td><td>' .  $data['existingUsers']['total'] . '</td><td>' . $newUsers . '</td></tr>' . PHP_EOL;
+      $reportContentsEmail .= '</table>' . PHP_EOL;
 
+      $report['email'][$source] = $reportTitleEmail . $reportContentsEmail;
+
+      // Slack
+      $reportTitleSlack  = 'Source: ' . $source;
+      $reportTitleSlack .= 'Range: ' . $reportRange;
+      $reportTitleSlack .= '--------';
+
+      $reportContentsSlack  = 'Users Processed: ' . $data['userImportCSV']['usersProcessed'];
+      $reportContentsSlack .= 'Existing Users: ' . $data['userImportCSV']['usersProcessed'];
+      $reportContentsSlack .= ' =========';
+      $reportContentsSlack .= 'New Users: ' . $data['userImportCSV']['usersProcessed'];
+
+      $report['slack'][$source] = $reportTitleSlack . $reportContentsSlack;
     }
-    $reportContents .= '</table>' . PHP_EOL;
 
-    $report = $reportTitle . $reportContents;
     return $report;
   }
 
@@ -348,6 +364,18 @@ class MBP_LoggingReports_Users
       $this->messageBroker->publish($payload, 'report.userimport.transactional', 1);
     }
 
+  }
+
+  /**
+   *
+   */
+  private function dispatchSlackAlert($composedReport, $recipients) {
+
+    foreach ($recipients as $recipient) {
+      $to .= $recipient . ' ';
+    }
+
+    $this->slack->alert($to, $composedReport);
   }
 
 }
