@@ -5,6 +5,7 @@
 
 use DoSomething\MB_Toolbox\MB_Configuration;
 use DoSomething\StatHat\Client as StatHat;
+use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
 
 // Load configuration settings common to the Message Broker system
@@ -28,6 +29,12 @@ $mbConfig->setProperty('mb_logging_api_config', [
   'host' => getenv("MB_LOGGING_API_HOST"),
   'port' => getenv('MB_LOGGING_API_PORT')
 ]);
+$mbConfig->setProperty('ds_drupal_api_config', [
+  'host' => getenv("DS_DRUPAL_API_HOST"),
+  'port' => getenv('DS_DRUPAL_API_PORT'),
+  'username' => getenv("DS_DRUPAL_API_USERNAME"),
+  'password' => getenv('DS_DRUPAL_API_PASSWORD'),
+]);
 $mbConfig->setProperty('rabbit_credentials', [
   'host' =>  getenv("RABBITMQ_HOST"),
   'port' => getenv("RABBITMQ_PORT"),
@@ -40,4 +47,5 @@ $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalQueue']);
 $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
+$mbConfig->setProperty('mbToolbox', new MB_Toolbox());
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
