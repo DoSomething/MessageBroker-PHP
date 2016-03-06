@@ -27,6 +27,13 @@ class MBP_LoggingReports_Users
   protected $messageBroker;
 
   /**
+   * Message Broker Toolbox utilities.
+   *
+   * @var object $mbToolbox
+   */
+  private $mbToolbox;
+
+  /**
    * Message Broker Toolbox cURL utilities.
    *
    * @var object $mbToolboxCURL
@@ -61,6 +68,7 @@ class MBP_LoggingReports_Users
 
     $this->mbConfig = MB_Configuration::getInstance();
     $this->messageBroker = $this->mbConfig->getProperty('messageBroker');
+    $this->mbToolbox = $this->mbConfig->getProperty('mbToolbox');
     $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
     $mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
     $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['host'] . ':' . $mbLoggingAPIConfig['port'];
@@ -84,8 +92,8 @@ class MBP_LoggingReports_Users
 
       case 'runningMonth':
 
-        $reportData['userImportCSV'] = $this->collectData('userImportCSV', $source);
-        $reportData['existingUsers'] = $this->collectData('existingUsers', $source);
+        $reportData[$source]['userImportCSV'] = $this->collectData('userImportCSV', $source);
+        $reportData[$source]['existingUsers'] = $this->collectData('existingUsers', $source);
         $composedReport = $this->composedReportMarkup($reportData);
         break;
 
@@ -98,6 +106,7 @@ class MBP_LoggingReports_Users
     if (empty($recipients)) {
       $recipients = $this->getRecipients();
     }
+
     $this->dispatchReport($composedReport, $recipients);
   }
 
@@ -133,12 +142,11 @@ class MBP_LoggingReports_Users
     }
 
     // Existing user imports from $source
-    if ($type = 'userImportCSV') {
-      $reportData['userImportCSV'] = $this->collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp);
+    if ($type == 'userImportCSV') {
+      $reportData = $this->collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp);
     }
-
-    if ($type = 'existingUsers') {
-      $reportData['existingUsers'] = $this->collectExistingUserImportLogEntries($source, $startDateStamp, $endDateStamp);
+    if ($type == 'existingUsers') {
+      $reportData = $this->collectExistingUserImportLogEntries($source, $startDateStamp, $endDateStamp);
     }
 
     if (!empty($reportData)) {
@@ -164,8 +172,8 @@ class MBP_LoggingReports_Users
    */
   private function collectUserImportCSVEntries($source, $startDateStamp, $endDateStamp) {
 
-    $stats[$source]['filesProcessed'] = 0;
-    $stats[$source]['usersProcessed'] = 0;
+    $stats['filesProcessed'] = 0;
+    $stats['usersProcessed'] = 0;
 
     $targetStartDate = date('Y-m-d', $startDateStamp);
     $targetEndDate = date('Y-m-d', $endDateStamp);
@@ -177,15 +185,15 @@ class MBP_LoggingReports_Users
     }
     $numberOfFiles = count($results[0]) - 1;
 
-    $stats[$source]['startDate'] = $targetStartDate;
-    $stats[$source]['endDate'] = $targetEndDate;
-    $stats[$source]['numberOfFiles'] = $numberOfFiles;
-    $stats[$source]['firstFile'] = $results[0][0]->target_CSV_file;
-    $stats[$source]['lastFile'] = $results[0][$numberOfFiles]->target_CSV_file;
+    $stats['startDate'] = $targetStartDate;
+    $stats['endDate'] = $targetEndDate;
+    $stats['numberOfFiles'] = $numberOfFiles;
+    $stats['firstFile'] = $results[0][0]->target_CSV_file;
+    $stats['lastFile'] = $results[0][$numberOfFiles]->target_CSV_file;
 
     foreach ($results[0] as $resultCount => $result) {
-      $stats[$source]['filesProcessed']++;
-      $stats[$source]['usersProcessed'] += $result->signup_count;
+      $stats['filesProcessed']++;
+      $stats['usersProcessed'] += $result->signup_count;
     }
 
     return $stats;
@@ -215,31 +223,38 @@ class MBP_LoggingReports_Users
       throw new Exception('Call to ' . $curlUrl . ' returned: ' . $results[1]);
     }
 
-    $stats[$source]['startDate'] = $targetStartDate;
-    $stats[$source]['endDate'] = $targetEndDate;
-    $stats[$source]['total'] = count($results[0]);
+    $stats['existingMailchimpUser'] = 0;
+    $stats['mobileCommonsUserError_existing'] = 0;
+    $stats['mobileCommonsUserError_undeliverable'] = 0;
+    $stats['mobileCommonsUserError_noSubscriptions'] = 0;
+    $stats['mobileCommonsUserError_other'] = 0;
+    $stats['existingDrupalUser'] = 0;
+
+    $stats['startDate'] = $targetStartDate;
+    $stats['endDate'] = $targetEndDate;
+    $stats['total'] = count($results[0]);
 
     foreach ($results[0] as $resultCount => $result) {
 
       if (isset($result->email)) {
-        $stats[$source]['existingMailchimpUser']++;
+        $stats['existingMailchimpUser']++;
       }
       if (isset($result->phone)) {
         if ($result->phone->status == 'Active Subscriber') {
-          $stats[$source]['mobileCommonsUserError_existing']++;
+          $stats['mobileCommonsUserError_existing']++;
         }
         elseif ($result->phone->status == 'Undeliverable') {
-          $stats[$source]['mobileCommonsUserError_undeliverable']++;
+          $stats['mobileCommonsUserError_undeliverable']++;
         }
         elseif ($result->phone->status == 'No Subscriptions') {
-          $stats[$source]['mobileCommonsUserError_noSubscriptions']++;
+          $stats['mobileCommonsUserError_noSubscriptions']++;
         }
         else {
-          $stats[$source]['mobileCommonsUserError_other']++;
+          $stats['mobileCommonsUserError_other']++;
         }
       }
       if (isset($result->drupal)) {
-        $stats[$source]['existingDrupalUser']++;
+        $stats['existingDrupalUser']++;
       }
 
     }
@@ -259,13 +274,22 @@ class MBP_LoggingReports_Users
    */
   private function composedReportMarkup($reportData) {
 
-    $reportContents = '';
+    $reportContents  = '<table style="width: 100%; white-space:nowrap; border: 1px solid black; padding: 3px;">' . PHP_EOL;
+    $reportContents .= '  <tr><td>Users Processed</td><td>Existing Users</td><td>New Users</td></tr>' . PHP_EOL;
 
-    foreach ($reportData['source'] as $source => $data) {
-      $reportContents = 'Report contents: '. $source;
+    foreach ($reportData as $source => $data) {
+
+      $reportTitle  = '<h1>' . $source . '</h1>' . PHP_EOL;
+      $reportTitle .= $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . PHP_EOL;
+
+      $newUsers = $data['userImportCSV']['usersProcessed'] - $data['existingUsers']['total'];
+      $reportContents .= '  <tr><td>' . $data['userImportCSV']['usersProcessed'] . '</td><td>' .  $data['existingUsers']['total'] . '</td><td>' . $newUsers . '</td></tr>' . PHP_EOL;
+
     }
+    $reportContents .= '</table>' . PHP_EOL;
 
-    return $reportContents;
+    $report = $reportTitle . $reportContents;
+    return $report;
   }
 
   /**
@@ -300,27 +324,28 @@ class MBP_LoggingReports_Users
    */
   private function dispatchReport($composedReport, $recipients) {
     
-    $memberCount = $this->toolbox->getDSMemberCount();
+    $memberCount = $this->mbToolbox->getDSMemberCount();
 
-    foreach ($tos as $to) {
+    foreach ($recipients as $to) {
       $message = array(
         'from_email' => 'machines@dosomething.org',
         'email' => $to['email'],
         'activity' => 'mb-reports',
         'email_template' => 'mb-user-import-report',
+        'user_country' => 'US',
         'merge_vars' => array(
           'FNAME' => $to['name'],
           'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
           'TITLE' => date('Y-m-d') . ' - Daily User Imports',
-          'BODY' => $existingUsersReport,
+          'BODY' => $composedReport,
           'MEMBER_COUNT' => $memberCount,
         ),
         'email_tags' => array(
           0 => 'mb-user-import-report',
-        ),
+        )
       );
-      $payload = serialize($message);
-      $this->messageBroker->publishMessage($payload);
+      $payload = json_encode($message);
+      $this->messageBroker->publish($payload, 'report.userimport.transactional', 1);
     }
 
   }
