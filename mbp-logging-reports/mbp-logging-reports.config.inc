@@ -35,6 +35,9 @@ $mbConfig->setProperty('ds_drupal_api_config', [
   'username' => getenv("DS_DRUPAL_API_USERNAME"),
   'password' => getenv('DS_DRUPAL_API_PASSWORD'),
 ]);
+$mbConfig->setProperty('slack', [
+  'webhookURL' => getenv("SLACK_WEBHOOK_URL")
+]);
 $mbConfig->setProperty('rabbit_credentials', [
   'host' =>  getenv("RABBITMQ_HOST"),
   'port' => getenv("RABBITMQ_PORT"),
