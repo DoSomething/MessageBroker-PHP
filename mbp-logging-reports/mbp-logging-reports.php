@@ -17,8 +17,8 @@ require_once __DIR__ . '/mbp-logging-reports.config.inc';
 if (isset($_GET['source'])) {
   $source = $_GET['source'];
 }
-elseif (isset($argv[3])) {
-  $source = $argv[3];
+elseif (isset($argv[1])) {
+  $source = $argv[1];
 }
 else {
   $source = 'all';
