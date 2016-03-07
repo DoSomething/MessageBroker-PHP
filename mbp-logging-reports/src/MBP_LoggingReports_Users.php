@@ -94,6 +94,13 @@ class MBP_LoggingReports_Users
 
         $reportData[$source]['userImportCSV'] = $this->collectData('userImportCSV', $source);
         $reportData[$source]['existingUsers'] = $this->collectData('existingUsers', $source);
+        $reportData[$source]['newUsers'] = $reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total'];
+        $percentNewUsers = ($reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total']) / $reportData[$source]['userImportCSV']['usersProcessed'] * 100;
+        $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
+        $budgetPercentage = 100 - (33333 - $reportData[$source]['newUsers']) / 33333 * 100;
+        $reportData[$source]['budgetPercentage'] = round($budgetPercentage, 1);
+        $reportData[$source]['budgetBackgroundColor'] = 'green';
+
         $composedReport = $this->composedReportMarkup($reportData);
         break;
 
@@ -274,16 +281,20 @@ class MBP_LoggingReports_Users
    */
   private function composedReportMarkup($reportData) {
 
-    $reportContents  = '<table style="width: 100%; white-space:nowrap; border: 1px solid black; padding: 3px;">' . PHP_EOL;
-    $reportContents .= '  <tr><td>Users Processed</td><td>Existing Users</td><td>New Users</td></tr>' . PHP_EOL;
+    $reportContents  = '<table style ="border-collapse:collapse; width:100%; white-space:nowrap; border:1px solid black; padding:8px; text-align: center;">' . PHP_EOL;
+    $reportContents .= '  <tr style ="border:1px solid white; padding:3px; background-color: black; color: white; font-weight: heavy;"><td></td><td>Users Processed</td><td>Existing Users</td><td>New Users</td><td>Budget</td></tr>' . PHP_EOL;
 
     foreach ($reportData as $source => $data) {
 
-      $reportTitle  = '<h1>' . $source . '</h1>' . PHP_EOL;
-      $reportTitle .= $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . PHP_EOL;
-
-      $newUsers = $data['userImportCSV']['usersProcessed'] - $data['existingUsers']['total'];
-      $reportContents .= '  <tr><td>' . $data['userImportCSV']['usersProcessed'] . '</td><td>' .  $data['existingUsers']['total'] . '</td><td>' . $newUsers . '</td></tr>' . PHP_EOL;
+      $reportTitle .= '<strong>' . $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . '</strong>' . PHP_EOL;
+      $reportContents .= '
+        <tr style ="border:1px solid black; padding:5px; background-color: grey; color: black;">
+          <td style="text-align: right; font-size: 1.3em; font-weight: heavy; background-color: black; color: white;">' . $source . ':&nbsp;</td>
+          <td style="background-color: white;">' . $data['userImportCSV']['usersProcessed'] . '</td>
+          <td style="background-color: white;">' . $data['existingUsers']['total'] . '</td>
+          <td>' . $data['newUsers'] . ' (' . $data['percentNewUsers'] . '% new)</td>
+          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: white;">' . $data['budgetPercentage'] . '%</td>
+        </tr>' . PHP_EOL;
 
     }
     $reportContents .= '</table>' . PHP_EOL;
@@ -336,7 +347,7 @@ class MBP_LoggingReports_Users
         'merge_vars' => array(
           'FNAME' => $to['name'],
           'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
-          'TITLE' => date('Y-m-d') . ' - Daily User Imports',
+          'TITLE' => 'Daily User Imports',
           'BODY' => $composedReport,
           'MEMBER_COUNT' => $memberCount,
         ),
