@@ -18,6 +18,7 @@ class MBP_LoggingReports_Users
 {
 
   const MB_LOGGING_API = '/api/v1';
+  const NICHE_USER_BUDGET = 33333;
 
   /**
    * Message Broker connection to send messages to send email request for report message.
@@ -97,7 +98,7 @@ class MBP_LoggingReports_Users
         $reportData[$source]['newUsers'] = $reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total'];
         $percentNewUsers = ($reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total']) / $reportData[$source]['userImportCSV']['usersProcessed'] * 100;
         $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
-        $budgetPercentage = 100 - (33333 - $reportData[$source]['newUsers']) / 33333 * 100;
+        $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $reportData[$source]['newUsers']) / self::NICHE_USER_BUDGET * 100;
         $reportData[$source]['budgetPercentage'] = round($budgetPercentage, 1);
         $reportData[$source]['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
 
