@@ -99,7 +99,7 @@ class MBP_LoggingReports_Users
         $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
         $budgetPercentage = 100 - (33333 - $reportData[$source]['newUsers']) / 33333 * 100;
         $reportData[$source]['budgetPercentage'] = round($budgetPercentage, 1);
-        $reportData[$source]['budgetBackgroundColor'] = 'green';
+        $reportData[$source]['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
 
         $composedReport = $this->composedReportMarkup($reportData);
         break;
@@ -359,6 +359,30 @@ class MBP_LoggingReports_Users
       $this->messageBroker->publish($payload, 'report.userimport.transactional', 1);
     }
 
+  }
+
+  /**
+   * setBugetColor() - Based on the number of new users processed, set a color value - green, yellow, red
+   * to highlight the current number of imported users.
+   *
+   * @param real $percentage
+   *   The percentage amount of imported users for the month.
+   *
+   * @return string $color
+   *   The CSS background-color property, used in report generation.
+   */
+  private function setBudgetColor($percentage) {
+
+    if ($percentage <= 80) {
+      $color = 'green';
+    }
+    if ($percentage > 80) {
+      $color = 'yellow';
+    }
+    if ($percentage > 90) {
+      $color = 'red';
+    }
+    return $color;
   }
 
 }
