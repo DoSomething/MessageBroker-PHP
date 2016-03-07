@@ -351,8 +351,8 @@ class MBP_LoggingReports_Users
         'user_country' => 'US',
         'merge_vars' => array(
           'FNAME' => $to['name'],
-          'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
-          'TITLE' => date('Y-m-d') . ' - Daily User Imports',
+          'SUBJECT' => 'Monthly User Import to Date Report - ' . date('Y-m-d'),
+          'TITLE' => 'Monthly User Imports to Date',
           'BODY' => $composedReport,
           'MEMBER_COUNT' => $memberCount,
         ),
