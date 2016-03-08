@@ -101,14 +101,14 @@ class MBP_LoggingReports_Users
         $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
 
         if ($source == 'niche') {
-          $userBudget = self::NICHE_USER_BUDGET;
+          $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $reportData[$source]['newUsers']) / self::NICHE_USER_BUDGET * 100;
+          $reportData['niche']['budgetPercentage'] = round($budgetPercentage, 1) . '%';
+          $reportData['niche']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
         }
         elseif ($source == 'afterschool') {
-          $userBudget = self::AFTERSCHOOL_USER_BUDGET;
+          $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
+          $reportData['afterschool']['budgetBackgroundColor'] = 'green';
         }
-        $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $reportData[$source]['newUsers']) / self::NICHE_USER_BUDGET * 100;
-        $reportData[$source]['budgetPercentage'] = round($budgetPercentage, 1);
-        $reportData[$source]['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
 
         $composedReport = $this->composedReportMarkup($reportData);
         break;
@@ -302,7 +302,7 @@ class MBP_LoggingReports_Users
           <td style="background-color: white;">' . $data['userImportCSV']['usersProcessed'] . '</td>
           <td style="background-color: white;">' . $data['existingUsers']['total'] . '</td>
           <td>' . $data['newUsers'] . ' (' . $data['percentNewUsers'] . '% new)</td>
-          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: white;">' . $data['budgetPercentage'] . '%</td>
+          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: white;">' . $data['budgetPercentage'] . '</td>
         </tr>' . PHP_EOL;
 
     }
