@@ -104,10 +104,15 @@ class MBP_LoggingReports_Users
           $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $reportData[$source]['newUsers']) / self::NICHE_USER_BUDGET * 100;
           $reportData['niche']['budgetPercentage'] = round($budgetPercentage, 1) . '%';
           $reportData['niche']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
+
+          $averageDailyNewUsers = $reportData[$source]['newUsers'] / date('j');
+          $projectedDaysToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
+          $reportData['niche']['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysToComplete, 0) . ', ' . date('Y');
         }
         elseif ($source == 'afterschool') {
           $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
           $reportData['afterschool']['budgetBackgroundColor'] = 'green';
+          $reportData['niche']['budgetProjectedCompletion'] = '';
         }
 
         $composedReport = $this->composedReportMarkup($reportData);
@@ -307,6 +312,7 @@ class MBP_LoggingReports_Users
 
     }
     $reportContents .= '</table>' . PHP_EOL;
+    $reportContents .= '<p>' . $reportData['niche']['budgetProjectedCompletion'] . '</p>';
 
     $report = $reportTitle . $reportContents;
     return $report;
