@@ -112,7 +112,7 @@ class MBP_LoggingReports_Users
         elseif ($source == 'afterschool') {
           $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
           $reportData['afterschool']['budgetBackgroundColor'] = 'green';
-          $reportData['niche']['budgetProjectedCompletion'] = '';
+          $reportData['afterschool']['budgetProjectedCompletion'] = '';
         }
 
         $composedReport = $this->composedReportMarkup($reportData);
@@ -300,7 +300,7 @@ class MBP_LoggingReports_Users
 
     foreach ($reportData as $source => $data) {
 
-      $reportTitle .= '<strong>' . $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . '</strong>' . PHP_EOL;
+      $reportTitle = '<strong>' . $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . '</strong>' . PHP_EOL;
       $reportContents .= '
         <tr style ="border:1px solid black; padding:5px; background-color: grey; color: black;">
           <td style="text-align: right; font-size: 1.3em; font-weight: heavy; background-color: black; color: white;">' . $source . ':&nbsp;</td>
@@ -309,12 +309,12 @@ class MBP_LoggingReports_Users
           <td>' . $data['newUsers'] . ' (' . $data['percentNewUsers'] . '% new)</td>
           <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: white;">' . $data['budgetPercentage'] . '</td>
         </tr>' . PHP_EOL;
+      $projected = '<p>' . $data['budgetProjectedCompletion'] . '</p>';
 
     }
     $reportContents .= '</table>' . PHP_EOL;
-    $reportContents .= '<p>' . $reportData['niche']['budgetProjectedCompletion'] . '</p>';
 
-    $report = $reportTitle . $reportContents;
+    $report = $reportTitle . $reportContents . $projected;
     return $report;
   }
 
