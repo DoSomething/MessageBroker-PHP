@@ -83,36 +83,39 @@ class MBP_LoggingReports_Users
    *
    * @param string $type
    *   The type or collection of types of report to generate
-   * @param string $source
+   * @param string $sources
    *   The import source: Niche or After School
    * @param array $recipients
    *   List of addresses (email and/or SMS phone numbers)
    */
-  public function report($type, $source, $recipients = null) {
+  public function report($type, $sources, $recipients = null) {
 
     switch($type) {
 
       case 'runningMonth':
 
-        $reportData[$source]['userImportCSV'] = $this->collectData('userImportCSV', $source);
-        $reportData[$source]['existingUsers'] = $this->collectData('existingUsers', $source);
-        $reportData[$source]['newUsers'] = $reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total'];
-        $percentNewUsers = ($reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total']) / $reportData[$source]['userImportCSV']['usersProcessed'] * 100;
-        $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
+        foreach ($sources as $source) {
 
-        if ($source == 'niche') {
-          $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $reportData[$source]['newUsers']) / self::NICHE_USER_BUDGET * 100;
-          $reportData['niche']['budgetPercentage'] = round($budgetPercentage, 1) . '%';
-          $reportData['niche']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
+          $reportData[$source]['userImportCSV'] = $this->collectData('userImportCSV', $source);
+          $reportData[$source]['existingUsers'] = $this->collectData('existingUsers', $source);
+          $reportData[$source]['newUsers'] = $reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total'];
+          $percentNewUsers = ($reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total']) / $reportData[$source]['userImportCSV']['usersProcessed'] * 100;
+          $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
 
-          $averageDailyNewUsers = $reportData[$source]['newUsers'] / date('j');
-          $projectedDaysToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
-          $reportData['niche']['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysToComplete, 0) . ', ' . date('Y');
-        }
-        elseif ($source == 'afterschool') {
-          $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
-          $reportData['afterschool']['budgetBackgroundColor'] = 'green';
-          $reportData['afterschool']['budgetProjectedCompletion'] = '';
+          if ($source == 'niche') {
+            $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $reportData[$source]['newUsers']) / self::NICHE_USER_BUDGET * 100;
+            $reportData['niche']['budgetPercentage'] = round($budgetPercentage, 1) . '%';
+            $reportData['niche']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
+
+            $averageDailyNewUsers = $reportData[$source]['newUsers'] / date('j');
+            $projectedDaysToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
+            $reportData['niche']['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysToComplete, 0) . ', ' . date('Y');
+          }
+          elseif ($source == 'afterschool') {
+            $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
+            $reportData['afterschool']['budgetBackgroundColor'] = 'green';
+            $reportData['afterschool']['budgetProjectedCompletion'] = '';
+          }
         }
 
         $composedReport = $this->composedReportMarkup($reportData);
