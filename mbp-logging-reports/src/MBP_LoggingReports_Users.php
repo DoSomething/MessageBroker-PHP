@@ -18,6 +18,8 @@ class MBP_LoggingReports_Users
 {
 
   const MB_LOGGING_API = '/api/v1';
+  const NICHE_USER_BUDGET = 33333;
+  const AFTERSCHOOL_USER_BUDGET = 'Unlimited';
 
   /**
    * Message Broker connection to send messages to send email request for report message.
@@ -94,6 +96,25 @@ class MBP_LoggingReports_Users
 
         $reportData[$source]['userImportCSV'] = $this->collectData('userImportCSV', $source);
         $reportData[$source]['existingUsers'] = $this->collectData('existingUsers', $source);
+        $reportData[$source]['newUsers'] = $reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total'];
+        $percentNewUsers = ($reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total']) / $reportData[$source]['userImportCSV']['usersProcessed'] * 100;
+        $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
+
+        if ($source == 'niche') {
+          $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $reportData[$source]['newUsers']) / self::NICHE_USER_BUDGET * 100;
+          $reportData['niche']['budgetPercentage'] = round($budgetPercentage, 1) . '%';
+          $reportData['niche']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
+
+          $averageDailyNewUsers = $reportData[$source]['newUsers'] / date('j');
+          $projectedDaysToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
+          $reportData['niche']['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysToComplete, 0) . ', ' . date('Y');
+        }
+        elseif ($source == 'afterschool') {
+          $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
+          $reportData['afterschool']['budgetBackgroundColor'] = 'green';
+          $reportData['niche']['budgetProjectedCompletion'] = '';
+        }
+
         $composedReport = $this->composedReportMarkup($reportData);
         break;
 
@@ -274,19 +295,24 @@ class MBP_LoggingReports_Users
    */
   private function composedReportMarkup($reportData) {
 
-    $reportContents  = '<table style="width: 100%; white-space:nowrap; border: 1px solid black; padding: 3px;">' . PHP_EOL;
-    $reportContents .= '  <tr><td>Users Processed</td><td>Existing Users</td><td>New Users</td></tr>' . PHP_EOL;
+    $reportContents  = '<table style ="border-collapse:collapse; width:100%; white-space:nowrap; border:1px solid black; padding:8px; text-align: center;">' . PHP_EOL;
+    $reportContents .= '  <tr style ="border:1px solid white; padding:3px; background-color: black; color: white; font-weight: heavy;"><td></td><td>Users Processed</td><td>Existing Users</td><td>New Users</td><td>Budget</td></tr>' . PHP_EOL;
 
     foreach ($reportData as $source => $data) {
 
-      $reportTitle  = '<h1>' . $source . '</h1>' . PHP_EOL;
-      $reportTitle .= $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . PHP_EOL;
-
-      $newUsers = $data['userImportCSV']['usersProcessed'] - $data['existingUsers']['total'];
-      $reportContents .= '  <tr><td>' . $data['userImportCSV']['usersProcessed'] . '</td><td>' .  $data['existingUsers']['total'] . '</td><td>' . $newUsers . '</td></tr>' . PHP_EOL;
+      $reportTitle .= '<strong>' . $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . '</strong>' . PHP_EOL;
+      $reportContents .= '
+        <tr style ="border:1px solid black; padding:5px; background-color: grey; color: black;">
+          <td style="text-align: right; font-size: 1.3em; font-weight: heavy; background-color: black; color: white;">' . $source . ':&nbsp;</td>
+          <td style="background-color: white;">' . $data['userImportCSV']['usersProcessed'] . '</td>
+          <td style="background-color: white;">' . $data['existingUsers']['total'] . '</td>
+          <td>' . $data['newUsers'] . ' (' . $data['percentNewUsers'] . '% new)</td>
+          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: white;">' . $data['budgetPercentage'] . '</td>
+        </tr>' . PHP_EOL;
 
     }
     $reportContents .= '</table>' . PHP_EOL;
+    $reportContents .= '<p>' . $reportData['niche']['budgetProjectedCompletion'] . '</p>';
 
     $report = $reportTitle . $reportContents;
     return $report;
@@ -336,7 +362,7 @@ class MBP_LoggingReports_Users
         'merge_vars' => array(
           'FNAME' => $to['name'],
           'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
-          'TITLE' => date('Y-m-d') . ' - Daily User Imports',
+          'TITLE' => 'Daily User Imports',
           'BODY' => $composedReport,
           'MEMBER_COUNT' => $memberCount,
         ),
@@ -348,6 +374,30 @@ class MBP_LoggingReports_Users
       $this->messageBroker->publish($payload, 'report.userimport.transactional', 1);
     }
 
+  }
+
+  /**
+   * setBugetColor() - Based on the number of new users processed, set a color value - green, yellow, red
+   * to highlight the current number of imported users.
+   *
+   * @param real $percentage
+   *   The percentage amount of imported users for the month.
+   *
+   * @return string $color
+   *   The CSS background-color property, used in report generation.
+   */
+  private function setBudgetColor($percentage) {
+
+    if ($percentage <= 80) {
+      $color = 'green';
+    }
+    if ($percentage > 80) {
+      $color = 'yellow';
+    }
+    if ($percentage > 90) {
+      $color = 'red';
+    }
+    return $color;
   }
 
 }
