@@ -15,14 +15,14 @@ require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/mbp-logging-reports.config.inc';
 
 if (isset($_GET['source'])) {
-  $source[0] = $_GET['source'];
+  $sources[0] = $_GET['source'];
 }
 elseif (isset($argv[1])) {
-  $source[0] = $argv[1];
+  $sources[0] = $argv[1];
 }
 // all
 else {
-  $source = [
+  $sources = [
     'niche',
     'afterschool'
   ];
