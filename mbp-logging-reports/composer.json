@@ -1,7 +1,7 @@
 {
   "name": "mbp-logging-reports",
   "type": "project",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A producer app for the Message Broker system  to generate scheduled reports based on the contents of the logging database.",
   "keywords": ["message broker"],
   "homepage": "https://github.com/DoSomething/MessageBroker-PHP/tree/master/mbc-logging-reports",
