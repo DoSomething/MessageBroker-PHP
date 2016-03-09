@@ -391,7 +391,7 @@ class MBP_LoggingReports_Users
         ]
       ];
 
-      $attachments[] = $reportData;
+      $attachments = $reportData;
     }
 
     return $attachments;
@@ -462,8 +462,16 @@ class MBP_LoggingReports_Users
    */
   private function dispatchSlackAlert($attachment, $recipients) {
 
-    foreach ($recipients as $recipient) {
-      $to .= $recipient . ', ';
+    $to = '';
+    $totalRecipients = count($recipients);
+    foreach ($recipients as $recipientCount => $recipient) {
+      if ($totalRecipients > 1) {
+        $to .= $recipient . ', ';
+      }
+      else {
+        $to = $recipient;
+      }
+
     }
     $this->slack->alert($to, $attachment);
   }
