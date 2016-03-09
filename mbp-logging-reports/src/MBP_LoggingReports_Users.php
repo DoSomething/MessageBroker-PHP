@@ -538,7 +538,7 @@ class MBP_LoggingReports_Users
     }
     if ($percentage > 80) {
       // yellow
-      $color['slack'] = '#FFFF00';
+      $color = '#FFFF00';
     }
     if ($percentage > 90) {
       $color = '#FF0000';
