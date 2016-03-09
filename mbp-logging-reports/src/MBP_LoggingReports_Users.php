@@ -75,6 +75,7 @@ class MBP_LoggingReports_Users
     $mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
     $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['host'] . ':' . $mbLoggingAPIConfig['port'];
     $this->statHat = $this->mbConfig->getProperty('statHat');
+    $this->slack = $this->mbConfig->getProperty('slack');
     $this->allowedSources = unserialize(ALLOWED_SOURCES);
   }
 
@@ -113,12 +114,13 @@ class MBP_LoggingReports_Users
           }
           elseif ($source == 'afterschool') {
             $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
-            $reportData['afterschool']['budgetBackgroundColor'] = 'green';
+            $reportData['afterschool']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
             $reportData['afterschool']['budgetProjectedCompletion'] = '';
           }
         }
 
-        $composedReport = $this->composedReportMarkup($reportData);
+        $composedReport['email'] = $this->composedReportMarkupEmail($reportData);
+        $composedReport['slack'] = $this->composedReportMarkupSlack($reportData);
         break;
 
       default:
@@ -127,11 +129,15 @@ class MBP_LoggingReports_Users
         break;
     }
 
+    // @todo: Coordinate sending reports. Includes to who based on $budgetStatus
+    // $budgetStatus = $this->budgetStatus('niche');
+    // $this->dispatchReport($type, $budgetStatus);
     if (empty($recipients)) {
       $recipients = $this->getRecipients();
     }
 
-    $this->dispatchReport($composedReport, $recipients);
+    $this->dispatchReport($composedReport['email'], $recipients);
+    $this->dispatchSlackAlert($composedReport['slack'], ['#message-broker']);
   }
 
   /**
@@ -296,7 +302,7 @@ class MBP_LoggingReports_Users
    * @return string
    *   The text to be displayed in the report.
    */
-  private function composedReportMarkup($reportData) {
+  private function composedReportMarkupEmail($reportData) {
 
     $reportContents  = '<table style ="border-collapse:collapse; width:100%; white-space:nowrap; border:1px solid black; padding:8px; text-align: center;">' . PHP_EOL;
     $reportContents .= '  <tr style ="border:1px solid white; padding:3px; background-color: black; color: white; font-weight: heavy;"><td></td><td>Users Processed</td><td>Existing Users</td><td>New Users</td><td>Budget</td></tr>' . PHP_EOL;
@@ -310,7 +316,7 @@ class MBP_LoggingReports_Users
           <td style="background-color: white;">' . $data['userImportCSV']['usersProcessed'] . '</td>
           <td style="background-color: white;">' . $data['existingUsers']['total'] . '</td>
           <td>' . $data['newUsers'] . ' (' . $data['percentNewUsers'] . '% new)</td>
-          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: white;">' . $data['budgetPercentage'] . '</td>
+          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: black;">' . $data['budgetPercentage'] . '</td>
         </tr>' . PHP_EOL;
       $projected = '<p>' . $data['budgetProjectedCompletion'] . '</p>';
 
@@ -319,6 +325,79 @@ class MBP_LoggingReports_Users
 
     $report = $reportTitle . $reportContents . $projected;
     return $report;
+  }
+
+
+  /**
+   * Compose the contents of the existing users import report content.
+   *
+   * @param stats array
+   *   Details of the user accounts that existed in Mailchimp, Mobile Common
+   *   and/or Drupal at the time of import.
+   *
+   * @return string
+   *   The text to be displayed in the report.
+   */
+  private function composedReportMarkupSlack($reportData) {
+
+    $attachments = [];
+
+    foreach ($reportData as $source => $data) {
+
+      $reportRange = $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'];
+
+      if ($source == 'niche') {
+
+        $reportData = [
+          'color' => '#36a64f',
+          'fallback' => 'User Import Daily Report: Niche.com',
+          'author_name' => 'Niche.com',
+          'author_icon' => 'http://static.tumblr.com/25dcac672bf20a1223baed360c75c453/mrlvgra/Jxhmu09gi/tumblr_static_niche-tumblr-logo.png',
+          'title' => 'March User Imports:' . $reportRange,
+          'title_link' => 'https://www.stathat.com/v/stats/576l/tf/1d15m',
+          'text' => 'Projected budget completion: March 17, 2016.'
+        ];
+      }
+      elseif ($source == 'afterschool') {
+
+        $reportData = [
+          'color' => '#36a64f',
+          'fallback' => 'User Import Daily Report: After School',
+          'author_name' => 'After School',
+          'author_icon' => 'http://a4.mzstatic.com/us/r30/Purple69/v4/f7/43/fc/f743fc64-0cc6-171d-2f86-8649b5d3a8e1/icon175x175.jpeg',
+          'title' => 'March User Imports: After School',
+          'title_link' => 'https://www.stathat.com/v/stats/7CNJ/tf/1d15m'
+        ];
+      }
+
+      // Common between all sources - the numbers
+      $reportData['fields'] = [
+        0 => [
+          'title' => 'Users Processed',
+          'value' => $data['userImportCSV']['usersProcessed'] ,
+          'short' => true
+        ],
+        1 => [
+          'title' => 'Existing Users',
+          'value' => $data['existingUsers']['total'],
+          'short' => true
+        ],
+        2 => [
+          'title' => 'New Users',
+          'value' => $data['newUsers'] . ' (' . $data['percentNewUsers'] .'% new)',
+          'short' => true
+        ],
+        3 => [
+          'title' => 'Budget',
+          'value' => $data['budgetPercentage'],
+          'short' => true
+        ]
+      ];
+
+      $attachments[] = $reportData;
+    }
+
+    return $attachments;
   }
 
   /**
@@ -333,11 +412,45 @@ class MBP_LoggingReports_Users
    */
   private function getRecipients() {
 
-    $to = [
+    $to['daily'] = [
       [
         'email' => 'dlee@dosomething.org',
-        'name' => 'Dee'
+        'name' => 'Dee',
+        'slack' => '#message-broker'
+      ]
+    ];
+    $to['monthly'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '@dee'
       ],
+      [
+        'email' => 'dlee+importtestreport01@dosomething.org',
+        'name' => 'Test Dee',
+        'slack' => '#message-broker'
+      ]
+    ];
+    $to['alert-dosomething'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '#message-broker'
+      ]
+    ];
+    $to['alert-niche'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '#message-broker'
+      ]
+    ];
+    $to['alert-afterschool'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '#message-broker'
+      ]
     ];
 
     return $to;
@@ -364,6 +477,8 @@ class MBP_LoggingReports_Users
         'user_country' => 'US',
         'merge_vars' => array(
           'FNAME' => $to['name'],
+          'SUBJECT' => 'Monthly User Import to Date Report - ' . date('Y-m-d'),
+          'TITLE' => 'Monthly User Imports to Date',
           'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
           'TITLE' => 'Daily User Imports',
           'BODY' => $composedReport,
@@ -380,6 +495,32 @@ class MBP_LoggingReports_Users
   }
 
   /**
+   * Send message to Slack user and/or channel.
+   *
+   * @param array attachments
+   *   Formatted message settings based on SlackAPI: https://api.slack.com/docs/formatting
+   * @param array $recipients
+   *   List of Slack user names and/or channels.
+   */
+  private function dispatchSlackAlert($attachments, $recipients) {
+
+    $to = '';
+    $totalRecipients = count($recipients);
+    foreach ($recipients as $recipientCount => $recipient) {
+      if ($totalRecipients > 1) {
+        $to .= $recipient['slack'] . ', ';
+      }
+      else {
+        $to = $recipient['slack'];
+      }
+    }
+
+    foreach ($attachments as $attachment) {
+      $this->slack->alert($to, $attachment);
+    }
+  }
+
+  /**
    * setBugetColor() - Based on the number of new users processed, set a color value - green, yellow, red
    * to highlight the current number of imported users.
    *
@@ -392,13 +533,15 @@ class MBP_LoggingReports_Users
   private function setBudgetColor($percentage) {
 
     if ($percentage <= 80) {
-      $color = 'green';
+      // green
+      $color = '#00FF00';
     }
     if ($percentage > 80) {
-      $color = 'yellow';
+      // yellow
+      $color = '#FFFF00';
     }
     if ($percentage > 90) {
-      $color = 'red';
+      $color = '#FF0000';
     }
     return $color;
   }

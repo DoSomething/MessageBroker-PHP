@@ -7,6 +7,7 @@ use DoSomething\MB_Toolbox\MB_Configuration;
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
+use DoSomething\MB_Toolbox\MB_Slack;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
@@ -35,6 +36,9 @@ $mbConfig->setProperty('ds_drupal_api_config', [
   'username' => getenv("DS_DRUPAL_API_USERNAME"),
   'password' => getenv('DS_DRUPAL_API_PASSWORD'),
 ]);
+$mbConfig->setProperty('slack_config', [
+  'webhookURL' => getenv("SLACK_WEBHOOK_URL")
+]);
 $mbConfig->setProperty('rabbit_credentials', [
   'host' =>  getenv("RABBITMQ_HOST"),
   'port' => getenv("RABBITMQ_PORT"),
@@ -49,3 +53,4 @@ $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $m
 
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
+$mbConfig->setProperty('slack', new MB_Slack());
