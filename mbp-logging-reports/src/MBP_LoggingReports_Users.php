@@ -337,58 +337,64 @@ class MBP_LoggingReports_Users
    */
   private function composedReportMarkupSlack($reportData) {
 
-<<<<<<< HEAD
-    foreach ($reportData as $source => $data) {
-
-      // Email
-      $reportContentsEmail  = '<table style="width: 100%; white-space:nowrap; border: 1px solid black; padding: 3px;">' . PHP_EOL;
-      $reportContentsEmail .= '  <tr><td>Users Processed</td><td>Existing Users</td><td>New Users</td></tr>' . PHP_EOL;
-
-      $reportRange  = $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . PHP_EOL;
-      $reportTitleEmail  = '<h1>' . $source . '</h1>' . PHP_EOL;
-      $reportTitleEmail .= $reportRange;
-
-      $newUsers = $data['userImportCSV']['usersProcessed'] - $data['existingUsers']['total'];
-      $reportContentsEmail .= '  <tr><td>' . $data['userImportCSV']['usersProcessed'] . '</td><td>' .  $data['existingUsers']['total'] . '</td><td>' . $newUsers . '</td></tr>' . PHP_EOL;
-      $reportContentsEmail .= '</table>' . PHP_EOL;
-
-      $report['email'][$source] = $reportTitleEmail . $reportContentsEmail;
-
-      // Slack
-      $reportTitleSlack  = 'Source: ' . $source;
-      $reportTitleSlack .= 'Range: ' . $reportRange;
-      $reportTitleSlack .= '--------';
-=======
-    $reportContents  = '<table style ="border-collapse:collapse; width:100%; white-space:nowrap; border:1px solid black; padding:8px; text-align: center;">' . PHP_EOL;
-    $reportContents .= '  <tr style ="border:1px solid white; padding:3px; background-color: black; color: white; font-weight: heavy;"><td></td><td>Users Processed</td><td>Existing Users</td><td>New Users</td><td>Budget</td></tr>' . PHP_EOL;
+    $attachments = [];
 
     foreach ($reportData as $source => $data) {
 
-      $reportTitle = '<strong>' . $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'] . '</strong>' . PHP_EOL;
-      $reportContents .= '
-        <tr style ="border:1px solid black; padding:5px; background-color: grey; color: black;">
-          <td style="text-align: right; font-size: 1.3em; font-weight: heavy; background-color: black; color: white;">' . $source . ':&nbsp;</td>
-          <td style="background-color: white;">' . $data['userImportCSV']['usersProcessed'] . '</td>
-          <td style="background-color: white;">' . $data['existingUsers']['total'] . '</td>
-          <td>' . $data['newUsers'] . ' (' . $data['percentNewUsers'] . '% new)</td>
-          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: white;">' . $data['budgetPercentage'] . '</td>
-        </tr>' . PHP_EOL;
-      $projected = '<p>' . $data['budgetProjectedCompletion'] . '</p>';
->>>>>>> master
+      $reportRange = $data['userImportCSV']['startDate'] . ' - ' . $data['userImportCSV']['endDate'];
 
-      $reportContentsSlack  = 'Users Processed: ' . $data['userImportCSV']['usersProcessed'];
-      $reportContentsSlack .= 'Existing Users: ' . $data['userImportCSV']['usersProcessed'];
-      $reportContentsSlack .= ' =========';
-      $reportContentsSlack .= 'New Users: ' . $data['userImportCSV']['usersProcessed'];
+      if ($source == 'niche') {
 
-      $report['slack'][$source] = $reportTitleSlack . $reportContentsSlack;
+        $reportData = [
+          'color' => '#36a64f',
+          'fallback' => 'User Import Daily Report: Niche.com',
+          'author_name' => 'Niche.com',
+          'author_icon' => 'http://static.tumblr.com/25dcac672bf20a1223baed360c75c453/mrlvgra/Jxhmu09gi/tumblr_static_niche-tumblr-logo.png',
+          'title' => 'March User Imports:' . $reportRange,
+          'title_link' => 'https://www.stathat.com/v/stats/576l/tf/1d15m',
+          'text' => 'Projected budget completion: March 17, 2016.'
+        ];
+      }
+      elseif ($source == 'afterschool') {
+
+        $reportData = [
+          'color' => '#36a64f',
+          'fallback' => 'User Import Daily Report: After School',
+          'author_name' => 'After School',
+          'author_icon' => 'http://a4.mzstatic.com/us/r30/Purple69/v4/f7/43/fc/f743fc64-0cc6-171d-2f86-8649b5d3a8e1/icon175x175.jpeg',
+          'title' => 'March User Imports: After School',
+          'title_link' => 'https://www.stathat.com/v/stats/7CNJ/tf/1d15m'
+        ];
+      }
+
+      // Common between all sources - the numbers
+      $reportData['fields'] = [
+        0 => [
+          'title' => 'Users Processed',
+          'value' => $data['userImportCSV']['usersProcessed'] ,
+          'short' => true
+        ],
+        1 => [
+          'title' => 'Existing Users',
+          'value' => $data['existingUsers']['total'],
+          'short' => true
+        ],
+        2 => [
+          'title' => 'New Users',
+          'value' => $data['newUsers'] . ' (' . $data['percentNewUsers'] .'% new)',
+          'short' => true
+        ],
+        3 => [
+          'title' => 'Budget',
+          'value' => $data['budgetPercentage'],
+          'short' => true
+        ]
+      ];
+
+      $attachments[] = $reportData;
     }
 
-<<<<<<< HEAD
-=======
-    $report = $reportTitle . $reportContents . $projected;
->>>>>>> master
-    return $report;
+    return $attachments;
   }
 
   /**
@@ -434,13 +440,10 @@ class MBP_LoggingReports_Users
         'user_country' => 'US',
         'merge_vars' => array(
           'FNAME' => $to['name'],
-<<<<<<< HEAD
           'SUBJECT' => 'Monthly User Import to Date Report - ' . date('Y-m-d'),
           'TITLE' => 'Monthly User Imports to Date',
-=======
           'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
           'TITLE' => 'Daily User Imports',
->>>>>>> master
           'BODY' => $composedReport,
           'MEMBER_COUNT' => $memberCount,
         ),
@@ -455,17 +458,17 @@ class MBP_LoggingReports_Users
   }
 
   /**
-<<<<<<< HEAD
    *
    */
-  private function dispatchSlackAlert($composedReport, $recipients) {
+  private function dispatchSlackAlert($attachment, $recipients) {
 
     foreach ($recipients as $recipient) {
-      $to .= $recipient . ' ';
+      $to .= $recipient . ', ';
     }
+    $this->slack->alert($to, $attachment);
+  }
 
-    $this->slack->alert($to, $composedReport);
-=======
+  /**
    * setBugetColor() - Based on the number of new users processed, set a color value - green, yellow, red
    * to highlight the current number of imported users.
    *
@@ -487,7 +490,6 @@ class MBP_LoggingReports_Users
       $color = 'red';
     }
     return $color;
->>>>>>> master
   }
 
 }
