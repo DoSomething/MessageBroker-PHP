@@ -114,7 +114,7 @@ class MBP_LoggingReports_Users
           }
           elseif ($source == 'afterschool') {
             $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
-            $reportData['afterschool']['budgetBackgroundColor'] = 'green';
+            $reportData['afterschool']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
             $reportData['afterschool']['budgetProjectedCompletion'] = '';
           }
         }
@@ -134,7 +134,7 @@ class MBP_LoggingReports_Users
     }
 
     $this->dispatchReport($composedReport['email'], $recipients);
-    $this->dispatchSlackAlert($composedReport['slack'], ['@dee']);
+    $this->dispatchSlackAlert($composedReport['slack'], ['#message-broker']);
   }
 
   /**
@@ -313,7 +313,7 @@ class MBP_LoggingReports_Users
           <td style="background-color: white;">' . $data['userImportCSV']['usersProcessed'] . '</td>
           <td style="background-color: white;">' . $data['existingUsers']['total'] . '</td>
           <td>' . $data['newUsers'] . ' (' . $data['percentNewUsers'] . '% new)</td>
-          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: white;">' . $data['budgetPercentage'] . '</td>
+          <td style="background-color: ' . $data['budgetBackgroundColor'] . '; color: black;">' . $data['budgetPercentage'] . '</td>
         </tr>' . PHP_EOL;
       $projected = '<p>' . $data['budgetProjectedCompletion'] . '</p>';
 
@@ -391,7 +391,7 @@ class MBP_LoggingReports_Users
         ]
       ];
 
-      $attachments = $reportData;
+      $attachments[] = $reportData;
     }
 
     return $attachments;
@@ -412,7 +412,8 @@ class MBP_LoggingReports_Users
     $to = [
       [
         'email' => 'dlee@dosomething.org',
-        'name' => 'Dee'
+        'name' => 'Dee',
+        'slack' => '#message-broker'
       ],
     ];
 
@@ -458,22 +459,29 @@ class MBP_LoggingReports_Users
   }
 
   /**
+   * Send message to Slack user and/or channel.
    *
+   * @param array attachments
+   *   Formatted message settings based on SlackAPI: https://api.slack.com/docs/formatting
+   * @param array $recipients
+   *   List of Slack user names and/or channels.
    */
-  private function dispatchSlackAlert($attachment, $recipients) {
+  private function dispatchSlackAlert($attachments, $recipients) {
 
     $to = '';
     $totalRecipients = count($recipients);
     foreach ($recipients as $recipientCount => $recipient) {
       if ($totalRecipients > 1) {
-        $to .= $recipient . ', ';
+        $to .= $recipient['slack'] . ', ';
       }
       else {
-        $to = $recipient;
+        $to = $recipient['slack'];
       }
-
     }
-    $this->slack->alert($to, $attachment);
+
+    foreach ($attachments as $attachment) {
+      $this->slack->alert($to, $attachment);
+    }
   }
 
   /**
@@ -489,13 +497,15 @@ class MBP_LoggingReports_Users
   private function setBudgetColor($percentage) {
 
     if ($percentage <= 80) {
-      $color = 'green';
+      // green
+      $color = '#00FF00';
     }
     if ($percentage > 80) {
-      $color = 'yellow';
+      // yellow
+      $color['slack'] = '#FFFF00';
     }
     if ($percentage > 90) {
-      $color = 'red';
+      $color = '#FF0000';
     }
     return $color;
   }
