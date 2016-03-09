@@ -129,6 +129,9 @@ class MBP_LoggingReports_Users
         break;
     }
 
+    // @todo: Coordinate sending reports. Includes to who based on $budgetStatus
+    // $budgetStatus = $this->budgetStatus('niche');
+    // $this->dispatchReport($type, $budgetStatus);
     if (empty($recipients)) {
       $recipients = $this->getRecipients();
     }
@@ -409,12 +412,45 @@ class MBP_LoggingReports_Users
    */
   private function getRecipients() {
 
-    $to = [
+    $to['daily'] = [
       [
         'email' => 'dlee@dosomething.org',
         'name' => 'Dee',
         'slack' => '#message-broker'
+      ]
+    ];
+    $to['monthly'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '@dee'
       ],
+      [
+        'email' => 'dlee+importtestreport01@dosomething.org',
+        'name' => 'Test Dee',
+        'slack' => '#message-broker'
+      ]
+    ];
+    $to['alert-dosomething'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '#message-broker'
+      ]
+    ];
+    $to['alert-niche'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '#message-broker'
+      ]
+    ];
+    $to['alert-afterschool'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '#message-broker'
+      ]
     ];
 
     return $to;
