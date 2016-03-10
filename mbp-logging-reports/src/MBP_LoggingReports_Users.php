@@ -136,7 +136,7 @@ class MBP_LoggingReports_Users
       $recipients = $this->getRecipients('daily');
     }
 
-    $this->dispatchReport($composedReport['email'], $recipients);
+    $this->dispatchReportEmail($composedReport['email'], $recipients);
     $this->dispatchSlackAlert($composedReport['slack'], ['#message-broker']);
   }
 
@@ -465,7 +465,7 @@ class MBP_LoggingReports_Users
    * @param array $recipients
    *   A list of users to send the report to.
    */
-  private function dispatchReport($composedReport, $recipients) {
+  private function dispatchReportEmail($composedReport, $recipients) {
     
     $memberCount = $this->mbToolbox->getDSMemberCount();
 
