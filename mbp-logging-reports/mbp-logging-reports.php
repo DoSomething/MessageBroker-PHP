@@ -20,7 +20,6 @@ if (isset($_GET['source'])) {
 elseif (isset($argv[1])) {
   $sources[0] = $argv[1];
 }
-
 if ($sources[0] == 'all') {
   $sources = [
     'niche',
