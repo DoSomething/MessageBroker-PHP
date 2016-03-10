@@ -133,7 +133,7 @@ class MBP_LoggingReports_Users
     // $budgetStatus = $this->budgetStatus('niche');
     // $this->dispatchReport($type, $budgetStatus);
     if (empty($recipients)) {
-      $recipients = $this->getRecipients();
+      $recipients = $this->getRecipients('daily');
     }
 
     $this->dispatchReport($composedReport['email'], $recipients);
@@ -403,14 +403,14 @@ class MBP_LoggingReports_Users
   /**
    * Compose the contents of the existing users import report content.
    *
-   * @param stats array
-   *   Details of the user accounts that existed in Mailchimp, Mobile Common
-   *   and/or Drupal at the time of import.
+   * @param string $type.
+   *   The type of report defines who will get.
    *
-   * @return string
-   *   The text to be displayed in the report.
+   * @return array
+   *   The values for the various forms of reporting.
+   *
    */
-  private function getRecipients() {
+  private function getRecipients($type) {
 
     $to['daily'] = [
       [
@@ -452,6 +452,7 @@ class MBP_LoggingReports_Users
         'slack' => '#message-broker'
       ]
     ];
+    $recipients = $to[$type];
 
     return $to;
   }
