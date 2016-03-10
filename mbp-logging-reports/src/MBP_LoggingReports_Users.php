@@ -454,7 +454,7 @@ class MBP_LoggingReports_Users
     ];
     $recipients = $to[$type];
 
-    return $to;
+    return $recipients;
   }
 
   /**
@@ -509,10 +509,10 @@ class MBP_LoggingReports_Users
     $totalRecipients = count($recipients);
     foreach ($recipients as $recipientCount => $recipient) {
       if ($totalRecipients > 1) {
-        $to .= $recipient['slack'] . ', ';
+        $to .= $recipient . ', ';
       }
       else {
-        $to = $recipient['slack'];
+        $to = $recipient;
       }
     }
 
