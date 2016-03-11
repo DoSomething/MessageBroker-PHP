@@ -121,6 +121,7 @@ class MBP_LoggingReports_Users
 
         $composedReport['email'] = $this->composedReportMarkupEmail($reportData);
         $composedReport['slack'] = $this->composedReportMarkupSlack($reportData);
+        $this->reportCorrdinator($type, $composedReport);
         break;
 
       default:
@@ -129,15 +130,6 @@ class MBP_LoggingReports_Users
         break;
     }
 
-    // @todo: Coordinate sending reports. Includes to who based on $budgetStatus
-    // $budgetStatus = $this->budgetStatus('niche');
-    // $this->dispatchReport($type, $budgetStatus);
-    if (empty($recipients)) {
-      $recipients = $this->getRecipients('daily');
-    }
-
-    $this->dispatchReportEmail($composedReport['email'], $recipients);
-    $this->dispatchSlackAlert($composedReport['slack'], ['#message-broker']);
   }
 
   /**
@@ -419,6 +411,13 @@ class MBP_LoggingReports_Users
         'slack' => '#message-broker'
       ]
     ];
+    $to['runningMonth'] = [
+      [
+        'email' => 'dlee@dosomething.org',
+        'name' => 'Dee',
+        'slack' => '#message-broker'
+      ]
+    ];
     $to['monthly'] = [
       [
         'email' => 'dlee@dosomething.org',
@@ -542,9 +541,42 @@ class MBP_LoggingReports_Users
       $color = '#FFFF00';
     }
     if ($percentage > 90) {
+      // red
       $color = '#FF0000';
     }
     return $color;
+  }
+
+  /**
+   *
+   */
+  private function reportCorrdinator($type, $composedReport) {
+
+    foreach ($composedReport as $source => $data)
+
+      $budgetStatus = $this->budgetStatus($type, $source);
+      if ($budgetStatus == 'ok') {
+        $recipients = $this->getRecipients($type);
+      }
+      elseif ($budgetStatus == 'warning') {
+        $alertType = 'warning-' . $source;
+        $recipients = $this->getRecipients($alertType);
+      }
+      elseif ($budgetStatus == 'alert') {
+        $alertType = 'alert-' . $source;
+        $recipients = $this->getRecipients($alertType);
+      }
+
+      $this->dispatchReportEmail($composedReport['email'], $recipients);
+      $this->dispatchSlackAlert($composedReport['slack'], $recipients);
+    }
+  }
+
+  /**
+   *
+   */
+  private function budgetStatus($type, $source) {
+
   }
 
 }
