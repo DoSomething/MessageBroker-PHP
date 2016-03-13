@@ -55,3 +55,4 @@ $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $m
 
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
+$mbConfig->setProperty('mbSlack', new MB_Slack());
