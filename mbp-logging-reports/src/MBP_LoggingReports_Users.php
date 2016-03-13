@@ -72,11 +72,10 @@ class MBP_LoggingReports_Users
     $this->messageBroker = $this->mbConfig->getProperty('messageBroker');
     $this->mbToolbox = $this->mbConfig->getProperty('mbToolbox');
     $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
+    $this->slack = $this->mbConfig->getProperty('mbSlack');
     $mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
     $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['host'] . ':' . $mbLoggingAPIConfig['port'];
     $this->statHat = $this->mbConfig->getProperty('statHat');
-    $this->slackMessageBroker = $this->mbConfig->getProperty('slack_message_broker');
-    $this->slackAfterSchool = $this->mbConfig->getProperty('slack_after_school');
     $this->allowedSources = unserialize(ALLOWED_SOURCES);
   }
 
@@ -139,7 +138,7 @@ class MBP_LoggingReports_Users
     }
 
     $this->dispatchEmailReport($composedReport['email'], $recipients);
-    $this->dispatchSlackAlert($composedReport['slack'], $recipients);
+    $this->dispatchSlackAlert($sources, $composedReport['slack'], $recipients);
   }
 
   /**
@@ -417,32 +416,47 @@ class MBP_LoggingReports_Users
     if ($type = 'runningMonth') {
 
       if (count($sources) > 1) {
+        // "all" as source, also send a copy of all of the reports
         $recipients[] = [
           'general' => [
-            'email' => 'dlee@dosomething.org',
+            'email' => 'dlee@dosomehting.org',
             'name' => 'Dee',
-            'slack' => '#message-broker'
-          ]
-        ];
-      }
-      if (in_array('niche', $sources)) {
-        $recipients[] = [
-          'alert' => [
-            'email' => 'dlee@dosomething.org',
-            'name' => 'Dee',
-            'slack' => '#niche_monitoring'
-          ]
-        ];
-      }
-      if (in_array('afterschool', $sources)) {
-        $recipients[] = [
-          'general' => [
-            'slack' => '#after-school-internal'
+            'slack' => '#quicksilver'
           ],
           'alert' => [
-            'slack' => '#after-school-internal'
+            'email' => 'dlee@dosomehting.org',
+            'slack' => '#quicksilver'
           ]
         ];
+      }
+      else {
+        foreach ($sources as $source) {
+          if ($source == 'niche') {
+            $recipients[] = [
+              'general' => [
+                'email' => 'dlee@dosomething.org',
+                'name' => 'Dee',
+                'slack' => '#quicksilver'
+              ],
+              'alert' => [
+                'email' => 'dlee@dosomething.org',
+                'name' => 'Dee',
+                'slack' => '#niche_monitoring'
+              ]
+            ];
+          }
+          if ($source == 'afterschool') {
+            $recipients[] = [
+              'general' => [
+                'slack' => '#after-school-internal'
+              ],
+              'alert' => [
+                'email' => 'dlee@dosomehting.org',
+                'slack' => '#after-school-internal'
+              ]
+            ];
+          }
+        }
       }
 
     }
@@ -469,15 +483,15 @@ class MBP_LoggingReports_Users
 
     foreach ($recipients as $to) {
 
-      if (isset($to['email'][$status])) {
+      if (isset($to[$status]['email'])) {
         $message = array(
           'from_email' => 'machines@dosomething.org',
-          'email' => $to['email'],
+          'email' => $to[$status]['email'],
           'activity' => 'mb-reports',
           'email_template' => 'mb-user-import-report',
           'user_country' => 'US',
           'merge_vars' => array(
-            'FNAME' => $to['name'],
+            'FNAME' => $to[$status]['name'],
             'SUBJECT' => 'Monthly User Import to Date Report - ' . date('Y-m-d'),
             'TITLE' => 'Monthly User Imports to Date',
             'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
@@ -504,26 +518,26 @@ class MBP_LoggingReports_Users
    * @param array $recipients
    *   List of Slack user names and/or channels.
    */
-  private function dispatchSlackAlert($source, $attachments, $recipients) {
+  private function dispatchSlackAlert($sources, $attachments, $recipients) {
 
-    $to = '';
-    $channelNames = '';
     foreach ($recipients as $recipient) {
 
       // Channels
-      if (isset($recipient['general']['slack']) && strpos($recipient['general']['slack'], '#') !== false) {
-        $channelNames[] = $recipient['general']['slack'];
-      }
-      if (isset($recipient['alert']['slack']) && strpos($recipient['alert']['slack'], '#') !== false) {
+      $alert = false;
+      if (isset($recipient['alert']['slack']) && strpos($recipient['alert']['slack'], '#') !== false && $alert == true) {
         $channelNames[] = $recipient['alert']['slack'];
+      }
+      elseif (isset($recipient['general']['slack']) && strpos($recipient['general']['slack'], '#') !== false && $alert == false) {
+        $channelNames[] = $recipient['general']['slack'];
       }
 
       // Users
-      if (isset($recipient['general']['slack']) && strpos($recipient['general']['slack'], '@') !== false) {
-        $to[] = $recipient['general']['slack'];
-      }
-      if (isset($recipient['alert']['slack']) && strpos($recipient['alert']['slack'], '@') !== false) {
+      $to = $channelNames;
+      if (isset($recipient['alert']['slack']) && strpos($recipient['alert']['slack'], '@') !== false && $alert == true) {
         $to[] = $recipient['alert']['slack'];
+      }
+      elseif (isset($recipient['general']['slack']) && strpos($recipient['general']['slack'], '@') !== false && $alert == false) {
+        $to[] = $recipient['general']['slack'];
       }
       $to = implode(', ', $to);
 
