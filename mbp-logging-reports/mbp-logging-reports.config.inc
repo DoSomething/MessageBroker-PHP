@@ -38,6 +38,7 @@ $mbConfig->setProperty('ds_drupal_api_config', [
 ]);
 $mbConfig->setProperty('slack_config', [
   'webhookURL_message-broker' => getenv("SLACK_WEBHOOK_MESSAGEBROKER"),
+  'webhookURL_niche_monitoring ' => getenv("SLACK_WEBHOOK_NICHE_MONITORING"),
   'webhookURL_after-school-internal' => getenv("SLACK_WEBHOOK_AFTERSCHOOL_INTERNAL")
 ]);
 $mbConfig->setProperty('rabbit_credentials', [
@@ -54,4 +55,3 @@ $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $m
 
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
-$mbConfig->setProperty('slack', new MB_Slack());
