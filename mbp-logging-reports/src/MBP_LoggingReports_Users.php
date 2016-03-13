@@ -75,7 +75,8 @@ class MBP_LoggingReports_Users
     $mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
     $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['host'] . ':' . $mbLoggingAPIConfig['port'];
     $this->statHat = $this->mbConfig->getProperty('statHat');
-    $this->slack = $this->mbConfig->getProperty('slack');
+    $this->slackMessageBroker = $this->mbConfig->getProperty('slack_message_broker');
+    $this->slackAfterSchool = $this->mbConfig->getProperty('slack_after_school');
     $this->allowedSources = unserialize(ALLOWED_SOURCES);
   }
 
@@ -121,6 +122,7 @@ class MBP_LoggingReports_Users
 
         $composedReport['email'] = $this->composedReportMarkupEmail($reportData);
         $composedReport['slack'] = $this->composedReportMarkupSlack($reportData);
+
         break;
 
       default:
@@ -133,11 +135,11 @@ class MBP_LoggingReports_Users
     // $budgetStatus = $this->budgetStatus('niche');
     // $this->dispatchReport($type, $budgetStatus);
     if (empty($recipients)) {
-      $recipients = $this->getRecipients('daily');
+      $recipients = $this->getRecipients($type, $sources);
     }
 
-    $this->dispatchReport($composedReport['email'], $recipients);
-    $this->dispatchSlackAlert($composedReport['slack'], ['#message-broker']);
+    $this->dispatchEmailReport($composedReport['email'], $recipients);
+    $this->dispatchSlackAlert($composedReport['slack'], $recipients);
   }
 
   /**
@@ -293,7 +295,7 @@ class MBP_LoggingReports_Users
   }
 
   /**
-   * Compose the contents of the existing users import report content.
+   * Compose the contents of the existing users import report content for email.
    *
    * @param stats array
    *   Details of the user accounts that existed in Mailchimp, Mobile Common
@@ -327,9 +329,8 @@ class MBP_LoggingReports_Users
     return $report;
   }
 
-
   /**
-   * Compose the contents of the existing users import report content.
+   * Compose the contents of the existing users import report content for Slack.
    *
    * @param stats array
    *   Details of the user accounts that existed in Mailchimp, Mobile Common
@@ -403,94 +404,94 @@ class MBP_LoggingReports_Users
   /**
    * Compose the contents of the existing users import report content.
    *
-   * @param string $type.
+   * @param string $type
    *   The type of report defines who will get.
+   * @param array $sources
    *
    * @return array
    *   The values for the various forms of reporting.
    *
    */
-  private function getRecipients($type) {
+  private function getRecipients($type, $sources) {
 
-    $to['daily'] = [
-      [
-        'email' => 'dlee@dosomething.org',
-        'name' => 'Dee',
-        'slack' => '#message-broker'
-      ]
-    ];
-    $to['monthly'] = [
-      [
-        'email' => 'dlee@dosomething.org',
-        'name' => 'Dee',
-        'slack' => '@dee'
-      ],
-      [
-        'email' => 'dlee+importtestreport01@dosomething.org',
-        'name' => 'Test Dee',
-        'slack' => '#message-broker'
-      ]
-    ];
-    $to['alert-dosomething'] = [
-      [
-        'email' => 'dlee@dosomething.org',
-        'name' => 'Dee',
-        'slack' => '#message-broker'
-      ]
-    ];
-    $to['alert-niche'] = [
-      [
-        'email' => 'dlee@dosomething.org',
-        'name' => 'Dee',
-        'slack' => '#message-broker'
-      ]
-    ];
-    $to['alert-afterschool'] = [
-      [
-        'email' => 'dlee@dosomething.org',
-        'name' => 'Dee',
-        'slack' => '#message-broker'
-      ]
-    ];
-    $recipients = $to[$type];
+    if ($type = 'runningMonth') {
+
+      if (count($sources) > 1) {
+        $recipients[] = [
+          'general' => [
+            'email' => 'dlee@dosomething.org',
+            'name' => 'Dee',
+            'slack' => '#message-broker'
+          ]
+        ];
+      }
+      if (in_array('niche', $sources)) {
+        $recipients[] = [
+          'alert' => [
+            'email' => 'dlee@dosomething.org',
+            'name' => 'Dee',
+            'slack' => '#niche_monitoring'
+          ]
+        ];
+      }
+      if (in_array('afterschool', $sources)) {
+        $recipients[] = [
+          'general' => [
+            'slack' => '#after-school-internal'
+          ],
+          'alert' => [
+            'slack' => '#after-school-internal'
+          ]
+        ];
+      }
+
+    }
+
+    if (count($recipients) == 0) {
+      throw new Exception('getRecipients() did not generate $recipients entries.');
+    }
 
     return $recipients;
   }
 
   /**
-   * Send report to appropriate managers.
+   * Send email report to appropriate managers.
    *
    * @param string $existingUsersReport string
    *   Details of the summary log entries for each import batch.
    * @param array $recipients
    *   A list of users to send the report to.
    */
-  private function dispatchReport($composedReport, $recipients) {
+  private function dispatchEmailReport($composedReport, $recipients) {
     
+    $status = 'general';
     $memberCount = $this->mbToolbox->getDSMemberCount();
 
     foreach ($recipients as $to) {
-      $message = array(
-        'from_email' => 'machines@dosomething.org',
-        'email' => $to['email'],
-        'activity' => 'mb-reports',
-        'email_template' => 'mb-user-import-report',
-        'user_country' => 'US',
-        'merge_vars' => array(
-          'FNAME' => $to['name'],
-          'SUBJECT' => 'Monthly User Import to Date Report - ' . date('Y-m-d'),
-          'TITLE' => 'Monthly User Imports to Date',
-          'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
-          'TITLE' => 'Daily User Imports',
-          'BODY' => $composedReport,
-          'MEMBER_COUNT' => $memberCount,
-        ),
-        'email_tags' => array(
-          0 => 'mb-user-import-report',
-        )
-      );
-      $payload = json_encode($message);
-      $this->messageBroker->publish($payload, 'report.userimport.transactional', 1);
+
+      if (isset($to['email'][$status])) {
+        $message = array(
+          'from_email' => 'machines@dosomething.org',
+          'email' => $to['email'],
+          'activity' => 'mb-reports',
+          'email_template' => 'mb-user-import-report',
+          'user_country' => 'US',
+          'merge_vars' => array(
+            'FNAME' => $to['name'],
+            'SUBJECT' => 'Monthly User Import to Date Report - ' . date('Y-m-d'),
+            'TITLE' => 'Monthly User Imports to Date',
+            'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
+            'TITLE' => 'Daily User Imports',
+            'BODY' => $composedReport,
+            'MEMBER_COUNT' => $memberCount,
+          ),
+          'email_tags' => array(
+            0 => 'mb-user-import-report',
+          )
+        );
+        $payload = json_encode($message);
+        $this->messageBroker->publish($payload, 'report.userimport.transactional', 1);
+      }
     }
 
   }
@@ -503,21 +504,33 @@ class MBP_LoggingReports_Users
    * @param array $recipients
    *   List of Slack user names and/or channels.
    */
-  private function dispatchSlackAlert($attachments, $recipients) {
+  private function dispatchSlackAlert($source, $attachments, $recipients) {
 
     $to = '';
-    $totalRecipients = count($recipients);
-    foreach ($recipients as $recipientCount => $recipient) {
-      if ($totalRecipients > 1) {
-        $to .= $recipient . ', ';
+    $channelNames = '';
+    foreach ($recipients as $recipient) {
+
+      // Channels
+      if (isset($recipient['general']['slack']) && strpos($recipient['general']['slack'], '#') !== false) {
+        $channelNames[] = $recipient['general']['slack'];
       }
-      else {
-        $to = $recipient;
+      if (isset($recipient['alert']['slack']) && strpos($recipient['alert']['slack'], '#') !== false) {
+        $channelNames[] = $recipient['alert']['slack'];
       }
+
+      // Users
+      if (isset($recipient['general']['slack']) && strpos($recipient['general']['slack'], '@') !== false) {
+        $to[] = $recipient['general']['slack'];
+      }
+      if (isset($recipient['alert']['slack']) && strpos($recipient['alert']['slack'], '@') !== false) {
+        $to[] = $recipient['alert']['slack'];
+      }
+      $to = implode(', ', $to);
+
     }
 
     foreach ($attachments as $attachment) {
-      $this->slack->alert($to, $attachment);
+      $this->slack->alert($to, $attachment, $channelNames);
     }
   }
 
