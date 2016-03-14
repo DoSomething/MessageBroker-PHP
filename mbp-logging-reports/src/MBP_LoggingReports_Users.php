@@ -163,13 +163,13 @@ class MBP_LoggingReports_Users
       $startDateStamp = date('Y-m', strtotime($targetStartDate)) . '-01';;
     }
     else {
-      $startDateStamp = strtotime('first day of this month');
+      $startDateStamp = mktime(0, 0, 0, date('n'), 1, date('Y'));
     }
     if ($endDate != null) {
       $endDateStamp = date('Y-m', strtotime($targetStartDate . ' + 1 month')) . '-01';
     }
     else {
-      $endDateStamp = strtotime('today midnight');
+      $endDateStamp = mktime(0, 0, 0, date('n') + 1, date('j'), date('Y'));
     }
 
     // Existing user imports from $source
