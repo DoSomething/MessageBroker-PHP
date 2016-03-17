@@ -91,6 +91,13 @@ class MBP_LoggingReports_Users
    */
   public function report($type, $sources, $recipients = null) {
 
+    // @todo: Coordinate sending reports. Includes to who based on $budgetStatus
+    // $budgetStatus = $this->budgetStatus('niche');
+    // $this->dispatchReport($type, $budgetStatus);
+    if (empty($recipients)) {
+      $recipients = $this->getRecipients($type, $sources);
+    }
+
     switch($type) {
 
       case 'runningMonth':
@@ -102,25 +109,18 @@ class MBP_LoggingReports_Users
           $reportData[$source]['newUsers'] = $reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total'];
           $percentNewUsers = ($reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total']) / $reportData[$source]['userImportCSV']['usersProcessed'] * 100;
           $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
+          $status = $this->budgetStatus($source, $type, $reportData[$source]['newUsers']);
 
-          if ($source == 'niche') {
-            $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $reportData[$source]['newUsers']) / self::NICHE_USER_BUDGET * 100;
-            $reportData['niche']['budgetPercentage'] = round($budgetPercentage, 1) . '%';
-            $reportData['niche']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
+          $reportData[$source]['budgetPercentage'] = $status['budgetPercentage'];
+          $reportData[$source]['budgetBackgroundColor'] = $status['budgetBackgroundColor'];
+          $reportData[$source]['budgetProjectedCompletion'] = $status['budgetProjectedCompletion'];
 
-            $averageDailyNewUsers = $reportData[$source]['newUsers'] / date('j');
-            $projectedDaysToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
-            $reportData['niche']['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysToComplete, 0) . ', ' . date('Y');
-          }
-          elseif ($source == 'afterschool') {
-            $reportData['afterschool']['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
-            $reportData['afterschool']['budgetBackgroundColor'] = $this->setBudgetColor($reportData[$source]['budgetPercentage']);
-            $reportData['afterschool']['budgetProjectedCompletion'] = '';
-          }
+          $composedReport = $this->composedReportMarkupEmail($reportData);
+          $this->dispatchEmailReport($source, $composedReport, $recipients, $status['budgetState']);
+
+          $composedReport = $this->composedReportMarkupSlack($reportData);
+          $this->dispatchSlackAlert($source, $composedReport, $recipients, $status['budgetState']);
         }
-
-        $composedReport['email'] = $this->composedReportMarkupEmail($reportData);
-        $composedReport['slack'] = $this->composedReportMarkupSlack($reportData);
 
         break;
 
@@ -130,15 +130,6 @@ class MBP_LoggingReports_Users
         break;
     }
 
-    // @todo: Coordinate sending reports. Includes to who based on $budgetStatus
-    // $budgetStatus = $this->budgetStatus('niche');
-    // $this->dispatchReport($type, $budgetStatus);
-    if (empty($recipients)) {
-      $recipients = $this->getRecipients($type, $sources);
-    }
-
-    $this->dispatchEmailReport($composedReport['email'], $recipients);
-    $this->dispatchSlackAlert($sources, $composedReport['slack'], $recipients);
   }
 
   /**
@@ -169,7 +160,7 @@ class MBP_LoggingReports_Users
       $endDateStamp = date('Y-m', strtotime($targetStartDate . ' + 1 month')) . '-01';
     }
     else {
-      $endDateStamp = mktime(0, 0, 0, date('n') + 1, date('j'), date('Y'));
+      $endDateStamp = mktime(0, 0, 0, date('n'), date('j') + 1, date('Y'));
     }
 
     // Existing user imports from $source
@@ -349,7 +340,7 @@ class MBP_LoggingReports_Users
       if ($source == 'niche') {
 
         $reportData = [
-          'color' => '#36a64f',
+          'color' => $data['budgetBackgroundColor'],
           'fallback' => 'User Import Daily Report: Niche.com',
           'author_name' => 'Niche.com',
           'author_icon' => 'http://static.tumblr.com/25dcac672bf20a1223baed360c75c453/mrlvgra/Jxhmu09gi/tumblr_static_niche-tumblr-logo.png',
@@ -361,7 +352,7 @@ class MBP_LoggingReports_Users
       elseif ($source == 'afterschool') {
 
         $reportData = [
-          'color' => '#36a64f',
+          'color' => $data['budgetBackgroundColor'],
           'fallback' => 'User Import Daily Report: After School',
           'author_name' => 'After School',
           'author_icon' => 'http://a4.mzstatic.com/us/r30/Purple69/v4/f7/43/fc/f743fc64-0cc6-171d-2f86-8649b5d3a8e1/icon175x175.jpeg',
@@ -394,7 +385,8 @@ class MBP_LoggingReports_Users
         ]
       ];
 
-      $attachments[] = $reportData;
+      // $attachments[] = $reportData;
+      $attachments = $reportData;
     }
 
     return $attachments;
@@ -413,51 +405,90 @@ class MBP_LoggingReports_Users
    */
   private function getRecipients($type, $sources) {
 
+    $recipients = null;
+
     if ($type = 'runningMonth') {
 
-      if (count($sources) > 1) {
-        // "all" as source, also send a copy of all of the reports
-        $recipients[] = [
-          'general' => [
-            'email' => 'dlee@dosomehting.org',
-            'name' => 'Dee',
-            'slack' => '#quicksilver'
+      $recipients['afterschool'] = [
+        'OK' => [
+          'email' => [
+            [
+              'address' => 'dlee@dosomething.org',
+              'name' => 'Dee'
+            ]
           ],
-          'alert' => [
-            'email' => 'dlee@dosomehting.org',
-            'slack' => '#quicksilver'
+          'slack' => [
+            '#after-school-internal'
           ]
-        ];
-      }
-      else {
-        foreach ($sources as $source) {
-          if ($source == 'niche') {
-            $recipients[] = [
-              'general' => [
-                'email' => 'dlee@dosomething.org',
-                'name' => 'Dee',
-                'slack' => '#quicksilver'
-              ],
-              'alert' => [
-                'email' => 'dlee@dosomething.org',
-                'name' => 'Dee',
-                'slack' => '#niche_monitoring'
-              ]
-            ];
-          }
-          if ($source == 'afterschool') {
-            $recipients[] = [
-              'general' => [
-                'slack' => '#after-school-internal'
-              ],
-              'alert' => [
-                'email' => 'dlee@dosomehting.org',
-                'slack' => '#after-school-internal'
-              ]
-            ];
-          }
-        }
-      }
+        ],
+        'Warning' => [
+          'email' => [
+            [
+              'address' => 'dlee@dosomething.org',
+              'name' => 'Dee'
+            ]
+          ],
+          'slack' => [
+            '#after-school-internal'
+          ]
+        ],
+        'Alert' => [
+          'email' => [
+            [
+              'address' => 'dlee@dosomething.org',
+              'name' => 'Dee'
+            ]
+          ],
+          'slack' => [
+            '#after-school-internal',
+            '@dee',
+            '@fantini'
+          ]
+        ]
+      ];
+
+      $recipients['niche'] = [
+        'OK' => [
+          'email' => [
+            [
+              'address' => 'dlee@dosomething.org',
+              'name' => 'Dee'
+            ]
+          ],
+          'slack' => [
+            '#quicksilver'
+          ]
+        ],
+        'Warning' => [
+          'email' => [
+            [
+              'address' => 'dlee@dosomething.org',
+              'name' => 'Dee'
+            ]
+          ],
+          'slack' => [
+            '#quicksilver'
+          ]
+        ],
+        'Alert' => [
+          'email' => [
+            [
+              'address' => 'dlee@dosomething.org',
+              'name' => 'Dee'
+            ],
+            [
+              'address' => 'mike@niche.com',
+              'name' => 'Mike'
+            ]
+          ],
+          'slack' => [
+            '#quicksilver',
+            '#niche_monitoring',
+            '@dee',
+            '@naomi'
+          ]
+        ]
+      ];
 
     }
 
@@ -471,40 +502,47 @@ class MBP_LoggingReports_Users
   /**
    * Send email report to appropriate managers.
    *
+   * @param string $source
+   *   The name of the source of the user import data.
    * @param string $existingUsersReport string
    *   Details of the summary log entries for each import batch.
    * @param array $recipients
    *   A list of users to send the report to.
+   * @param string $status
+   *   The status of the import process relative to the budget for the source.
    */
-  private function dispatchEmailReport($composedReport, $recipients) {
+  private function dispatchEmailReport($source, $composedReport, $recipients, $status = 'general') {
     
-    $status = 'general';
     $memberCount = $this->mbToolbox->getDSMemberCount();
 
-    foreach ($recipients as $to) {
+    foreach ($recipients as $sourceTo => $to) {
 
-      if (isset($to[$status]['email'])) {
-        $message = array(
-          'from_email' => 'machines@dosomething.org',
-          'email' => $to[$status]['email'],
-          'activity' => 'mb-reports',
-          'email_template' => 'mb-user-import-report',
-          'user_country' => 'US',
-          'merge_vars' => array(
-            'FNAME' => $to[$status]['name'],
-            'SUBJECT' => 'Monthly User Import to Date Report - ' . date('Y-m-d'),
-            'TITLE' => 'Monthly User Imports to Date',
-            'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
-            'TITLE' => 'Daily User Imports',
-            'BODY' => $composedReport,
-            'MEMBER_COUNT' => $memberCount,
-          ),
-          'email_tags' => array(
-            0 => 'mb-user-import-report',
-          )
-        );
-        $payload = json_encode($message);
-        $this->messageBroker->publish($payload, 'report.userimport.transactional', 1);
+      if (isset($to[$status]['email']) && $sourceTo == $source) {
+
+        foreach ($to[$status]['email'] as $email) {
+
+          $message = array(
+            'from_email' => 'machines@dosomething.org',
+            'email' => $email['address'],
+            'activity' => 'mb-reports',
+            'email_template' => 'mb-user-import-report',
+            'user_country' => 'US',
+            'merge_vars' => array(
+              'FNAME' => $email['name'],
+              'SUBJECT' => 'Monthly User Import to Date Report - ' . date('Y-m-d'),
+              'TITLE' => 'Monthly User Imports to Date',
+              'SUBJECT' => 'Daily User Import Report - ' . date('Y-m-d'),
+              'TITLE' => 'Daily User Imports',
+              'BODY' => $composedReport,
+              'MEMBER_COUNT' => $memberCount,
+            ),
+            'email_tags' => array(
+              0 => 'mb-user-import-report',
+            )
+          );
+          $payload = json_encode($message);
+          $this->messageBroker->publish($payload, 'report.userimport.transactional', 1);
+        }
       }
     }
 
@@ -513,38 +551,29 @@ class MBP_LoggingReports_Users
   /**
    * Send message to Slack user and/or channel.
    *
-   * @param array attachments
+   * @param array attachment
    *   Formatted message settings based on SlackAPI: https://api.slack.com/docs/formatting
    * @param array $recipients
    *   List of Slack user names and/or channels.
    */
-  private function dispatchSlackAlert($sources, $attachments, $recipients) {
+  private function dispatchSlackAlert($source, $attachment, $recipients, $status) {
 
-    foreach ($recipients as $recipient) {
+    $channelNames = [];
+    $tos = [];
 
-      // Channels
-      $alert = false;
-      if (isset($recipient['alert']['slack']) && strpos($recipient['alert']['slack'], '#') !== false && $alert == true) {
-        $channelNames[] = $recipient['alert']['slack'];
+    foreach ($recipients as $sourceTo => $to) {
+      if (isset($to[$status]['slack']) && $sourceTo == $source) {
+        foreach ($to[$status]['slack'] as $recipient) {
+          if (strpos($recipient, '#') !== false) {
+            $channelNames[] = $recipient;
+          }
+          // Users
+          if (strpos($recipient, '@') !== false) {
+            $tos[] = $recipient;
+          }
+          $this->slack->alert($channelNames, $attachment, $tos);
+        }
       }
-      elseif (isset($recipient['general']['slack']) && strpos($recipient['general']['slack'], '#') !== false && $alert == false) {
-        $channelNames[] = $recipient['general']['slack'];
-      }
-
-      // Users
-      $to = $channelNames;
-      if (isset($recipient['alert']['slack']) && strpos($recipient['alert']['slack'], '@') !== false && $alert == true) {
-        $to[] = $recipient['alert']['slack'];
-      }
-      elseif (isset($recipient['general']['slack']) && strpos($recipient['general']['slack'], '@') !== false && $alert == false) {
-        $to[] = $recipient['general']['slack'];
-      }
-      $to = implode(', ', $to);
-
-    }
-
-    foreach ($attachments as $attachment) {
-      $this->slack->alert($to, $attachment, $channelNames);
     }
   }
 
@@ -552,26 +581,84 @@ class MBP_LoggingReports_Users
    * setBugetColor() - Based on the number of new users processed, set a color value - green, yellow, red
    * to highlight the current number of imported users.
    *
-   * @param real $percentage
-   *   The percentage amount of imported users for the month.
+   * @param string $budgetState
+   *
    *
    * @return string $color
    *   The CSS background-color property, used in report generation.
    */
-  private function setBudgetColor($percentage) {
+  private function setBudgetColor($budgetState) {
 
-    if ($percentage <= 80) {
+    if ($budgetState == 'OK') {
       // green
       $color = '#00FF00';
     }
-    if ($percentage > 80) {
+    if ($budgetState == 'Warning') {
       // yellow
       $color = '#FFFF00';
     }
-    if ($percentage > 90) {
+    if ($budgetState == 'Alert') {
       $color = '#FF0000';
     }
     return $color;
+  }
+
+  /**
+   * getBudgetState() : Define budget state based on the percentage of the budget has been reached.
+   *
+   * @param integer $percentage
+   *   The about the budget has been used.
+   */
+  private function getBudgetState($percentage) {
+
+    if ($percentage == 'Unlimited') {
+      return 'OK';
+    }
+
+    if ($percentage <= 80) {
+      $budgetState = 'OK';
+    }
+    if ($percentage > 80) {
+      $budgetState = 'Warning';
+    }
+    if ($percentage >= 100) {
+      $budgetState = 'Alert';
+    }
+    return $budgetState;
+  }
+
+  /**
+   * budgetStatus() : Calculate the current budget status based on the budget for a source and amount
+   * (users) the budget has been fulled.
+   *
+   * @param string $source
+   *   The source of the users. Each source has it's own budget.
+   * @param string $type
+   *   Unused?!?
+   * @param integer $newUsers
+   *   The number of new users that have been creat in a budget period.
+   */
+  private function budgetStatus($source, $type, $newUsers) {
+
+    if ($source == 'niche') {
+      $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $newUsers) / self::NICHE_USER_BUDGET * 100;
+      $status['budgetPercentage'] = round($budgetPercentage, 1) . '%';
+      $status['budgetState'] = $this->getBudgetState($status['budgetPercentage']);
+      $status['budgetBackgroundColor'] = $this->setBudgetColor($status['budgetState'] );
+
+      $averageDailyNewUsers = $newUsers / date('j');
+      $projectedDaysToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
+      $status['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysToComplete, 0) . ', ' . date('Y');
+    }
+    if ($source == 'afterschool') {
+      $budgetPercentage = self::AFTERSCHOOL_USER_BUDGET;
+      $status['budgetPercentage'] = 'Unlimited';
+      $status['budgetState'] = $this->getBudgetState($status['budgetPercentage']);
+      $status['budgetBackgroundColor'] = $this->setBudgetColor($status['budgetState']);
+      $status['budgetProjectedCompletion'] = '';
+    }
+
+    return $status;
   }
 
 }
