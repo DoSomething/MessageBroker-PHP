@@ -429,7 +429,8 @@ class MBP_LoggingReports_Users
             ]
           ],
           'slack' => [
-            '#after-school-internal'
+            '#after-school-internal',
+            '#quicksilver'
           ]
         ],
         'Alert' => [
@@ -441,6 +442,7 @@ class MBP_LoggingReports_Users
           ],
           'slack' => [
             '#after-school-internal',
+            '#quicksilver',
             '@dee',
             '@fantini'
           ]
@@ -456,7 +458,8 @@ class MBP_LoggingReports_Users
             ]
           ],
           'slack' => [
-            '#quicksilver'
+            '#quicksilver',
+            '#niche_monitoring'
           ]
         ],
         'Warning' => [
@@ -464,10 +467,16 @@ class MBP_LoggingReports_Users
             [
               'address' => 'dlee@dosomething.org',
               'name' => 'Dee'
+            ],
+            [
+              'address' => 'mranalli@dosomething.org',
+              'name' => 'Marissa'
             ]
           ],
           'slack' => [
-            '#quicksilver'
+            '#quicksilver',
+            '#niche_monitoring',
+            '@dee'
           ]
         ],
         'Alert' => [
@@ -475,6 +484,10 @@ class MBP_LoggingReports_Users
             [
               'address' => 'dlee@dosomething.org',
               'name' => 'Dee'
+            ],
+            [
+              'address' => 'mranalli@dosomething.org',
+              'name' => 'Marissa'
             ],
             [
               'address' => 'mike@niche.com',
@@ -485,7 +498,7 @@ class MBP_LoggingReports_Users
             '#quicksilver',
             '#niche_monitoring',
             '@dee',
-            '@naomi'
+            '@marissaranalli'
           ]
         ]
       ];
