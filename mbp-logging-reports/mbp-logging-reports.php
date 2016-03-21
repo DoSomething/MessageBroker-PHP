@@ -1,3 +1,4 @@
+#! /usr/bin/env php
 <?php
 /**
  * mbp-logging-reports.php
@@ -5,6 +6,9 @@
  * A producer to create reports based on logged data in mb-logging-api.
  */
 
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use DoSomething\MBP_LoggingReports\MBP_LoggingReports_Users;
 
 date_default_timezone_set('America/New_York');
@@ -13,6 +17,15 @@ define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/mbp-logging-reports.config.inc';
+
+$app = new Application();
+
+$app->register('mbp-logging-reports')
+  ->addArgument('source')
+  ->setCode(function(InputInterface $input, OutputInterface $output)
+  {
+    $output->writeln('------- mbp-logging-reports START: ' . date('D M j G:i:s T Y') . ' -------');
+  });
 
 if (isset($_GET['source'])) {
   $sources[0] = $_GET['source'];
