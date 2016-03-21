@@ -7,9 +7,7 @@
  */
 
 use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
+use DoSomething\MBP_LoggingReports\UserImportCommand;
 use DoSomething\MBP_LoggingReports\MBP_LoggingReports_Users;
 
 date_default_timezone_set('America/New_York');
@@ -21,13 +19,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 $app = new Application('Quicksilver Logging Report Generator', '0.2.1');
 
-$app->register('user-import')
-  ->addArgument('source', InputArgument::REQUIRED, 'Import source: all, niche, afterschool')
-  ->setCode(function(InputInterface $input, OutputInterface $output)
-  {
-    $output->writeln('------- mbp-logging-reports START: ' . date('D M j G:i:s T Y') . ' -------');
-  });
-
+$app->add(new UserImportCommand);
 $app->run();
 
 if (isset($_GET['source'])) {
