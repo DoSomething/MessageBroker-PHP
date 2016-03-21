@@ -9,6 +9,7 @@
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputArgument;
 use DoSomething\MBP_LoggingReports\MBP_LoggingReports_Users;
 
 date_default_timezone_set('America/New_York');
@@ -16,16 +17,18 @@ define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/mbp-logging-reports.config.inc';
+// require_once __DIR__ . '/mbp-logging-reports.config.inc';
 
-$app = new Application();
+$app = new Application('Quicksilver Logging Report Generator', '0.2.1');
 
-$app->register('mbp-logging-reports')
-  ->addArgument('source')
+$app->register('user-import')
+  ->addArgument('source', InputArgument::REQUIRED, 'Import source: all, niche, afterschool')
   ->setCode(function(InputInterface $input, OutputInterface $output)
   {
     $output->writeln('------- mbp-logging-reports START: ' . date('D M j G:i:s T Y') . ' -------');
   });
+
+$app->run();
 
 if (isset($_GET['source'])) {
   $sources[0] = $_GET['source'];
@@ -45,10 +48,10 @@ echo '------- mbp-logging-reports START: ' . date('D M j G:i:s T Y') . ' -------
 try {
 
   // Kick off
-  $mbpLoggingReport = new MBP_LoggingReports_Users();
+//  $mbpLoggingReport = new MBP_LoggingReports_Users();
 
   // Gather digest message mailing list
-  $mbpLoggingReport->report('runningMonth', $sources);
+//  $mbpLoggingReport->report('runningMonth', $sources);
 }
 catch(Exception $e) {
   echo $e->getMessage(), PHP_EOL;
