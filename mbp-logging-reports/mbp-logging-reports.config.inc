@@ -3,15 +3,17 @@
  * Message Broker configuration settings for mbc-logging-processor
  */
 
+// @todo: Some kind of enviroment detection
+$env = 'dev';
+
 use DoSomething\MB_Toolbox\MB_Configuration;
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
 use DoSomething\MB_Toolbox\MB_Slack;
 
-// Load configuration settings common to the Message Broker system
-// symlinks in the project directory point to the actual location of the files
-require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
+// Load configuration settings common to the Quicksilver system
+require_once __DIR__ . '/../../mb-secure-config/' . $env . '/mb-secure-config.inc';
 
 define("ALLOWED_SOURCES", serialize([
   'all',
@@ -51,7 +53,7 @@ $mbConfig->setProperty('rabbit_credentials', [
 
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalQueue']);
-$mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+// $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
