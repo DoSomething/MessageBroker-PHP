@@ -346,7 +346,7 @@ class MBP_LoggingReports_Users
           'author_icon' => 'http://static.tumblr.com/25dcac672bf20a1223baed360c75c453/mrlvgra/Jxhmu09gi/tumblr_static_niche-tumblr-logo.png',
           'title' => date('F', strtotime($data['userImportCSV']['startDate'])) . ' User Imports:' . $reportRange,
           'title_link' => 'https://www.stathat.com/v/stats/576l/tf/1d15m',
-          'text' => 'Projected budget completion: March 17, 2016.'
+          'text' => 'Projected budget completion: ' . $data['budgetProjectedCompletion'] . '.'
         ];
       }
       elseif ($source == 'afterschool') {
@@ -418,8 +418,8 @@ class MBP_LoggingReports_Users
             ]
           ],
           'slack' => [
-            '#quicksilver'
-            // '#after-school-internal'
+            '#quicksilver',
+            '#after-school-internal'
           ]
         ],
         'Warning' => [
@@ -430,7 +430,7 @@ class MBP_LoggingReports_Users
             ]
           ],
           'slack' => [
-            // '#after-school-internal',
+            '#after-school-internal',
             '#quicksilver'
           ]
         ],
@@ -442,10 +442,10 @@ class MBP_LoggingReports_Users
             ]
           ],
           'slack' => [
-            // '#after-school-internal',
+            '#after-school-internal',
             '#quicksilver',
-            '@dee'
-            // '@fantini'
+            '@dee',
+            '@fantini'
           ]
         ]
       ];
