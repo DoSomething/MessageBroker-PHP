@@ -39,6 +39,11 @@
         <div class="container">
             <div class="content">
                 <div class="title">Alerts</div>
+                  <table>
+                      @foreach ($stats as $stat)
+                          <tr><td>{{ $stat }}</td></tr>
+                      @endforeach
+                  </table>
             </div>
         </div>
     </body>
