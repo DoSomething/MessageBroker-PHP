@@ -18,8 +18,7 @@ class AlertsController extends BaseController
    */
   public function index()
   {
-    return ('Welcome to Alerts');
-    // return view('welcome');
+    return view('alerts');
   }
 
 }
