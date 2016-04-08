@@ -39,10 +39,14 @@
         <div class="container">
             <div class="content">
                 <div class="title">Alerts</div>
-                  <table>
+                <table>
+                  @if (empty($stats))
+                    <tr><td>Nothing to report on.</td></tr>
+                  @else
                       @foreach ($stats as $stat)
                           <tr><td>{{ $stat }}</td></tr>
                       @endforeach
+                   @endif
                   </table>
             </div>
         </div>
