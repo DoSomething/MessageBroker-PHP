@@ -346,7 +346,7 @@ class MBP_LoggingReports_Users
           'author_icon' => 'http://static.tumblr.com/25dcac672bf20a1223baed360c75c453/mrlvgra/Jxhmu09gi/tumblr_static_niche-tumblr-logo.png',
           'title' => date('F', strtotime($data['userImportCSV']['startDate'])) . ' User Imports: ' . $reportRange,
           'title_link' => 'https://www.stathat.com/v/stats/576l/tf/1M1h',
-          'text' => 'Projected budget completion: ' . $data['budgetProjectedCompletion'] . '.'
+          'text' => $data['budgetProjectedCompletion']
         ];
       }
       elseif ($source == 'afterschool') {
