@@ -79,7 +79,6 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
     parent::consumeQueue($payload);
 
     try {
-
       if ($this->canProcess()) {
         $this->logConsumption('log-type');
         $this->setter($this->message);
@@ -262,15 +261,13 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
     $loggingApiUrl .=  self::MB_LOGGING_API . $this->endPoint . '?' . http_build_query($this->cURLparameters);
     $result = $this->mbToolboxCURL->curlPOST($loggingApiUrl, $this->post);
 
-    // Only ack messages that the API has responded as "created" (201).
     if ($result[1] == 201) {
-      // $this->statHat->ezCount('mbc-logging-gateway: submitLogEntry()', 1);
+      $this->statHat->ezCount('mbc-logging-gateway: process()', 1);
       $this->messageBroker->sendAck($this->message['payload']);
     }
     else {
-      echo '- ERROR, MBC_LoggingGateway->process(): Failed to POST to ' . $loggingApiUrl, PHP_EOL;
-      echo '  * Returned POST results: ' . print_r($result, TRUE), PHP_EOL;
-      // $this->statHat->ezCount('mbc-logging-gatewa: ERROR submitLogEntry()', 1);
+      $error = 'Error code: ' . $result[1] . ', message: ' .  $result[0];
+      throw new Exception($error);
     }
   }
 
