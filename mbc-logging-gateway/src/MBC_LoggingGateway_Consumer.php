@@ -19,6 +19,7 @@ use \Exception;
 class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
 {
   const MB_LOGGING_API = '/api/v1';
+  const RETRY_SECONDS = 20;
 
   /**
    * Message Broker Toolbox cURL utilities.
@@ -76,26 +77,28 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
     echo '------- MBC_LoggingGateway - consumeQueue() START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
     parent::consumeQueue($payload);
-    $this->logConsumption('log-type');
 
-    if ($this->canProcess()) {
+    try {
 
-      try {
-
+      if ($this->canProcess()) {
+        $this->logConsumption('log-type');
         $this->setter($this->message);
         $this->process();
       }
-      catch(Exception $e) {
-        echo 'Error sending logging request to mb-logging-api, holding in queue.. Error: ' . $e->getMessage();
+      else {
+        echo '- ' . $this->message['log-type'] . ' can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
+        $this->statHat->ezCount('mbc-logging-gateway: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
+        parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Error', $e->getMessage());
+
       }
-
     }
-    else {
-      echo '- ' . $this->message['log-type'] . ' can\'t be processed, holding in queue.', PHP_EOL;
 
-      // @todo: Send copy of message to "dead message queue" with details of the original processing: date,
-      // origin queue, processing app. The "dead messages" queue can be used to monitor health.
-
+    catch(Exception $e) {
+      echo 'Error sending logging request to mb-logging-api, retrying... Error: ' . $e->getMessage();
+      sleep(self::RETRY_SECONDS);
+      $this->messageBroker->sendNack($this->message['payload']);
+      echo '- Nack sent to requeue message: ' . date('j D M Y G:i:s T'), PHP_EOL . PHP_EOL;
+      $this->statHat->ezCount('mbc-logging-gateway: MBC_LoggingGateway_Consumer: Exception: Bad response - HTTP Code:500', 1);
     }
 
     // @todo: Throttle the number of consumers running. Based on the number of messages
