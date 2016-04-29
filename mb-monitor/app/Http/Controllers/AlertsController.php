@@ -17,6 +17,6 @@ class AlertsController extends Controller
       'mbp-user-import: MBP_UserCSVfileTools: gatherIMAP attachment: Niche',
       'mbp-user-import: MBP_UserCSVfileTools: gatherIMAP attachment: AfterSchool'
     ];
-    return view('alerts')->with('stats', $stats);
+    return view('alerts.index')->with('stats', $stats);
   }
 }
