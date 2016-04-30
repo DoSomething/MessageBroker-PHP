@@ -16,3 +16,4 @@ Route::get('/', function () {
 });
 
 Route::get('/alerts', 'AlertsController@index');
+Route::get('/alerts/{alert}', 'AlertsController@show');

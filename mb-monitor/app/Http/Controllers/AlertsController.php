@@ -17,4 +17,12 @@ class AlertsController extends Controller
     $alerts = Alert::all();
     return view('alerts.index')->with('alerts', $alerts);
   }
+
+  /**
+   *
+   */
+  public function show($alert) {
+
+    return $alert;
+  }
 }
