@@ -8,11 +8,11 @@
 
             <div class="title">Alerts</div>
             <table>
-                @if (empty($stats))
+                @if (empty($alerts))
                     <tr><td>Nothing to report on.</td></tr>
                 @else
-                    @foreach ($stats as $stat)
-                        <tr><td>{{ $stat }}</td></tr>
+                    @foreach ($alerts as $alert)
+                        <tr><td>{{ $alert->stat_id }}</td></tr>
                     @endforeach
                 @endif
             </table>
