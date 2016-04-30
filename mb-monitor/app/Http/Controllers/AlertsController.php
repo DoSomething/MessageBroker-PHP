@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use DB;
 
-use App\Http\Requests;
 
 class AlertsController extends Controller
 {
@@ -13,10 +14,7 @@ class AlertsController extends Controller
    */
   public function index()
   {
-    $stats = [
-      'mbp-user-import: MBP_UserCSVfileTools: gatherIMAP attachment: Niche',
-      'mbp-user-import: MBP_UserCSVfileTools: gatherIMAP attachment: AfterSchool'
-    ];
-    return view('alerts.index')->with('stats', $stats);
+    $alerts = DB::table('alerts')->get();
+    return view('alerts.index')->with('alerts', $alerts);
   }
 }
