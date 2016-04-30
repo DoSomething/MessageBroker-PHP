@@ -21,9 +21,9 @@ class AlertsController extends Controller
   /**
    *
    */
-  public function show($id) {
-
+  public function show($id)
+  {
     $alert = Alert::find($id);
-    return $alert;
+    return view('alerts.show')->with('alert', $alert);
   }
 }
