@@ -156,6 +156,11 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
+        /*
+         * Third-party Service Providers...
+         */
+        DoSomething\StatHat\StatHatServiceProvider::class,
+
     ],
 
     /*
@@ -201,6 +206,7 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
+        'StatHat' => DoSomething\StatHat\Facades\StatHat::class,
 
     ],
 
