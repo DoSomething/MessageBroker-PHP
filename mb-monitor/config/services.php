@@ -38,7 +38,7 @@ return [
     'stathat' => [
       'user_key' => env('STATHAT_USERKEY'),
       'ez_key' => env('STATHAT_EZKEY'),
-      'access_token' => env('STATHAT_ACCESSTOKEN'),
+      'access_token' => env('STATHAT_ACCESS_TOKEN'),
       'prefix' => 'mb-monitor - ',
       'debug' => env('APP_DEBUG'),
   ],
