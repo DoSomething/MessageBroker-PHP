@@ -15,3 +15,7 @@ config.inc
 
 # Ignor OSX system files
 .DS_Store
+
+# Ignor PHP Storm config file
+.idea
+
