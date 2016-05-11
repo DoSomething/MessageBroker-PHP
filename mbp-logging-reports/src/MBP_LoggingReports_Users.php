@@ -86,10 +86,12 @@ class MBP_LoggingReports_Users
    *   The type or collection of types of report to generate
    * @param string $sources
    *   The import source: Niche or After School
+   * @param string $startDate
+   *   The start date for the report
    * @param array $recipients
    *   List of addresses (email and/or SMS phone numbers)
    */
-  public function report($type, $sources, $recipients = null) {
+  public function report($type, $sources, $startDate = null, $recipients = null) {
 
     // @todo: Coordinate sending reports. Includes to who based on $budgetStatus
     // $budgetStatus = $this->budgetStatus('niche');
@@ -104,8 +106,8 @@ class MBP_LoggingReports_Users
 
         foreach ($sources as $source) {
 
-          $reportData[$source]['userImportCSV'] = $this->collectData('userImportCSV', $source);
-          $reportData[$source]['existingUsers'] = $this->collectData('existingUsers', $source);
+          $reportData[$source]['userImportCSV'] = $this->collectData('userImportCSV', $source, $startDate);
+          $reportData[$source]['existingUsers'] = $this->collectData('existingUsers', $source, $startDate);
           $reportData[$source]['newUsers'] = $reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total'];
           $percentNewUsers = ($reportData[$source]['userImportCSV']['usersProcessed'] - $reportData[$source]['existingUsers']['total']) / $reportData[$source]['userImportCSV']['usersProcessed'] * 100;
           $reportData[$source]['percentNewUsers'] = round($percentNewUsers, 1);
@@ -151,7 +153,7 @@ class MBP_LoggingReports_Users
     }
 
     if ($startDate != null) {
-      $startDateStamp = date('Y-m', strtotime($targetStartDate)) . '-01';;
+      $startDateStamp = strtotime($startDate);
     }
     else {
       $startDateStamp = mktime(0, 0, 0, date('n'), 1, date('Y'));
@@ -525,7 +527,7 @@ class MBP_LoggingReports_Users
    * @param string $status
    *   The status of the import process relative to the budget for the source.
    */
-  private function dispatchEmailReport($source, $composedReport, $recipients, $status = 'general') {
+  private function dispatchEmailReport($source, $composedReport, $recipients, $status = 'OK') {
     
     $memberCount = $this->mbToolbox->getDSMemberCount();
 
