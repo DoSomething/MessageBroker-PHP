@@ -27,6 +27,13 @@ if ($sources[0] == 'all') {
   ];
 }
 
+if (isset($_GET['startDate'])) {
+  $startDate = $_GET['startDate'];
+}
+elseif (isset($argv[2])) {
+  $startDate = $argv[2];
+}
+
 echo '------- mbp-logging-reports START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 try {
@@ -35,7 +42,7 @@ try {
   $mbpLoggingReport = new MBP_LoggingReports_Users();
 
   // Gather digest message mailing list
-  $mbpLoggingReport->report('runningMonth', $sources);
+  $mbpLoggingReport->report('runningMonth', $sources, $startDate);
 }
 catch(Exception $e) {
   echo $e->getMessage(), PHP_EOL;
