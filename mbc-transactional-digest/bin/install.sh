@@ -10,7 +10,7 @@ cd ../../messagebroker-config
 MBCONFIG=`pwd`
 
 # Back to mbc-transactional-digest
-cd ../MessageBroker-PHP/mbc-batch-messaging
+cd ../MessageBroker-PHP/mbc-transactional-digest
 
 # Create SymLink for mbc-transactional-digest application to make reference to for all Message Broker configuration settings
 ln -s $MBCONFIG .
