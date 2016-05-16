@@ -1,10 +1,10 @@
 {
-  "name": "mbc-batch-email",
+  "name": "mbc-transactional-digest",
   "type": "project",
   "version": "0.0.1",
-  "description": "A consummer app for the Message Broker system that gathers messages in a queue to compose a digest of all the messages to generate a single user message (email / SMS) request.",
+  "description": "A consummer app for the Message Broker system that gathers messages in a queue for a given time period to compose a digest of all the messages to generate a single user message (email / SMS) request.",
   "keywords": ["message broker"],
-  "homepage": "https://github.com/DoSomething/Quicksilver-PHP/tree/master/mbc-batch-email",
+  "homepage": "https://github.com/DoSomething/Quicksilver-PHP/tree/master/mbc-transactional-digest",
   "license" : "MIT",
   "authors": [
     {
@@ -25,7 +25,7 @@
     },
     "autoload": {
       "psr-4": {
-        "DoSomething\\MBC_BatchEmail\\": "src/"
+        "DoSomething\\MBC_TransactionalDigest\\": "src/"
       }
     },
     "scripts": {
