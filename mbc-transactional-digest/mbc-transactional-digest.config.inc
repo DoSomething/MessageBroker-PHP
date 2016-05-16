@@ -33,8 +33,12 @@ $mbConfig->setProperty('mb_logging_api_config', [
 ]);
 
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
-$mbRabbitConfig = $mbConfig->constructRabbitConfig('directLoggingGateway', array('loggingGatewayQueue'));
-$mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalDigestQueue']);
+$mbConfig->setProperty('messageBroker_transactionalDigest', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalQueue']);
+$mbConfig->setProperty('messageBroker_transactional', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchange', ['deadLetterQueue']);
+$mbConfig->setProperty('messageBroker_deadLetter', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
 $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
   'domain' => getenv("MB_RABBITMQ_MANAGEMENT_API_HOST"),
