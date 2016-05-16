@@ -20,7 +20,7 @@ require_once __DIR__ . '/mbc-transactional-digest.config.inc';
 // Kick off
 echo '------- mbc-transactional-digest START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
-$mb = $mbConfig->getProperty('messageBroker');
-$mb->consumeMessage(array(new MBC_TransactionalDigest_Consumer(), 'consumeQueue'));
+$mb = $mbConfig->getProperty('messageBroker_transactionalDigest');
+$mb->consumeMessage(array(new MBC_TransactionalDigest_Consumer('messageBroker_transactionalDigest'), 'consumeQueue'));
 
 echo '------- mbc-transactional-digest END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
