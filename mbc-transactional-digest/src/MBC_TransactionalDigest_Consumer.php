@@ -25,13 +25,23 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    * @var array $mbLoggingAPIConfig
    */
   private $mbLoggingAPIConfig;
+  
+    /**
+   * A list of user objects.
+   * @var array $users
+   */
+  private $users = [];
 
   /**
    * Constructor for MBC_LoggingGateway
+   *
+   * @param string $targetMBconfig
+   *   The Message Broker object used to interface the RabbitMQ server exchanges and
+   *   related queues.
    */
-  public function __construct() {
+  public function __construct($targetMBconfig = 'messageBroker') {
 
-    parent::__construct();
+    parent::__construct($targetMBconfig);
     $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
   }
 
@@ -49,7 +59,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
     try {
       if ($this->canProcess()) {
-        parent::logConsumption();
+        parent::logConsumption(['email', 'event_id']);
         $this->setter($this->message);
         $this->process();
       }
@@ -77,8 +87,29 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    * @return boolean
    */
   protected function canProcess() {
+    
+    $bla = FALSE;
+if ($bla) {
+  $bla = TRUE;
+}
 
-
+    if (empty($this->message['email'])) {
+      return false;
+    }
+    if (empty($this->message['activity'])) {
+      return false;
+    }
+    if (isset($this->message['activity']) && $this->message['activity'] != 'campaign_signup') {
+      return false;
+    }
+    if (empty($this->message['user_language'])) {
+      return false;
+    }
+    if (isset($this->users[$this->message['email']][$this->message['event_id']])) {
+      $message = 'MBC_TransactionalDigest_Consumer->canProcess(): Duplicate campaign signup for '.$this->message['email'].' to campaign ID: '.$this->message['event_id'];
+      echo $message, PHP_EOL;
+      throw new Exception($message);
+    }
 
     return true;
   }
