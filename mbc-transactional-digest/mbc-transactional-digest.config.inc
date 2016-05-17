@@ -1,11 +1,13 @@
 <?php
 /**
- * Message Broker configuration settings for mbc-batch-messaging
+ * Message Broker configuration settings for mbc-transactional-digest
  */
 
 
 use DoSomething\MB_Toolbox\MB_Configuration;
 use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
+use DoSomething\MBC_TransactionalDigest\MBC_ServiceToolbox_Mandrill;
+use DoSomething\MBC_TransactionalDigest\MBC_ServiceToolbox_MobileCommons;
 use DoSomething\MB_Toolbox\MB_RabbitMQManagementAPI;
 use DoSomething\StatHat\Client as StatHat;
 
@@ -49,3 +51,6 @@ $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
 ]));
 
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
+
+$mbConfig->setProperty('mbEmailService', new MBC_ServiceToolbox_Mandrill());
+$mbConfig->setProperty('mbSMSservice', new MBC_ServiceToolbox_MobileCommons());
