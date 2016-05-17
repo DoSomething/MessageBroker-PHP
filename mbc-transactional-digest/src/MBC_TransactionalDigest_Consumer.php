@@ -43,6 +43,9 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
     parent::__construct($targetMBconfig);
     $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
+
+    $this->mbMessageServices['email'] = $this->mbConfig->getProperty('mbEmailService');
+    $this->mbMessageServices['sms'] = $this->mbConfig->getProperty('mbSMSservice');
   }
 
   /**
@@ -141,7 +144,10 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     // Assigned by campaign IDs to email to define contents of transactional message
     $this->users[$this->message['email']][$this->message['event_id']] = [
       'event_id' => $this->message['event_id'],
-      'markup' => $this->campaigns[$this->message['event_id']]->markup
+      'markup' => [
+        'email' =>  $this->campaigns[$this->message['event_id']]->markup['email'],
+        'sms' => $this->campaigns[$this->message['event_id']]->markup['sms'],
+      ],
     ];
  
   }
