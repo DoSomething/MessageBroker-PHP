@@ -148,10 +148,6 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    */
   protected function setter($message) {
 
-    if (empty($this->users[$this->message['email']])) {
-      $this->users[$this->message['email']] = $this->gatherUserDetails($this->message);
-    }
-
     if (empty($this->campaigns[$this->message['event_id']])) {
       $this->campaigns[$this->message['event_id']] = new MB_Toolbox_Campaign($this->message['event_id']);
       $this->campaigns[$this->message['event_id']]['markup'] = [
@@ -161,8 +157,18 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       ];
     }
 
-    // Assign campaign details to user object
-    $this->users[$this->message['email']]['campaigns'][$this->message['event_id']] = $this->campaigns[$this->message['event_id']];
+    if (isset($this->users[$this->message['email']])) {
+      $this->users[$this->message['email']] = $this->gatherUserDetailsEmail($this->message);
+      $this->users[$this->message['email']]['campaigns'][$this->message['event_id']] = $this->campaigns[$this->message['event_id']]['markup']['email'];
+    }
+    if (isset($this->users[$this->message['mobile']])) {
+      $this->users[$this->message['mobile']] = $this->gatherUserDetailsMobile($this->message);
+      $this->users[$this->message['mobile']]['campaigns'][$this->message['event_id']] = $this->campaigns[$this->message['event_id']]['markup']['sms'];
+    }
+    if (isset($this->users[$this->message['ott']])) {
+      $this->users[$this->message['ott']] = $this->gatherUserDetailsOTT($this->message);
+      $this->users[$this->message['ott']]['campaigns'][$this->message['event_id']] = $this->campaigns[$this->message['event_id']]['markup']['ott'];
+    }
 
   }
 
