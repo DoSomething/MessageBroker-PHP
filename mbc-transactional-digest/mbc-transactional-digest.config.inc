@@ -6,8 +6,6 @@
 
 use DoSomething\MB_Toolbox\MB_Configuration;
 use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
-use DoSomething\MBC_TransactionalDigest\MBC_ServiceToolbox_Mandrill;
-use DoSomething\MBC_TransactionalDigest\MBC_ServiceToolbox_MobileCommons;
 use DoSomething\MB_Toolbox\MB_RabbitMQManagementAPI;
 use DoSomething\StatHat\Client as StatHat;
 
@@ -38,7 +36,9 @@ $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalDigestQueue']);
 $mbConfig->setProperty('messageBroker_transactionalDigest', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalQueue']);
-$mbConfig->setProperty('messageBroker_transactional', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+$mbConfig->setProperty('transactionalEmailQueue', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['mobileCommonsQueue']);
+$mbConfig->setProperty('transactionalSMSQueue', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchange', ['deadLetterQueue']);
 $mbConfig->setProperty('messageBroker_deadLetter', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
@@ -51,6 +51,3 @@ $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
 ]));
 
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
-
-$mbConfig->setProperty('mbEmailService', new MBC_ServiceToolbox_Mandrill());
-$mbConfig->setProperty('mbSMSservice', new MBC_ServiceToolbox_MobileCommons());
