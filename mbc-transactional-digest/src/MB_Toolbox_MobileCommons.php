@@ -27,7 +27,7 @@ class MB_Toolbox_MobileCommons extends MB_Toolbox_BaseService
   *   Values to be used to generate message markup based on Mobile Commons API documentation:
   *   Send SMS Message: https://secure.mcommons.com/api/send_message
   *   https://mobilecommons.zendesk.com/hc/en-us/articles/202052534-REST-API#SendSMSMessage.
-  
+  *
   *     body (160 characters or fewer. If passing body as a URL param, the value must be URL encoded)
   *
   *   Note: There's now support for "long SMS messages" of 2500 characters.
