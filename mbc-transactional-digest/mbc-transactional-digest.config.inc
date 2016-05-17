@@ -27,6 +27,12 @@ $mbConfig->setProperty('rabbit_credentials', [
   'password' => getenv("RABBITMQ_PASSWORD"),
   'vhost' => getenv("RABBITMQ_VHOST"),
 ]);
+$mbConfig->setProperty('ds_drupal_api_config', [
+  'host' => getenv("DS_DRUPAL_API_HOST"),
+  'port' => getenv('DS_DRUPAL_API_PORT'),
+  'username' => getenv("DS_DRUPAL_API_USERNAME"),
+  'password' => getenv('DS_DRUPAL_API_PASSWORD'),
+]);
 $mbConfig->setProperty('mb_logging_api_config', [
   'host' => getenv("MB_LOGGING_API_HOST"),
   'port' => getenv('MB_LOGGING_API_PORT')
