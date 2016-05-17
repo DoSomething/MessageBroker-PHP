@@ -61,7 +61,11 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       if ($this->canProcess()) {
         parent::logConsumption(['email', 'event_id']);
         $this->setter($this->message);
-        $this->process();
+      }
+      elseif ($this->message['log-type'] == 'shim') {
+        echo '* Shim message encounter... time to sleep.', PHP_EOL;
+        sleep(self::SHIM_SLEEP);
+        $this->processShim();
       }
       else {
         echo '- ' . $this->message['log-type'] . ' can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
@@ -70,13 +74,21 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       }
     }
-
     catch(Exception $e) {
       echo 'Error sending transactional request to transactionalQueue, retrying... Error: ' . $e->getMessage();
       $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception: ??', 1);
     }
 
-    $queueMessages = parent::queueStatus('transactionalDigestQueue');
+    // Batch time reached, generate digest and dispatch messages to transactional queues
+    try {
+      if ($this->timeToProcess()) {
+        $this->process();
+      }
+    }
+    catch(Exception $e) {
+      echo 'Error attempting to process transactional digest request. Error: ' . $e->getMessage();
+      $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception: ??', 1);
+    }
 
     echo '------- MBC_TransactionalDigest_Consumer - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
   }
@@ -87,11 +99,6 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    * @return boolean
    */
   protected function canProcess() {
-    
-    $bla = FALSE;
-if ($bla) {
-  $bla = TRUE;
-}
 
     if (empty($this->message['email'])) {
       return false;
@@ -105,6 +112,7 @@ if ($bla) {
     if (empty($this->message['user_language'])) {
       return false;
     }
+
     if (isset($this->users[$this->message['email']][$this->message['event_id']])) {
       $message = 'MBC_TransactionalDigest_Consumer->canProcess(): Duplicate campaign signup for '.$this->message['email'].' to campaign ID: '.$this->message['event_id'];
       echo $message, PHP_EOL;
@@ -122,6 +130,19 @@ if ($bla) {
    */
   protected function setter($message) {
 
+    if (empty($this->users[$this->message['email']])) {
+      $this->users[$this->message['email']] = $this->mbUserToolbox->gether($this->message);
+    }
+
+    if (empty($this->campaigns[$this->message['event_id']])) {
+      $this->campaigns[$this->message['event_id']] = $this->mbCampaignToolbox->add($this->message['event_id']);
+    }
+
+    // Assigned by campaign IDs to email to define contents of transactional message
+    $this->users[$this->message['email']][$this->message['event_id']] = [
+      'event_id' => $this->message['event_id'],
+      'markup' => $this->campaigns[$this->message['event_id']]->markup
+    ];
  
   }
 
@@ -130,6 +151,30 @@ if ($bla) {
    */
   protected function process() {
 
+    // Build transactional requests for each of the users
+    foreach ($this->users as $address => $messageDetails) {
+
+      // Toggle between message services depending on communication medium - eMail vs SMS
+      $medium = $this->whatMedium($address);
+      $message = $this->mbMessageServices[$medium]->generateMarkup($messageDetails);
+      $this->mbMessageServices[$medium]->dispatch($message);
+    }
+  }
+
+  /**
+   * timeToProcess: .
+   *
+   * @param array $payloadDetails
+   *   ...
+   *
+   * @return array $
+   *   ...
+   */
+  public function timeToProcess($payloadDetails) {
+
+    $queuedMessages = parent::queueStatus('transactionalDigestQueue');
+
+    return true;
   }
 
   /**
@@ -145,6 +190,5 @@ if ($bla) {
 
 
   }
-
 
 }
