@@ -24,13 +24,26 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    *
    * @var array $mbLoggingAPIConfig
    */
-  private $mbLoggingAPIConfig;
+  private $mbMessageServices;
+
+  /**
+   *
+   * @var object $mbCampaignToolbox
+   */
+  private $mbCampaignToolbox;
   
-    /**
+  /**
    * A list of user objects.
    * @var array $users
    */
   private $users = [];
+
+  /**
+   * mb-logging-api configuration settings.
+   *
+   * @var array $mbLoggingAPIConfig
+   */
+  private $mbLoggingAPIConfig;
 
   /**
    * Constructor for MBC_LoggingGateway
@@ -42,10 +55,12 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   public function __construct($targetMBconfig = 'messageBroker') {
 
     parent::__construct($targetMBconfig);
-    $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
 
     $this->mbMessageServices['email'] = new MB_Toolbox_Mandrill();
     $this->mbMessageServices['sms'] = new MB_Toolbox_MobileCommons();
+    $this->mbMessageServices['ott'] = new MB_Toolbox_FBMessenger();
+
+    $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
   }
 
   /**
@@ -134,22 +149,21 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   protected function setter($message) {
 
     if (empty($this->users[$this->message['email']])) {
-      $this->users[$this->message['email']] = $this->mbUserToolbox->gether($this->message);
+      $this->users[$this->message['email']] = $this->gatherUserDetails($this->message);
     }
 
     if (empty($this->campaigns[$this->message['event_id']])) {
-      $this->campaigns[$this->message['event_id']] = $this->mbCampaignToolbox->add($this->message['event_id']);
+      $this->campaigns[$this->message['event_id']] = new MB_Toolbox_Campaign($this->message['event_id']);
+      $this->campaigns[$this->message['event_id']]['markup'] = [
+        'email' => $this->mbMessageServices['email']->generateMessage($this->campaigns[$this->message['event_id']]),
+        'sms' => $this->mbMessageServices['sms']->generateMessage($this->campaigns[$this->message['event_id']]),
+        'ott' => $this->mbMessageServices['ott']->generateMessage($this->campaigns[$this->message['event_id']]),
+      ];
     }
 
-    // Assigned by campaign IDs to email to define contents of transactional message
-    $this->users[$this->message['email']][$this->message['event_id']] = [
-      'event_id' => $this->message['event_id'],
-      'markup' => [
-        'email' =>  $this->campaigns[$this->message['event_id']]->markup['email'],
-        'sms' => $this->campaigns[$this->message['event_id']]->markup['sms'],
-      ],
-    ];
- 
+    // Assign campaign details to user object
+    $this->users[$this->message['email']]['campaigns'][$this->message['event_id']] = $this->campaigns[$this->message['event_id']];
+
   }
 
   /**
@@ -162,9 +176,27 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       // Toggle between message services depending on communication medium - eMail vs SMS
       $medium = $this->whatMedium($address);
-      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails);
+      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails['markup']['medium']);
       $this->mbMessageServices[$medium]->dispatchMessage($message);
     }
+  }
+
+  /**
+   * gatherUserDetails: .
+   *
+   * @param array $message
+   *   ...
+   *
+   * @return array $
+   *   ...
+   */
+  public function gatherUserDetails($message) {
+
+    $userDetails = [
+      'first_name' => $message['merge_vars']['FNAME']
+    ];
+
+    return $userDetails;
   }
 
   /**
