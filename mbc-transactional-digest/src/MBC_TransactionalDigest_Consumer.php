@@ -44,8 +44,8 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     parent::__construct($targetMBconfig);
     $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
 
-    $this->mbMessageServices['email'] = $this->mbConfig->getProperty('mbEmailService');
-    $this->mbMessageServices['sms'] = $this->mbConfig->getProperty('mbSMSservice');
+    $this->mbMessageServices['email'] = new MB_Toolbox_Mandrill();
+    $this->mbMessageServices['sms'] = new MB_Toolbox_MobileCommons();
   }
 
   /**
@@ -162,8 +162,8 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       // Toggle between message services depending on communication medium - eMail vs SMS
       $medium = $this->whatMedium($address);
-      $message = $this->mbMessageServices[$medium]->generateMarkup($messageDetails);
-      $this->mbMessageServices[$medium]->dispatch($message);
+      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails);
+      $this->mbMessageServices[$medium]->dispatchMessage($message);
     }
   }
 
