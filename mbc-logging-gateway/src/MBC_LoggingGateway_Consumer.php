@@ -342,6 +342,9 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
       if (isset($payloadDetails['email'])) {
         $post['drupal_email'] = $payloadDetails['email'];
       }
+      if (isset($payloadDetails['mobile'])) {
+        $post['drupal_mobile'] = $payloadDetails['mobile'];
+      }
       $post['drupal_uid'] = $payloadDetails['drupal-uid'];
     }
 
