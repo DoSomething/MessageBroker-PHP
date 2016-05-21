@@ -271,6 +271,38 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
+   * whatMedium(): .
+   *
+   * @param string $address
+   *   The address to analyze to determine what medium it is from.
+   *
+   * @return string $medium
+   *   The determined medium for the $address.
+   */
+  public function whatMedium($address) {
+
+    if (filter_var($address, FILTER_VALIDATE_EMAIL)) {
+      return 'email';
+    }
+
+    // Validate phone number based on the North American Numbering Plan
+    // https://en.wikipedia.org/wiki/North_American_Numbering_Plan
+    $regex = "/^(\d[\s-]?)?[\(\[\s-]{0,2}?\d{3}[\)\]\s-]{0,2}?\d{3}[\s-]?\d{4}$/i";
+    if (preg_match( $regex, $address)) {
+      return 'sms';
+    }
+
+    // To be better defined based on target OTT conditions
+    /*
+    if (isset($address)) {
+      return 'ott';
+    }
+    */
+
+    return false;
+  }
+
+  /**
    * logTransactionalDigestMessage: Log transactional digest message contents by email address.
    *
    * @param array $payloadDetails
