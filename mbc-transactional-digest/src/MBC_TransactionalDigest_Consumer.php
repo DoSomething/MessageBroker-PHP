@@ -152,9 +152,9 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     if (empty($this->campaigns[$message['event_id']])) {
       $this->campaigns[$message['event_id']] = new MB_Toolbox_Campaign($message['event_id']);
       $this->campaigns[$message['event_id']]->markup = [
-        'email' => $this->mbMessageServices['email']->generateMessage($this->campaigns[$message['event_id']]),
-        'sms'   => $this->mbMessageServices['sms']->generateMessage($this->campaigns[$message['event_id']]),
-        'ott'   => $this->mbMessageServices['ott']->generateMessage($this->campaigns[$message['event_id']]),
+        'email' => $this->mbMessageServices['email']->generateCampaignMarkup($this->campaigns[$message['event_id']]),
+        'sms'   => $this->mbMessageServices['sms']->generateCampaignMarkup($this->campaigns[$message['event_id']]),
+        'ott'   => $this->mbMessageServices['ott']->generateCampaignMarkup($this->campaigns[$message['event_id']]),
       ];
     }
 
@@ -192,7 +192,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       // Toggle between message services depending on communication medium - eMail vs SMS
       $medium = $this->whatMedium($address);
-      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails['markup']['medium']);
+      $message = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
       $this->mbMessageServices[$medium]->dispatchMessage($message);
     }
   }
@@ -265,9 +265,41 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    */
   public function timeToProcess() {
 
-    $queuedMessages = parent::queueStatus('transactionalDigestQueue');
+    // $queuedMessages = parent::queueStatus('transactionalDigestQueue');
 
     return true;
+  }
+
+  /**
+   * whatMedium(): .
+   *
+   * @param string $address
+   *   The address to analyze to determine what medium it is from.
+   *
+   * @return string $medium
+   *   The determined medium for the $address.
+   */
+  public function whatMedium($address) {
+
+    if (filter_var($address, FILTER_VALIDATE_EMAIL)) {
+      return 'email';
+    }
+
+    // Validate phone number based on the North American Numbering Plan
+    // https://en.wikipedia.org/wiki/North_American_Numbering_Plan
+    $regex = "/^(\d[\s-]?)?[\(\[\s-]{0,2}?\d{3}[\)\]\s-]{0,2}?\d{3}[\s-]?\d{4}$/i";
+    if (preg_match( $regex, $address)) {
+      return 'sms';
+    }
+
+    // To be better defined based on target OTT conditions
+    /*
+    if (isset($address)) {
+      return 'ott';
+    }
+    */
+
+    return false;
   }
 
   /**

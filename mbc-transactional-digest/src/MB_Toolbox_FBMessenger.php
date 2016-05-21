@@ -21,17 +21,47 @@ class MB_Toolbox_FBMessenger extends MB_Toolbox_BaseService
   }
 
  /**
+  * generateCampaignMarkup(): Generate campaign specific row HTML markup for email.
+  *
+  * @param array $settings
+  *   Campaign Values to be used to generate campaign row markup.
+  *
+  * @return string $markup
+  *   HTML markup
+  *
+  */
+   public function generateCampaignMarkup($settings) {
+
+     $markup = ' MB_Toolbox_FBMessenger - GENERATED CAMPAIGN MARKUP';
+
+     return $markup;
+  }
+
+ /**
+  * generateCampaignsMarkup(): Generate message values based on Mandrill Send-Template requirements.
+  *
+  * @param array $settings
+  *
+  */
+  public function generateCampaignsMarkup($settings) {
+
+    $markup = ' MB_Toolbox_FBMessenger - CAMPAIGNS MARKUP';
+
+    return $markup;
+ }
+
+ /**
   * generateMessage(): Generate message values based on Facebook Messenger requirements.
   *
   * @param array $settings
   */
- public function generateMessage($settings) {
+  public function generateMessage($settings) {
 
-  $message = '';
+    $markup = 'FACEBOOK MESSENGER MESSAGE';
 
-   return $message;
- }
- 
+    return $markup;
+  }
+
  /**
   * dispatchMessage(): Send message to Twilio to trigger sending transactional Facebook Messenger message.
   *
@@ -39,8 +69,7 @@ class MB_Toolbox_FBMessenger extends MB_Toolbox_BaseService
   *   Values to create message for processing in ottTransactionalQueue.
   */
   public function dispatchMessage($message) {
-  
-  
+
  }
- 
+
 }
