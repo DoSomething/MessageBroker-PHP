@@ -33,13 +33,15 @@ class MB_Toolbox_MobileCommons extends MB_Toolbox_BaseService
   *   Note: There's now support for "long SMS messages" of 2500 characters.
   */
  public function generateMessage($settings) {
-  
+
+  $message = '';
+
   /*
     campaign_id (Required) => fixed value, all basic digest SMS messages
     body => Text based list of user campaigns with opt in KEYWORDS
     phone_number (Required) => mobile
   */
-   
+
    return $message;
  }
  
@@ -53,8 +55,7 @@ class MB_Toolbox_MobileCommons extends MB_Toolbox_BaseService
   *   Values to create message for processing in transactionalQueue.
   */
   public function dispatchMessage($message) {
-  
-  
+
  }
  
 }
