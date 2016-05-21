@@ -89,6 +89,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
         echo '- ' . $message, PHP_EOL;
         $this->statHat->ezCount('mbc-logging-gateway: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
         parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Error', $message);
+        $this->messageBroker->sendAck($this->message['payload']);
       }
     }
 
