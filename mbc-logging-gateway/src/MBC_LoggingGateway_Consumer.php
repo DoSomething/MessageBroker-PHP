@@ -85,10 +85,10 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
         $this->process();
       }
       else {
-        echo '- ' . $this->message['log-type'] . ' can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
+        $message = $this->message['log-type'] . ' can\'t be processed, sending to deadLetterQueue.';
+        echo '- ' . $message, PHP_EOL;
         $this->statHat->ezCount('mbc-logging-gateway: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
-        parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Error', $e->getMessage());
-
+        parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Error', $message);
       }
     }
 
