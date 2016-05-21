@@ -106,22 +106,10 @@ class MB_Toolbox_Campaign
    public $during_tip;
 
   /**
-   * The HTML markup for the campaign to be used in the digest message content.
-   * @var string $emailMarkup
+   * HTML markup settings for each of the support communication platforms.
+   * @var array $markup
    */
-   public $emailMarkup;
-   
-  /**
-   *
-   * @var string $smsMarkup
-   */
-   public $smsMarkup;
-   
-  /**
-   *
-   * @var string $ottMarkup
-   */
-   public $ottMarkup;
+   public $markup;
 
   /**
    * __construct(): Trigger populating values in Campaign object when object is created.
