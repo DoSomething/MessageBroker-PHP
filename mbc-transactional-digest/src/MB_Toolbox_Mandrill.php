@@ -21,6 +21,36 @@ class MB_Toolbox_Mandrill extends MB_Toolbox_BaseService
   }
 
  /**
+  * generateCampaignMarkup(): Generate campaign specific row HTML markup for email.
+  *
+  * @param array $settings
+  *   Campaign Values to be used to generate campaign row markup.
+  *
+  * @return string $markup
+  *   HTML markup
+  *
+  */
+   public function generateCampaignMarkup($settings) {
+
+     $markup = 'MB_Toolbox_Mandrill - GENERATED CAMPAIGN MARKUP';
+
+     return $markup;
+  }
+
+ /**
+  * generateCampaignsMarkup(): Generate message values based on Mandrill Send-Template requirements.
+  *
+  * @param array $settings
+  *
+  */
+  public function generateCampaignsMarkup($settings) {
+
+    $markup = 'MB_Toolbox_Mandrill - CAMPAIGNS MARKUP';
+
+    return $markup;
+ }
+
+  /**
   * generateMessage(): Generate message values based on Mandrill Send-Template requirements.
   *
   * @param array $settings
@@ -46,13 +76,10 @@ class MB_Toolbox_Mandrill extends MB_Toolbox_BaseService
   */
   public function generateMessage($settings) {
 
-    $markup = '';
-    foreach($settings as $campaignMarkup) {
-      $markup .= $campaignMarkup;
-    }
+    $markup = 'MANDRILL MESSAGE';
 
     return $markup;
- }
+  }
  
  /**
   * dispatch(): Send message to transactionalQueue to trigger sending transactional Mobile Commons message.
@@ -65,8 +92,8 @@ class MB_Toolbox_Mandrill extends MB_Toolbox_BaseService
   */
   public function dispatchMessage($message) {
 
- }
- 
+  }
+
 }
 
 /*
