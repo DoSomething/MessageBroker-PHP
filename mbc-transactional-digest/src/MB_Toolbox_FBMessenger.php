@@ -27,6 +27,8 @@ class MB_Toolbox_FBMessenger extends MB_Toolbox_BaseService
   */
  public function generateMessage($settings) {
 
+  $message = '';
+
    return $message;
  }
  
