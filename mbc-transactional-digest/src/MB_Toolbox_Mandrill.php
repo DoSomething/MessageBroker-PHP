@@ -47,6 +47,9 @@ class MB_Toolbox_Mandrill extends MB_Toolbox_BaseService
   public function generateMessage($settings) {
 
     $markup = '';
+    foreach($settings as $campaignMarkup) {
+      $markup .= $campaignMarkup;
+    }
 
     return $markup;
  }
@@ -61,8 +64,7 @@ class MB_Toolbox_Mandrill extends MB_Toolbox_BaseService
   *   Values to create message for processing in transactionalQueue.
   */
   public function dispatchMessage($message) {
-  
-  
+
  }
  
 }
