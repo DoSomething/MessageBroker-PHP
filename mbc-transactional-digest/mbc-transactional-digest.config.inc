@@ -1,6 +1,6 @@
 <?php
 /**
- * Message Broker configuration settings for mbc-batch-messaging
+ * Message Broker configuration settings for mbc-transactional-digest
  */
 
 
@@ -27,6 +27,12 @@ $mbConfig->setProperty('rabbit_credentials', [
   'password' => getenv("RABBITMQ_PASSWORD"),
   'vhost' => getenv("RABBITMQ_VHOST"),
 ]);
+$mbConfig->setProperty('ds_drupal_api_config', [
+  'host' => getenv("DS_DRUPAL_API_HOST"),
+  'port' => getenv('DS_DRUPAL_API_PORT'),
+  'username' => getenv("DS_DRUPAL_API_USERNAME"),
+  'password' => getenv('DS_DRUPAL_API_PASSWORD'),
+]);
 $mbConfig->setProperty('mb_logging_api_config', [
   'host' => getenv("MB_LOGGING_API_HOST"),
   'port' => getenv('MB_LOGGING_API_PORT')
@@ -36,7 +42,9 @@ $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalDigestQueue']);
 $mbConfig->setProperty('messageBroker_transactionalDigest', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalQueue']);
-$mbConfig->setProperty('messageBroker_transactional', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+$mbConfig->setProperty('transactionalEmailQueue', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['mobileCommonsQueue']);
+$mbConfig->setProperty('transactionalSMSQueue', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchange', ['deadLetterQueue']);
 $mbConfig->setProperty('messageBroker_deadLetter', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
