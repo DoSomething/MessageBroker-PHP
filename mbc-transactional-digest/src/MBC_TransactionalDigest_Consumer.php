@@ -152,9 +152,9 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     if (empty($this->campaigns[$message['event_id']])) {
       $this->campaigns[$message['event_id']] = new MB_Toolbox_Campaign($message['event_id']);
       $this->campaigns[$message['event_id']]->markup = [
-        'email' => $this->mbMessageServices['email']->generateMessage($this->campaigns[$message['event_id']]),
-        'sms'   => $this->mbMessageServices['sms']->generateMessage($this->campaigns[$message['event_id']]),
-        'ott'   => $this->mbMessageServices['ott']->generateMessage($this->campaigns[$message['event_id']]),
+        'email' => $this->mbMessageServices['email']->generateCampaignMarkup($this->campaigns[$message['event_id']]),
+        'sms'   => $this->mbMessageServices['sms']->generateCampaignMarkup($this->campaigns[$message['event_id']]),
+        'ott'   => $this->mbMessageServices['ott']->generateCampaignMarkup($this->campaigns[$message['event_id']]),
       ];
     }
 
@@ -192,7 +192,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       // Toggle between message services depending on communication medium - eMail vs SMS
       $medium = $this->whatMedium($address);
-      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails['campaigns']);
+      $message = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
       $this->mbMessageServices[$medium]->dispatchMessage($message);
     }
   }
