@@ -4,7 +4,7 @@
  */
 
 namespace DoSomething\MBC_TransactionalDigest;
- 
+
 /**
  *
  */
@@ -20,6 +20,36 @@ class MB_Toolbox_MobileCommons extends MB_Toolbox_BaseService
     $this->transactionQueue = $this->mbConfig->getProperty('transactionalSMSQueue');
   }
 
+  /**
+  * generateCampaignMarkup(): Generate campaign specific row HTML markup for email.
+  *
+  * @param array $settings
+  *   Campaign Values to be used to generate campaign row markup.
+  *
+  * @return string $markup
+  *   HTML markup
+  *
+  */
+   public function generateCampaignMarkup($settings) {
+
+     $markup = 'MB_Toolbox_MobileCommons - GENERATED CAMPAIGN MARKUP';
+
+     return $markup;
+  }
+
+ /**
+  * generateCampaignsMarkup(): Generate message values based on Mandrill Send-Template requirements.
+  *
+  * @param array $settings
+  *
+  */
+  public function generateCampaignsMarkup($settings) {
+
+    $markup = 'MB_Toolbox_MobileCommons - CAMPAIGNS MARKUP';
+
+    return $markup;
+ }
+
  /**
   * generateMessage(): Generate message values based on Mobile Commons send_message() requirements.
   *
@@ -32,9 +62,9 @@ class MB_Toolbox_MobileCommons extends MB_Toolbox_BaseService
   *
   *   Note: There's now support for "long SMS messages" of 2500 characters.
   */
- public function generateMessage($settings) {
+  public function generateMessage($settings) {
 
-  $message = '';
+    $markup = 'MOBILE COMMONS MESSAGE';
 
   /*
     campaign_id (Required) => fixed value, all basic digest SMS messages
@@ -42,9 +72,9 @@ class MB_Toolbox_MobileCommons extends MB_Toolbox_BaseService
     phone_number (Required) => mobile
   */
 
-   return $message;
- }
- 
+   return $markup;
+  }
+
  /**
   * dispatchMessage(): Send message to mobileCommonsQueue to trigger sending transactional Mobile Commons message.
   *
@@ -56,8 +86,8 @@ class MB_Toolbox_MobileCommons extends MB_Toolbox_BaseService
   */
   public function dispatchMessage($message) {
 
- }
- 
+  }
+
 }
 
 /*
