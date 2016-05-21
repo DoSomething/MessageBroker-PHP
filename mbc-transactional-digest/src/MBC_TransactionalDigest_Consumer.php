@@ -192,7 +192,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       // Toggle between message services depending on communication medium - eMail vs SMS
       $medium = $this->whatMedium($address);
-      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails['markup']['medium']);
+      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails['campaigns']);
       $this->mbMessageServices[$medium]->dispatchMessage($message);
     }
   }
@@ -265,7 +265,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    */
   public function timeToProcess() {
 
-    $queuedMessages = parent::queueStatus('transactionalDigestQueue');
+    // $queuedMessages = parent::queueStatus('transactionalDigestQueue');
 
     return true;
   }
