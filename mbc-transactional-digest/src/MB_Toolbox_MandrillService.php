@@ -8,7 +8,7 @@ namespace DoSomething\MBC_TransactionalDigest;
 /**
  *
  */
-class MB_Toolbox_Mandrill extends MB_Toolbox_BaseService
+class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
 {
 
   /**
@@ -23,31 +23,62 @@ class MB_Toolbox_Mandrill extends MB_Toolbox_BaseService
  /**
   * generateCampaignMarkup(): Generate campaign specific row HTML markup for email.
   *
-  * @param array $settings
-  *   Campaign Values to be used to generate campaign row markup.
+  * @param object $campaign
+  *   Campaign values to be used to generate campaign row markup.
   *
   * @return string $markup
   *   HTML markup
   *
   */
-   public function generateCampaignMarkup($settings) {
+  public function generateCampaignMarkup($campaign) {
 
-     $markup = 'MB_Toolbox_Mandrill - GENERATED CAMPAIGN MARKUP';
-
-     return $markup;
+    $campaignMarkup = parent::getTemplate('campaign-markup.inc');
+    
+    $campaignMarkup = str_replace('*|CAMPAIGN_IMAGE_URL|*', $campaign->image_campaign_cover, $campaignMarkup);
+    $campaignMarkup = str_replace('*|CAMPAIGN_TITLE|*', $campaign->title, $campaignMarkup);
+    $campaignMarkup = str_replace('*|CAMPAIGN_LINK|*', $campaign->url, $campaignMarkup);
+    $campaignMarkup = str_replace('*|CALL_TO_ACTION|*', $campaign->call_to_action, $campaignMarkup);
+    
+    if (isset($campaign->latest_news)) {
+      $campaignMarkup = str_replace('*|TIP_TITLE|*',  'News from the team: ', $campaignMarkup);
+      $campaignMarkup = str_replace('*|DURING_TIP|*',  $campaign->latest_news, $campaignMarkup);
+    }
+    else {
+      $campaignMarkup = str_replace('*|TIP_TITLE|*',  $campaign->during_tip_header, $campaignMarkup);
+      $campaignMarkup = str_replace('*|DURING_TIP|*',  $campaign->during_tip_copy, $campaignMarkup);
+    }
+    
+    return $campaignMarkup;
   }
 
  /**
   * generateCampaignsMarkup(): Generate message values based on Mandrill Send-Template requirements.
   *
-  * @param array $settings
+  * @param array $campaigns
+  *   List of all user campaigns signed up for in current transactional batch.
   *
   */
-  public function generateCampaignsMarkup($settings) {
+  public function generateCampaignsMarkup($campaigns) {
 
-    $markup = 'MB_Toolbox_Mandrill - CAMPAIGNS MARKUP';
+    $campaignsMarkup = null;
+    $campaignCounter = 0;
+    $totalCampaigns = count($campaigns);
+    
+    if ($totalCampaigns == 0) {
+      throw new Exception('-> MB_Toolbox_MandrillService->generateCampaignsMarkup() no campaigns found.');
+    }
 
-    return $markup;
+    foreach ($campaigns as $campaignNID => $campaignMarkup) {
+      $campaignsMarkup .= $campaignMarkup;
+      
+      // Add divider markup if more campaigns are to be added
+      if ($totalCampaigns - 1 > $campaignCounter) {
+        $campaignsMarkup .= $this->campaignTempateDivider;
+      }
+      $campaignCounter++;
+    }
+
+    return $campaignsMarkup;
  }
 
   /**
