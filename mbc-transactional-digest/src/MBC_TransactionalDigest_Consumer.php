@@ -105,7 +105,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     }
     catch(Exception $e) {
       echo 'Error attempting to process transactional digest request. Error: ' . $e->getMessage();
-      $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception: ??', 1);
+      $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception', 1);
     }
 
     echo '------- MBC_TransactionalDigest_Consumer - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
@@ -148,26 +148,36 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    */
   protected function setter($message) {
 
-    if (empty($this->campaigns[$this->message['event_id']])) {
-      $this->campaigns[$this->message['event_id']] = new MB_Toolbox_Campaign($this->message['event_id']);
-      $this->campaigns[$this->message['event_id']]['markup'] = [
-        'email' => $this->mbMessageServices['email']->generateMessage($this->campaigns[$this->message['event_id']]),
-        'sms' => $this->mbMessageServices['sms']->generateMessage($this->campaigns[$this->message['event_id']]),
-        'ott' => $this->mbMessageServices['ott']->generateMessage($this->campaigns[$this->message['event_id']]),
+    // Collection of campaign details and generation of markup by medium
+    if (empty($this->campaigns[$message['event_id']])) {
+      $this->campaigns[$message['event_id']] = new MB_Toolbox_Campaign($message['event_id']);
+      $this->campaigns[$message['event_id']]->markup = [
+        'email' => $this->mbMessageServices['email']->generateMessage($this->campaigns[$message['event_id']]),
+        'sms'   => $this->mbMessageServices['sms']->generateMessage($this->campaigns[$message['event_id']]),
+        'ott'   => $this->mbMessageServices['ott']->generateMessage($this->campaigns[$message['event_id']]),
       ];
     }
 
-    if (isset($this->users[$this->message['email']])) {
-      $this->users[$this->message['email']] = $this->gatherUserDetailsEmail($this->message);
-      $this->users[$this->message['email']]['campaigns'][$this->message['event_id']] = $this->campaigns[$this->message['event_id']]['markup']['email'];
+    // Basic user settings by medium
+    if (isset($message['email']) && empty($this->users[$message['email']])) {
+      $this->users[$message['email']] = $this->gatherUserDetailsEmail($message);
     }
-    if (isset($this->users[$this->message['mobile']])) {
-      $this->users[$this->message['mobile']] = $this->gatherUserDetailsMobile($this->message);
-      $this->users[$this->message['mobile']]['campaigns'][$this->message['event_id']] = $this->campaigns[$this->message['event_id']]['markup']['sms'];
+    if (isset($message['mobile']) && empty($this->users[$message['mobile']])) {
+      $this->users[$message['mobile']] = $this->gatherUserDetailsSMS($message);
     }
-    if (isset($this->users[$this->message['ott']])) {
-      $this->users[$this->message['ott']] = $this->gatherUserDetailsOTT($this->message);
-      $this->users[$this->message['ott']]['campaigns'][$this->message['event_id']] = $this->campaigns[$this->message['event_id']]['markup']['ott'];
+    if (isset($message['ott']) && empty($this->users[$message['ott']])) {
+      $this->users[$message['ott']] = $this->gatherUserDetailsOTT($message);
+    }
+
+    // Assign markup by medium for campaigns the user is signed up for
+    if (isset($message['email']) && empty($this->users[$message['email']]->campaigns[$message['event_id']])) {
+      $this->users[$message['email']]['campaigns'][$message['event_id']] = $this->campaigns[$message['event_id']]->markup['email'];
+    }
+    if (isset($message['mobile']) && empty($this->users[$message['mobile']]->campaigns[$message['event_id']])) {
+      $this->users[$message['mobile']]['campaigns'][$message['event_id']] = $this->campaigns[$message['event_id']]->markup['sms'];
+    }
+    if (isset($message['ott']) && empty($this->users[$message['ott']]->campaigns[$message['event_id']])) {
+      $this->users[$message['ott']]['campaigns'][$message['event_id']] = $this->campaigns[$message['event_id']]->markup['ott'];
     }
 
   }
@@ -188,7 +198,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * gatherUserDetails: .
+   * gatherUserDetailsEmail: .
    *
    * @param array $message
    *   ...
@@ -196,9 +206,48 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    * @return array $
    *   ...
    */
-  public function gatherUserDetails($message) {
+  public function gatherUserDetailsEmail($message) {
 
     $userDetails = [
+      'campaigns' => [],
+      'first_name' => $message['merge_vars']['FNAME']
+    ];
+
+    return $userDetails;
+  }
+
+  /**
+   * gatherUserDetailsSMS: .
+   *
+   * @param array $message
+   *   ...
+   *
+   * @return array $
+   *   ...
+   */
+  public function gatherUserDetailsSMS($message) {
+
+    $userDetails = [
+      'campaigns' => [],
+      'first_name' => $message['merge_vars']['FNAME'],
+    ];
+
+    return $userDetails;
+  }
+
+  /**
+   * gatherUserDetailsOTT: .
+   *
+   * @param array $message
+   *   ...
+   *
+   * @return array $
+   *   ...
+   */
+  public function gatherUserDetailsOTT($message) {
+
+    $userDetails = [
+      'campaigns' => [],
       'first_name' => $message['merge_vars']['FNAME']
     ];
 
@@ -214,7 +263,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    * @return array $
    *   ...
    */
-  public function timeToProcess($payloadDetails) {
+  public function timeToProcess() {
 
     $queuedMessages = parent::queueStatus('transactionalDigestQueue');
 
