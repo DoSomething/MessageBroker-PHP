@@ -44,9 +44,11 @@ class MB_Toolbox_Mandrill extends MB_Toolbox_BaseService
   *
   *   Note: There's now support for "long SMS messages" of 2500 characters.
   */
- public function generateMessage($settings) {
-   
-   return $markup;
+  public function generateMessage($settings) {
+
+    $markup = '';
+
+    return $markup;
  }
  
  /**
