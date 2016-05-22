@@ -1,23 +1,43 @@
 <?php
 /**
+ * A Service class used to generate messages based on the specific Service requirements. Each Service
+ * has specifics based on the mediums they support and their API requirements.
  *
+ * SMS communication is provided through the Mobile Commons
+ * API: https://mobilecommons.zendesk.com/hc/en-us/articles/202052534-REST-API
  */
 
 namespace DoSomething\MBC_TransactionalDigest;
 
 /**
- *
+ * The MB_Toolbox_MobileCommonsService class. A collection of functionality related to SMS and the
+ * Mobile Commons service.
  */
 class MB_Toolbox_MobileCommonsService extends MB_Toolbox_BaseService
 {
 
   /**
-   *
+   * Loaded campaign HTML markup from inc file.
+   * @var string $campaignMarkup
+   */
+  private $campaignMarkup;
+
+  /**
+   * Loaded campaign divider HTML markup from inc file.
+   * @var string $campaignTempateDivider
+   */
+  private $campaignTempateDivider;
+
+  /**
+   * Setup common settings used throughout the class.
    */
   public function __construct() {
 
     parent::__construct();
     $this->transactionQueue = $this->mbConfig->getProperty('transactionalSMSQueue');
+
+    $this->campaignMarkup = parent::getTemplate('campaign-markup.mandrill.inc');
+    $this->campaignTempateDivider = parent::getTemplate('campaign-divider-markup.mandrill.inc');
   }
 
   /**
@@ -28,11 +48,10 @@ class MB_Toolbox_MobileCommonsService extends MB_Toolbox_BaseService
   *
   * @return string $markup
   *   HTML markup
-  *
   */
   public function generateCampaignMarkup($campaign) {
 
-    $campaignMarkup = parent::getTemplate('campaign-markup.mobile-commons.inc');
+    $campaignMarkup = $this->campaignMarkup;
     
     $campaignMarkup = str_replace('*|CAMPAIGN_IMAGE_URL|*', $campaign->image_campaign_cover, $campaignMarkup);
     $campaignMarkup = str_replace('*|CAMPAIGN_TITLE|*', $campaign->title, $campaignMarkup);
@@ -55,15 +74,34 @@ class MB_Toolbox_MobileCommonsService extends MB_Toolbox_BaseService
  /**
   * generateCampaignsMarkup(): Generate message values based on Mandrill Send-Template requirements.
   *
-  * @param array $settings
-  *
+  * @param array $campaigns
+  *   List of all user campaigns signed up for in current transactional batch.
+  * @return string $campaignsMarkup
+  *   All of the message campaigns formatted by the service requirements.
   */
   public function generateCampaignsMarkup($settings) {
 
-    $markup = 'MB_Toolbox_MobileCommons - CAMPAIGNS MARKUP';
+    $campaignTempateDivider = $this->campaignTemplateDivider;
+    $campaignsMarkup = null;
+    $campaignCounter = 0;
+    $totalCampaigns = count($campaigns);
 
-    return $markup;
- }
+    if ($totalCampaigns == 0) {
+      throw new Exception('-> MB_Toolbox_MandrillService->generateCampaignsMarkup() no campaigns found.');
+    }
+
+    foreach ($campaigns as $campaignNID => $campaignMarkup) {
+      $campaignsMarkup .= $campaignMarkup;
+
+      // Add divider markup if more campaigns are to be added
+      if ($totalCampaigns - 1 > $campaignCounter) {
+        $campaignsMarkup .= $campaignTempateDivider;
+      }
+      $campaignCounter++;
+    }
+
+    return $campaignsMarkup;
+  }
 
  /**
   * generateMessage(): Generate message values based on Mobile Commons send_message() requirements.
