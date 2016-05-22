@@ -76,7 +76,7 @@ abstract class MB_Toolbox_BaseService
   * @param array $settings
   *   Values to be used to generate message markup.
   */
- abstract function generateMessage($setting);
+  abstract function generateMessage($setting);
  
  /**
   * dispatchMessage(): Send message to transactional queue.
@@ -84,6 +84,28 @@ abstract class MB_Toolbox_BaseService
   * @param array $message
   *   Values to create message for processing in transactionalQueue.
   */
- abstract function dispatchMessage($message);
+  abstract function dispatchMessage($message);
+
+  /**
+   * getTeamplate(): Gather base template values by loading include (inc) file.
+   *
+   * @param string $templateFile
+   *   The name of the file to load.
+   *
+   * @return string $markup
+   *   The contents of the loaded file.
+   */
+  protected function getTemplate($templateFile) {
+
+    $targetFile = __DIR__ . '/../templates/' . $templateFile;
+    try {
+      $markup = file_get_contents($targetFile);
+    }
+    catch(Exception $e) {
+      throw new Exception('MB_Toolbox_BaseService->getTemplate(): Failed to load template: ' . $templateFile);
+    }
+
+    return $markup;
+  }
 
 }
