@@ -1,23 +1,43 @@
 <?php
 /**
+ * A Service class used to generate messages based on the specific Service requirements. Each Service
+ * has specifics based on the mediums they support and specific to the service.
  *
+ * Mandrill is the email engine made available by MainChimp that's accessed through an
+ * API: https://mandrillapp.com/api/docs/.
  */
 
 namespace DoSomething\MBC_TransactionalDigest;
- 
+
 /**
- *
+ * The MB_Toolbox_MandrillService class. A collection of functionality related to email and the
+ * Mandrill service.
  */
 class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
 {
 
   /**
-   *
+   * Loaded campaign HTML markup from inc file.
+   * @var string $campaignMarkup
+   */
+  private $campaignMarkup;
+
+  /**
+   * Loaded campaign divider HTML markup from inc file.
+   * @var string $campaignTempateDivider
+   */
+  private $campaignTempateDivider;
+
+  /**
+   * Setup common settings used throughout the class.
    */
   public function __construct() {
 
     parent::__construct();
     $this->transactionQueue = $this->mbConfig->getProperty('transactionalEmailQueue');
+
+    $this->campaignMarkup = parent::getTemplate('campaign-markup.mandrill.inc');
+    $this->campaignTempateDivider = parent::getTemplate('campaign-divider-markup.mandrill.inc');
   }
 
  /**
@@ -32,7 +52,7 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   */
   public function generateCampaignMarkup($campaign) {
 
-    $campaignMarkup = parent::getTemplate('campaign-markup.inc');
+    $campaignMarkup = $this->campaignMarkup;
     
     $campaignMarkup = str_replace('*|CAMPAIGN_IMAGE_URL|*', $campaign->image_campaign_cover, $campaignMarkup);
     $campaignMarkup = str_replace('*|CAMPAIGN_TITLE|*', $campaign->title, $campaignMarkup);
@@ -60,6 +80,7 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   */
   public function generateCampaignsMarkup($campaigns) {
 
+    $campaignTempateDivider = $this->campaignTemplateDivider;
     $campaignsMarkup = null;
     $campaignCounter = 0;
     $totalCampaigns = count($campaigns);
@@ -73,7 +94,7 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
       
       // Add divider markup if more campaigns are to be added
       if ($totalCampaigns - 1 > $campaignCounter) {
-        $campaignsMarkup .= $this->campaignTempateDivider;
+        $campaignsMarkup .= $campaignTempateDivider;
       }
       $campaignCounter++;
     }
