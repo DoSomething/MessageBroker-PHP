@@ -58,7 +58,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
     $this->mbMessageServices['email'] = new MB_Toolbox_MandrillService();
     $this->mbMessageServices['sms'] = new MB_Toolbox_MobileCommonsService();
-    $this->mbMessageServices['ott'] = new MB_Toolbox_FBMessengerService();
+    $this->mbMessageServices['ott'] = new MB_Toolbox_FacebookMessengerService();
 
     $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
   }
