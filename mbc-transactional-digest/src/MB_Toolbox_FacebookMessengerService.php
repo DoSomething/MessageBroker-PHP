@@ -1,23 +1,42 @@
 <?php
 /**
+ * A Service class used to generate messages based on the specific Service requirements. Each Service
+ * has specifics based on the mediums they support and their API requirements.
  *
+ * Facebook Messenger communication is provided through the Twilio API.
  */
 
 namespace DoSomething\MBC_TransactionalDigest;
  
 /**
- *
+ * The MB_Toolbox_FacebookMessengerService class. A collection of functionality related to Over
+ * The Top (OTT) messaging using the Facebook Messenger service via Twilio.
  */
-class MB_Toolbox_FBMessengerService extends MB_Toolbox_BaseService
+class MB_Toolbox_FacebookMessengerService extends MB_Toolbox_BaseService
 {
+  
+  /**
+   * Loaded campaign HTML markup from inc file.
+   * @var string $campaignMarkup
+   */
+  private $campaignMarkup;
 
   /**
-   *
+   * Loaded campaign divider HTML markup from inc file.
+   * @var string $campaignTempateDivider
+   */
+  private $campaignTempateDivider;
+
+  /**
+   * Setup common settings used throughout the class.
    */
   public function __construct() {
 
     parent::__construct();
     $this->transactionQueue = $this->mbConfig->getProperty('transactionalOTTQueue');
+
+    $this->campaignMarkup = parent::getTemplate('campaign-markup.facebook-messenger.inc');
+    $this->campaignTempateDivider = parent::getTemplate('campaign-divider-markup.facebook-messenger.inc');
   }
 
  /**
@@ -32,7 +51,7 @@ class MB_Toolbox_FBMessengerService extends MB_Toolbox_BaseService
   */
   public function generateCampaignMarkup($campaign) {
 
-    $campaignMarkup = parent::getTemplate('campaign-markup.facebook.inc');
+    $campaignMarkup = $this->campaignMarkup;
     
     $campaignMarkup = str_replace('*|CAMPAIGN_IMAGE_URL|*', $campaign->image_campaign_cover, $campaignMarkup);
     $campaignMarkup = str_replace('*|CAMPAIGN_TITLE|*', $campaign->title, $campaignMarkup);
@@ -54,14 +73,33 @@ class MB_Toolbox_FBMessengerService extends MB_Toolbox_BaseService
  /**
   * generateCampaignsMarkup(): Generate message values based on Mandrill Send-Template requirements.
   *
-  * @param array $settings
-  *
+  * @param array $campaigns
+  *   List of all user campaigns signed up for in current transactional batch.
+  * @return string $campaignsMarkup
+  *   All of the message campaigns formatted by the service requirements.
   */
-  public function generateCampaignsMarkup($settings) {
+  public function generateCampaignsMarkup($campaignsMarkup) {
 
-    $markup = ' MB_Toolbox_FBMessenger - CAMPAIGNS MARKUP';
+    $campaignTempateDivider = $this->campaignTemplateDivider;
+    $campaignsMarkup = null;
+    $campaignCounter = 0;
+    $totalCampaigns = count($campaigns);
+    
+    if ($totalCampaigns == 0) {
+      throw new Exception('-> MB_Toolbox_FacebookMessengerService->generateCampaignsMarkup() no campaigns found.');
+    }
 
-    return $markup;
+    foreach ($campaigns as $campaignNID => $campaignMarkup) {
+      $campaignsMarkup .= $campaignMarkup;
+      
+      // Add divider markup if more campaigns are to be added
+      if ($totalCampaigns - 1 > $campaignCounter) {
+        $campaignsMarkup .= $campaignTempateDivider;
+      }
+      $campaignCounter++;
+    }
+
+    return $campaignsMarkup;
  }
 
  /**
