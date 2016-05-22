@@ -1,7 +1,7 @@
 <?php
 /**
  * A Service class used to generate messages based on the specific Service requirements. Each Service
- * has specifics based on the mediums they support and specific to the service.
+ * has specifics based on the mediums they support and their API requirements.
  *
  * Mandrill is the email engine made available by MainChimp that's accessed through an
  * API: https://mandrillapp.com/api/docs/.
@@ -48,7 +48,6 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   *
   * @return string $markup
   *   HTML markup
-  *
   */
   public function generateCampaignMarkup($campaign) {
 
@@ -76,7 +75,8 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   *
   * @param array $campaigns
   *   List of all user campaigns signed up for in current transactional batch.
-  *
+  * @return string $campaignsMarkup
+  *   All of the message campaigns formatted by the service requirements.
   */
   public function generateCampaignsMarkup($campaigns) {
 
