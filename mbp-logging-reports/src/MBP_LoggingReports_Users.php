@@ -663,8 +663,13 @@ class MBP_LoggingReports_Users
       $status['budgetBackgroundColor'] = $this->setBudgetColor($status['budgetState'] );
 
       $averageDailyNewUsers = $newUsers / date('j');
-      $projectedDaysToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
-      $status['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysToComplete, 0) . ', ' . date('Y');
+      $projectedDaysInMonthToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
+      if (round($projectedDaysInMonthToComplete, 0) > date('t')) {
+        $status['budgetProjectedCompletion'] = '** Projected new user rate will not complete budget.';
+      }
+      else {
+        $status['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysInMonthToComplete, 0) . ', ' . date('Y');
+      }
     }
     if ($source == 'afterschool') {
       $budgetPercentage = self::AFTERSCHOOL_USER_BUDGET;
