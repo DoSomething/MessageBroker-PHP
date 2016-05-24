@@ -65,6 +65,7 @@ abstract class MB_Toolbox_BaseService
 
     $this->mbConfig = MB_Configuration::getInstance();
     
+    $this->mbToolbox = $this->mbConfig->getProperty('mbToolbox');
     $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
     $this->mbLoggingConfig = $this->mbConfig->getProperty('mb_logging_api_config');
     $this->statHat = $this->mbConfig->getProperty('statHat');
