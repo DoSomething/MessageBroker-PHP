@@ -163,6 +163,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     // Basic user settings by medium
     if (isset($message['email']) && empty($this->users[$message['email']])) {
       $this->users[$message['email']] = $this->gatherUserDetailsEmail($message);
+      $this->users[$message['email']]['merge_vars'] = $message['merge_vars'];
     }
     if (isset($message['mobile']) && empty($this->users[$message['mobile']])) {
       $this->users[$message['mobile']] = $this->gatherUserDetailsSMS($message);
@@ -194,8 +195,8 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       // Toggle between message services depending on communication medium - eMail vs SMS
       $medium = $this->whatMedium($address);
-      $campaignsMarkup = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
-      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails, $campaignsMarkup);
+      $messageDetails['campaignsMarkup'] = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
+      $message = $this->mbMessageServices[$medium]->generateMessage($address, $messageDetails);
       $this->mbMessageServices[$medium]->dispatchMessage($message);
     }
   }
