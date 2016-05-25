@@ -74,10 +74,12 @@ abstract class MB_Toolbox_BaseService
  /**
   * generateMarkup(): Generate message values based on target service.
   *
-  * @param array $settings
-  *   Values to be used to generate message markup.
+  * @param string $address
+  *   The specific user address of the medium the service communicates with.
+  * @param array $messageDetails
+  *   Settings used to construct the message contents.
   */
-  abstract function generateMessage($address, $campaignsMarkup);
+  abstract function generateMessage($address, $messageDetails);
  
  /**
   * dispatchMessage(): Send message to transactional queue.
