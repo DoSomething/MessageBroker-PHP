@@ -115,7 +115,7 @@ class MB_Toolbox_MobileCommonsService extends MB_Toolbox_BaseService
   *
   *   Note: There's now support for "long SMS messages" of 2500 characters.
   */
-  public function generateMessage($settings) {
+  public function generateMessage($address, $campaignsMarkup) {
 
     $markup = 'MOBILE COMMONS MESSAGE';
 

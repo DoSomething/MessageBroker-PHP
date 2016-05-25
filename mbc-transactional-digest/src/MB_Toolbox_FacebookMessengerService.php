@@ -107,7 +107,7 @@ class MB_Toolbox_FacebookMessengerService extends MB_Toolbox_BaseService
   *
   * @param array $settings
   */
-  public function generateMessage($settings) {
+  public function generateMessage($address, $campaignsMarkup) {
 
     $markup = 'FACEBOOK MESSENGER MESSAGE';
 
