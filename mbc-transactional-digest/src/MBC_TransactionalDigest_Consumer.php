@@ -194,7 +194,8 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       // Toggle between message services depending on communication medium - eMail vs SMS
       $medium = $this->whatMedium($address);
-      $message = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
+      $campaignsMarkup = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
+      $message = $this->mbMessageServices[$medium]->generateMessage($messageDetails, $campaignsMarkup);
       $this->mbMessageServices[$medium]->dispatchMessage($message);
     }
   }
