@@ -77,13 +77,13 @@ abstract class MB_Toolbox_BaseService
   * @param array $settings
   *   Values to be used to generate message markup.
   */
-  abstract function generateMessage($setting);
+  abstract function generateMessage($address, $campaignsMarkup);
  
  /**
   * dispatchMessage(): Send message to transactional queue.
   *
   * @param array $message
-  *   Values to create message for processing in transactionalQueue.
+  *   The values to send as a message to the transactional queue.
   */
   abstract function dispatchMessage($message);
 
