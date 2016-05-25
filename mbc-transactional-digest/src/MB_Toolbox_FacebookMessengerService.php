@@ -105,13 +105,19 @@ class MB_Toolbox_FacebookMessengerService extends MB_Toolbox_BaseService
  /**
   * generateMessage(): Generate message values based on Facebook Messenger requirements.
   *
-  * @param array $settings
+  * @param string $address
+  *   The specific user address of the medium the service communicates with.
+  * @param array $messageDetails
+  *   Settings used to construct the message contents.
+  *
+  * @return array $message
+  *   Formatted message in format required by the service.
   */
-  public function generateMessage($address, $campaignsMarkup) {
+  public function generateMessage($address, $messageDetails) {
 
-    $markup = 'FACEBOOK MESSENGER MESSAGE';
+    $message['contents'] = 'FACEBOOK MESSENGER MESSAGE';
 
-    return $markup;
+    return $message;
   }
 
  /**
