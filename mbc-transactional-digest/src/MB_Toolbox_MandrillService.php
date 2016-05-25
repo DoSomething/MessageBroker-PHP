@@ -26,7 +26,7 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
    * Loaded campaign divider HTML markup from inc file.
    * @var string $campaignTempateDivider
    */
-  private $campaignTempateDivider;
+  private $campaignTemplateDivider;
 
   /**
    * Settings common to all transactional digest messages.
@@ -145,39 +145,20 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   }
 
   /**
-   * getGlobalMergeVars(): Formatted global merge var values based on
-   * Mandrill send-template API spec:
-   * https://mandrillapp.com/api/docs/messages.JSON.html#method=send-template
-   *
-   * Global merge variables to use for all recipients. You can override these
-   * per recipient.
-   *
-   * @return array $globalMergeVars
-   *   A formatted array of global merge var values to be sent with
-   *   digest batch.
-   *
-   */
-  private function getGlobalMergeVars() {
-
-    foreach($this->globalMergeVars as $name => $content) {
-      $globalMergeVars[] = [
-        'name' => $name,
-        'content' => $content
-      ];
-    }
-
-    return $globalMergeVars;
-  }
-
-  /**
    * getUserMergeVars():
    *
    * @return array $mergeVars
    *
    */
-  private function getUserMergeVars($campaignsMarkup, &$mergeVars) {
+  private function getMergeVars($campaignsMarkup, $mergeVars) {
 
-    $mergeVars['merge_vars']['CAMPAIGNS'] = $campaignsMarkup;
+    $digestMergeVars = [
+      'FNAME' => $mergeVars['FNAME'],
+      'CAMPAIGNS' => $campaignsMarkup,
+      'MEMBER_COUNT' => $mergeVars['MEMBER_COUNT']
+    ];
+
+    return $digestMergeVars;
   }
 
  /**
@@ -204,25 +185,21 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   *
   *   Note: There's now support for "long SMS messages" of 2500 characters.
   */
-  public function generateMessage($address, $campaignsMarkup) {
+  public function generateMessage($address, $messageDetails) {
 
-    $templateName = 'mb-transactional-digest-v0-0-1';
-
-    // merge vars
-    $mergeVars = $this->getGlobalMergeVars();
-    $this->getUserMergeVars($campaignsMarkup, $mergeVars);
-
-    // tags
+    $template = 'mb-transactional-digest-v0-0-1';
+    $mergeVars = $this->getMergeVars($messageDetails['campaignsMarkup'], $messageDetails['merge_vars']);
     $tags = $this->getTransactionalDigestMessageTags();
 
     $message = [
       'activity' => 'campaign_signup_digest',
+      'email_template' => $template,
       'email' => $address,
       'merge_vars' => $mergeVars,
       'user_language' => 'en',
       'email_tags' => $tags,
-      'activity_timestamp' => '',
-      'application_id' => ''
+      'activity_timestamp' => time(),
+      'application_id' => 'MBC-TRANSACTIONAL-DIGEST'
     ];
 
     return $message;
@@ -235,9 +212,9 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   * @param array $message
   *   Values to create message for processing in transactionalQueue.
   */
-  public function dispatchMessage($message) {
+  public function dispatchMessage($payload) {
 
-    $message = serialize($payload);
+    $message = json_encode($payload);
     $this->transactionQueue->publish($message, 'user.registration.transactional');
 
   }
