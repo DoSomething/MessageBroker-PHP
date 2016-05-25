@@ -88,7 +88,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       else {
         echo '- ' . $this->message['log-type'] . ' can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
         $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
-        parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Error', $e->getMessage());
+        parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Generation Error', $e->getMessage());
 
       }
     }
@@ -101,11 +101,13 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     try {
       if ($this->timeToProcess()) {
         $this->process();
+        $this->messageBroker->sendAck($this->message['payload']);
       }
     }
     catch(Exception $e) {
       echo 'Error attempting to process transactional digest request. Error: ' . $e->getMessage();
       $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception', 1);
+      parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() process() Error', $e->getMessage());
     }
 
     echo '------- MBC_TransactionalDigest_Consumer - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
@@ -161,6 +163,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     // Basic user settings by medium
     if (isset($message['email']) && empty($this->users[$message['email']])) {
       $this->users[$message['email']] = $this->gatherUserDetailsEmail($message);
+      $this->users[$message['email']]['merge_vars'] = $message['merge_vars'];
     }
     if (isset($message['mobile']) && empty($this->users[$message['mobile']])) {
       $this->users[$message['mobile']] = $this->gatherUserDetailsSMS($message);
@@ -192,7 +195,8 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
       // Toggle between message services depending on communication medium - eMail vs SMS
       $medium = $this->whatMedium($address);
-      $message = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
+      $messageDetails['campaignsMarkup'] = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
+      $message = $this->mbMessageServices[$medium]->generateMessage($address, $messageDetails);
       $this->mbMessageServices[$medium]->dispatchMessage($message);
     }
   }

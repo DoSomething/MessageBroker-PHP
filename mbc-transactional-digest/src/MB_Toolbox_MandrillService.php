@@ -26,7 +26,13 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
    * Loaded campaign divider HTML markup from inc file.
    * @var string $campaignTempateDivider
    */
-  private $campaignTempateDivider;
+  private $campaignTemplateDivider;
+
+  /**
+   * Settings common to all transactional digest messages.
+   * @var array $globalMergeVars
+   */
+  private $globalMergeVars;
 
   /**
    * Setup common settings used throughout the class.
@@ -37,7 +43,9 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
     $this->transactionQueue = $this->mbConfig->getProperty('transactionalEmailQueue');
 
     $this->campaignMarkup = parent::getTemplate('campaign-markup.mandrill.inc');
-    $this->campaignTempateDivider = parent::getTemplate('campaign-divider-markup.mandrill.inc');
+    $this->campaignTemplateDivider = parent::getTemplate('campaign-divider-markup.mandrill.inc');
+
+    $this->setGlobalMergeVars();
   }
 
  /**
@@ -102,7 +110,58 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
     return $campaignsMarkup;
  }
 
+  /*
+   * An array of string to tag the message with. Stats are accumulated using
+   * tags, though we only store the first 100 we see, so this should not be
+   * unique or change frequently. Tags should be 50 characters or less. Any
+   * tags starting with an underscore are reserved for internal use and will
+   * cause errors.
+   *
+   * @return array $tags
+   *   A list of tags to be associated with the transactional digest messages.
+   */
+  private function getTransactionalDigestMessageTags() {
+
+    $tags = array(
+      0 => 'transactional',
+      1 => 'transactional-digest',
+    );
+
+    return $tags;
+  }
+
   /**
+   *
+   */
+  private function setGlobalMergeVars() {
+
+    $memberCount = $this->mbToolbox->getDSMemberCount();
+    $currentYear = date('Y');
+
+    $this->globalMergeVars = [
+      'MEMBER_COUNT' => $memberCount,
+      'CURRENT_YEAR' => $currentYear,
+    ];
+  }
+
+  /**
+   * getUserMergeVars():
+   *
+   * @return array $mergeVars
+   *
+   */
+  private function getMergeVars($campaignsMarkup, $mergeVars) {
+
+    $digestMergeVars = [
+      'FNAME' => $mergeVars['FNAME'],
+      'CAMPAIGNS' => $campaignsMarkup,
+      'MEMBER_COUNT' => $mergeVars['MEMBER_COUNT']
+    ];
+
+    return $digestMergeVars;
+  }
+
+ /**
   * generateMessage(): Generate message values based on Mandrill Send-Template requirements.
   *
   * @param array $settings
@@ -126,23 +185,37 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   *
   *   Note: There's now support for "long SMS messages" of 2500 characters.
   */
-  public function generateMessage($settings) {
+  public function generateMessage($address, $messageDetails) {
 
-    $markup = 'MANDRILL MESSAGE';
+    $template = 'mb-transactional-digest-v0-0-1';
+    $mergeVars = $this->getMergeVars($messageDetails['campaignsMarkup'], $messageDetails['merge_vars']);
+    $tags = $this->getTransactionalDigestMessageTags();
 
-    return $markup;
+    $message = [
+      'activity' => 'campaign_signup_digest',
+      'email_template' => $template,
+      'email' => $address,
+      'merge_vars' => $mergeVars,
+      'user_language' => 'en',
+      'email_tags' => $tags,
+      'activity_timestamp' => time(),
+      'application_id' => 'MBC-TRANSACTIONAL-DIGEST'
+    ];
+
+    return $message;
   }
- 
+
+
  /**
-  * dispatch(): Send message to transactionalQueue to trigger sending transactional Mobile Commons message.
-  *
-  *   Send SMS Message: https://secure.mcommons.com/api/send_message
-  *   https://mobilecommons.zendesk.com/hc/en-us/articles/202052534-REST-API#SendSMSMessage.
+  * dispatchMessages(): Send message to transactionalQueue to trigger sending transactional email messages.
   *
   * @param array $message
   *   Values to create message for processing in transactionalQueue.
   */
-  public function dispatchMessage($message) {
+  public function dispatchMessage($payload) {
+
+    $message = json_encode($payload);
+    $this->transactionQueue->publish($message, 'user.registration.transactional');
 
   }
 

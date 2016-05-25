@@ -106,18 +106,25 @@ class MB_Toolbox_MobileCommonsService extends MB_Toolbox_BaseService
  /**
   * generateMessage(): Generate message values based on Mobile Commons send_message() requirements.
   *
-  * @param array $settings
-  *   Values to be used to generate message markup based on Mobile Commons API documentation:
-  *   Send SMS Message: https://secure.mcommons.com/api/send_message
-  *   https://mobilecommons.zendesk.com/hc/en-us/articles/202052534-REST-API#SendSMSMessage.
+  * @param string $address
+  *   The specific user address of the medium the service communicates with.
+  * @param array $messageDetails
+  *   Settings used to construct the message contents.
   *
-  *     body (160 characters or fewer. If passing body as a URL param, the value must be URL encoded)
+  * Values to be used to generate message markup based on Mobile Commons API documentation:
+  * Send SMS Message: https://secure.mcommons.com/api/send_message
+  * https://mobilecommons.zendesk.com/hc/en-us/articles/202052534-REST-API#SendSMSMessage.
   *
-  *   Note: There's now support for "long SMS messages" of 2500 characters.
+  *   body (160 characters or fewer. If passing body as a URL param, the value must be URL encoded)
+  *
+  * Note: There's now support for "long SMS messages" of 2500 characters.
+  *
+  * @return array $message
+  *   Formatted message in format required by the service.
   */
-  public function generateMessage($settings) {
+  public function generateMessage($address, $campaignsMarkup) {
 
-    $markup = 'MOBILE COMMONS MESSAGE';
+    $message['contents'] = 'MOBILE COMMONS MESSAGE';
 
   /*
     campaign_id (Required) => fixed value, all basic digest SMS messages
@@ -125,7 +132,7 @@ class MB_Toolbox_MobileCommonsService extends MB_Toolbox_BaseService
     phone_number (Required) => mobile
   */
 
-   return $markup;
+    return $message;
   }
 
  /**

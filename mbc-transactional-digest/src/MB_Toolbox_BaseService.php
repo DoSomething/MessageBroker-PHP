@@ -65,6 +65,7 @@ abstract class MB_Toolbox_BaseService
 
     $this->mbConfig = MB_Configuration::getInstance();
     
+    $this->mbToolbox = $this->mbConfig->getProperty('mbToolbox');
     $this->mbToolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
     $this->mbLoggingConfig = $this->mbConfig->getProperty('mb_logging_api_config');
     $this->statHat = $this->mbConfig->getProperty('statHat');
@@ -73,16 +74,18 @@ abstract class MB_Toolbox_BaseService
  /**
   * generateMarkup(): Generate message values based on target service.
   *
-  * @param array $settings
-  *   Values to be used to generate message markup.
+  * @param string $address
+  *   The specific user address of the medium the service communicates with.
+  * @param array $messageDetails
+  *   Settings used to construct the message contents.
   */
-  abstract function generateMessage($setting);
+  abstract function generateMessage($address, $messageDetails);
  
  /**
   * dispatchMessage(): Send message to transactional queue.
   *
   * @param array $message
-  *   Values to create message for processing in transactionalQueue.
+  *   The values to send as a message to the transactional queue.
   */
   abstract function dispatchMessage($message);
 
