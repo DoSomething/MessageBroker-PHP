@@ -7,6 +7,8 @@
  */
 
 namespace DoSomething\MBC_TransactionalDigest;
+
+use \Exception;
  
 /**
  * The MB_Toolbox_FacebookMessengerService class. A collection of functionality related to Over

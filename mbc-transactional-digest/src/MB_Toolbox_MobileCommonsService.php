@@ -9,6 +9,8 @@
 
 namespace DoSomething\MBC_TransactionalDigest;
 
+use \Exception;
+
 /**
  * The MB_Toolbox_MobileCommonsService class. A collection of functionality related to SMS and the
  * Mobile Commons service.
@@ -36,8 +38,8 @@ class MB_Toolbox_MobileCommonsService extends MB_Toolbox_BaseService
     parent::__construct();
     $this->transactionQueue = $this->mbConfig->getProperty('transactionalSMSQueue');
 
-    $this->campaignMarkup = parent::getTemplate('campaign-markup.mandrill.inc');
-    $this->campaignTempateDivider = parent::getTemplate('campaign-divider-markup.mandrill.inc');
+    $this->campaignMarkup = parent::getTemplate('campaign-markup.mobile-commons.inc');
+    $this->campaignTempateDivider = parent::getTemplate('campaign-divider-markup.mobile-commons.inc');
   }
 
   /**
