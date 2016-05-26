@@ -19,7 +19,8 @@ use \Exception;
 class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 {
 
-  const DIGEST_WINDOW = 300;
+  const TRANSACTIONAL_DIGEST_WINDOW = 5;
+  const TRANSACTIONAL_DIGEST_CYCLE = 2;
 
   /**
    * mb-logging-api configuration settings.
@@ -48,6 +49,13 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   private $mbLoggingAPIConfig;
 
   /**
+   * The timestamp of the last time the list of user transactions was processed.
+   *
+   * @var init $lastProcessed
+   */
+  private $lastProcessed;
+
+  /**
    * Constructor for MBC_LoggingGateway
    *
    * @param string $targetMBconfig
@@ -63,6 +71,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     $this->mbMessageServices['ott'] = new MB_Toolbox_FacebookMessengerService();
 
     $this->mbLoggingAPIConfig = $this->mbConfig->getProperty('mb_logging_api_config');
+    $this->lastProcessed = time();
   }
 
   /**
@@ -81,16 +90,17 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       if ($this->canProcess()) {
         parent::logConsumption(['email', 'event_id']);
         $this->setter($this->message);
+        $this->messageBroker->sendAck($this->message['payload']);
       }
-      elseif ($this->message['log-type'] == 'shim') {
+      elseif (isset($this->message['log-type']) && $this->message['log-type'] == 'shim') {
         echo '* Shim message encounter... time to sleep.', PHP_EOL;
         sleep(self::SHIM_SLEEP);
         $this->processShim();
       }
       else {
-        echo '- ' . $this->message['log-type'] . ' can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
+        echo '- Message can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
         $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
-        parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Generation Error', $e->getMessage());
+        // parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Generation Error');
 
       }
     }
@@ -103,7 +113,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     try {
       if ($this->timeToProcess()) {
         $this->process();
-        $this->messageBroker->sendAck($this->message['payload']);
+        $this->lastProcessed = time();
       }
     }
     catch(Exception $e) {
@@ -182,9 +192,11 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     }
     if (isset($message['mobile']) && empty($this->users[$message['mobile']]->campaigns[$message['event_id']])) {
       $this->users[$message['mobile']]['campaigns'][$message['event_id']] = $this->campaigns[$message['event_id']]->markup['sms'];
+      $this->users[$message['mobile']]['last_transaction_stamp'] = time();
     }
     if (isset($message['ott']) && empty($this->users[$message['ott']]->campaigns[$message['event_id']])) {
       $this->users[$message['ott']]['campaigns'][$message['event_id']] = $this->campaigns[$message['event_id']]->markup['ott'];
+      $this->users[$message['ott']]['last_transaction_stamp'] = time();
     }
 
   }
@@ -197,13 +209,15 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     // Build transactional requests for each of the users
     foreach ($this->users as $address => $messageDetails) {
 
-      if (isset($messageDetails['last_transaction_stamp']) && $messageDetails['last_transaction_stamp'] < (time() - self::DIGEST_WINDOW)) {
+      if (isset($messageDetails['last_transaction_stamp']) && $messageDetails['last_transaction_stamp'] < (time() - self::TRANSACTIONAL_DIGEST_WINDOW)) {
 
+        // Digest messages are composed of at least two signups in the DIGEST_WINDOW. If only one campaign signup, \
+        // send message to transactionalQueue to send standard campaign signup message.
+        $medium = $this->whatMedium($address);
         if (count($messageDetails['campaigns']) > 1) {
           // Toggle between message services depending on communication medium - eMail vs SMS vs OTT
-          $medium = $this->whatMedium($address);
           $messageDetails['campaignsMarkup'] = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
-          $message = $this->mbMessageServices[$medium]->generateMessage($address, $messageDetails);
+          $message = $this->mbMessageServices[$medium]->generateDigestMessage($address, $messageDetails);
           $this->mbMessageServices[$medium]->dispatchDigestMessage($message);
         }
         else {
@@ -285,9 +299,10 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    */
   public function timeToProcess() {
 
-    // $queuedMessages = parent::queueStatus('transactionalDigestQueue');
-
-    return true;
+    if (isset($this->lastProcessed) && $this->lastProcessed + self::TRANSACTIONAL_DIGEST_CYCLE < time()) {
+      return true;
+    }
+    return false;
   }
 
   /**
