@@ -72,22 +72,40 @@ abstract class MB_Toolbox_BaseService
   }
 
  /**
-  * generateMarkup(): Generate message values based on target service.
+  * generateMessage(): Generate message values based on target service.
   *
   * @param string $address
   *   The specific user address of the medium the service communicates with.
   * @param array $messageDetails
   *   Settings used to construct the message contents.
   */
-  abstract function generateMessage($address, $messageDetails);
- 
+  abstract function generateDigestMessage($address, $messageDetails);
+
  /**
-  * dispatchMessage(): Send message to transactional queue.
+  * dispatchDigestMessage(): Send message to transactional queue.
   *
   * @param array $message
   *   The values to send as a message to the transactional queue.
   */
-  abstract function dispatchMessage($message);
+  abstract function dispatchDigestMessage($message);
+
+ /**
+  * generateSingleMessage(): Generate message values based on target service.
+  *
+  * @param string $address
+  *   The specific user address of the medium the service communicates with.
+  * @param array $messageDetails
+  *   Settings used to construct the message contents.
+  */
+  abstract function generateSingleMessage($address, $messageDetails);
+
+ /**
+  * dispatchSingleMessage(): Send message to transactional queue.
+  *
+  * @param array $message
+  *   The values to send as a message to the transactional queue.
+  */
+  abstract function dispatchSingleMessage($message);
 
   /**
    * getTeamplate(): Gather base template values by loading include (inc) file.
