@@ -185,13 +185,14 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   *
   *   Note: There's now support for "long SMS messages" of 2500 characters.
   */
-  public function generateMessage($address, $messageDetails) {
+  public function generateDigestMessage($address, $messageDetails) {
 
     $template = 'mb-transactional-digest-v0-0-1';
     $mergeVars = $this->getMergeVars($messageDetails['campaignsMarkup'], $messageDetails['merge_vars']);
     $tags = $this->getTransactionalDigestMessageTags();
 
     $message = [
+      'log-type' => 'transactional',
       'activity' => 'campaign_signup_digest',
       'email_template' => $template,
       'email' => $address,
@@ -205,17 +206,39 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
     return $message;
   }
 
-
  /**
-  * dispatchMessages(): Send message to transactionalQueue to trigger sending transactional email messages.
+  * dispatchMessages(): Send message to transactionalQueue to trigger sending transactional email message.
   *
   * @param array $message
   *   Values to create message for processing in transactionalQueue.
   */
-  public function dispatchMessage($payload) {
+  public function dispatchDigestMessage($payload) {
 
     $message = json_encode($payload);
-    $this->transactionQueue->publish($message, 'user.registration.transactional');
+    // $this->transactionQueue->publish($message, 'campaigns.signup-digest.transactional');
+  }
+
+ /**
+  * generateSingleMessages():
+  *
+  * @param array $message
+  *   Values to create message for processing in transactionalQueue.
+  */
+  public function generateSingleMessage($address, $messageDetails) {
+
+    // $this->transactionQueue->publish($message, 'user.registration.transactional');
+  }
+
+ /**
+  * dispatchSingleMessages(): Send message to transactionalQueue to trigger sending transactional email message
+  * in signle campaign signup format.
+  *
+  * @param array $message
+  *   Values to create message for processing in transactionalQueue.
+  */
+  public function dispatchSingleMessage($payload) {
+
+    // $this->transactionQueue->publish($message, 'user.registration.transactional');
   }
 
 }
