@@ -9,6 +9,8 @@
 
 namespace DoSomething\MBC_TransactionalDigest;
 
+use \Exception;
+
 /**
  * The MB_Toolbox_MandrillService class. A collection of functionality related to email and the
  * Mandrill service.
