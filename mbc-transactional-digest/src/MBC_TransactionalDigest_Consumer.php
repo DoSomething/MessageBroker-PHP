@@ -19,6 +19,8 @@ use \Exception;
 class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 {
 
+  const DIGEST_WINDOW = 300;
+
   /**
    * mb-logging-api configuration settings.
    *
@@ -108,6 +110,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       echo 'Error attempting to process transactional digest request. Error: ' . $e->getMessage();
       $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception', 1);
       parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() process() Error', $e->getMessage());
+      $this->messageBroker->sendAck($this->message['payload']);
     }
 
     echo '------- MBC_TransactionalDigest_Consumer - consumeQueue() END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
@@ -175,6 +178,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     // Assign markup by medium for campaigns the user is signed up for
     if (isset($message['email']) && empty($this->users[$message['email']]->campaigns[$message['event_id']])) {
       $this->users[$message['email']]['campaigns'][$message['event_id']] = $this->campaigns[$message['event_id']]->markup['email'];
+      $this->users[$message['email']]['last_transaction_stamp'] = time();
     }
     if (isset($message['mobile']) && empty($this->users[$message['mobile']]->campaigns[$message['event_id']])) {
       $this->users[$message['mobile']]['campaigns'][$message['event_id']] = $this->campaigns[$message['event_id']]->markup['sms'];
@@ -193,11 +197,17 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     // Build transactional requests for each of the users
     foreach ($this->users as $address => $messageDetails) {
 
-      // Toggle between message services depending on communication medium - eMail vs SMS
-      $medium = $this->whatMedium($address);
-      $messageDetails['campaignsMarkup'] = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
-      $message = $this->mbMessageServices[$medium]->generateMessage($address, $messageDetails);
-      $this->mbMessageServices[$medium]->dispatchMessage($message);
+      if ($messageDetails['last_transaction_stamp'] < (time() - self::DIGEST_WINDOW)) {
+
+        // Toggle between message services depending on communication medium - eMail vs SMS vs OTT
+        $medium = $this->whatMedium($address);
+        $messageDetails['campaignsMarkup'] = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
+        $message = $this->mbMessageServices[$medium]->generateMessage($address, $messageDetails);
+        $this->mbMessageServices[$medium]->dispatchMessage($message);
+        unset($this->users[$address]);
+
+      }
+
     }
   }
 
