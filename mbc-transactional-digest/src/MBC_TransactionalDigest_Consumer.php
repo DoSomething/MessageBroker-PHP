@@ -152,6 +152,11 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       throw new Exception($message);
     }
 
+    // TEST MODE
+    if (strpos($this->message['email'], '@dosomething.org') === false) {
+      return false;
+    }
+
     return true;
   }
 
