@@ -9,6 +9,8 @@
 
 namespace DoSomething\MBC_TransactionalDigest;
 
+use \Exception;
+
 /**
  * The MB_Toolbox_MandrillService class. A collection of functionality related to email and the
  * Mandrill service.
@@ -185,13 +187,14 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   *
   *   Note: There's now support for "long SMS messages" of 2500 characters.
   */
-  public function generateMessage($address, $messageDetails) {
+  public function generateDigestMessage($address, $messageDetails) {
 
     $template = 'mb-transactional-digest-v0-0-1';
     $mergeVars = $this->getMergeVars($messageDetails['campaignsMarkup'], $messageDetails['merge_vars']);
     $tags = $this->getTransactionalDigestMessageTags();
 
     $message = [
+      'log-type' => 'transactional',
       'activity' => 'campaign_signup_digest',
       'email_template' => $template,
       'email' => $address,
@@ -205,55 +208,39 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
     return $message;
   }
 
-
  /**
-  * dispatchMessages(): Send message to transactionalQueue to trigger sending transactional email messages.
+  * dispatchMessages(): Send message to transactionalQueue to trigger sending transactional email message.
   *
   * @param array $message
   *   Values to create message for processing in transactionalQueue.
   */
-  public function dispatchMessage($payload) {
+  public function dispatchDigestMessage($payload) {
 
     $message = json_encode($payload);
-    $this->transactionQueue->publish($message, 'user.registration.transactional');
+    // $this->transactionQueue->publish($message, 'campaigns.signup-digest.transactional');
+  }
 
+ /**
+  * generateSingleMessages():
+  *
+  * @param array $message
+  *   Values to create message for processing in transactionalQueue.
+  */
+  public function generateSingleMessage($address, $messageDetails) {
+
+    $this->transactionQueue->publish($message, 'campaign.signup-digest.transactional');
+  }
+
+ /**
+  * dispatchSingleMessages(): Send message to transactionalQueue to trigger sending transactional email message
+  * in signle campaign signup format.
+  *
+  * @param array $message
+  *   Values to create message for processing in transactionalQueue.
+  */
+  public function dispatchSingleMessage($payload) {
+
+    $this->transactionQueue->publish($message, 'campaign.signup.transactional');
   }
 
 }
-
-/*
-(
-    [activity] => campaign_signup
-    [email] => xxx@yahoo.com
-    [uid] => 3887635
-    [merge_vars] => Array
-        (
-            [MEMBER_COUNT] => 5.3 million
-            [FNAME] => Emily
-            [CAMPAIGN_TITLE] => Bubble Breaks
-            [CAMPAIGN_LINK] => https://www.dosomething.org/campaigns/bubble-breaks?source=node/1524
-            [CALL_TO_ACTION] => Create homemade bubble blowing kits for kids at a family shelter. 
-            [STEP_ONE] => Create and Decorate!
-            [STEP_TWO] => Snap a Pic
-            [STEP_THREE] => Drop It Off
-        )
-
-    [user_country] => US
-    [user_language] => en
-    [campaign_language] => en-global
-    [campaign_country] => global
-    [email_template] => mb-campaign-signup-US
-    [subscribed] => 1
-    [event_id] => 1524
-    [email_tags] => Array
-        (
-            [0] => 1524
-            [1] => drupal_campaign_signup
-        )
-
-    [mobile] => 1234567890
-    [activity_timestamp] => 1463499802
-    [application_id] => US
-)
-*/
-

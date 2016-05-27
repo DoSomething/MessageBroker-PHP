@@ -7,6 +7,8 @@
  */
 
 namespace DoSomething\MBC_TransactionalDigest;
+
+use \Exception;
  
 /**
  * The MB_Toolbox_FacebookMessengerService class. A collection of functionality related to Over
@@ -103,7 +105,7 @@ class MB_Toolbox_FacebookMessengerService extends MB_Toolbox_BaseService
  }
 
  /**
-  * generateMessage(): Generate message values based on Facebook Messenger requirements.
+  * generateDigestMessage(): Generate message values based on Facebook Messenger requirements.
   *
   * @param string $address
   *   The specific user address of the medium the service communicates with.
@@ -113,7 +115,7 @@ class MB_Toolbox_FacebookMessengerService extends MB_Toolbox_BaseService
   * @return array $message
   *   Formatted message in format required by the service.
   */
-  public function generateMessage($address, $messageDetails) {
+  public function generateDigestMessage($address, $messageDetails) {
 
     $message['contents'] = 'FACEBOOK MESSENGER MESSAGE';
 
@@ -121,13 +123,36 @@ class MB_Toolbox_FacebookMessengerService extends MB_Toolbox_BaseService
   }
 
  /**
-  * dispatchMessage(): Send message to Twilio to trigger sending transactional Facebook Messenger message.
+  * dispatchDigestMessage(): Send message to Twilio to trigger sending transactional Facebook Messenger message.
   *
   * @param array $message
   *   Values to create message for processing in ottTransactionalQueue.
   */
-  public function dispatchMessage($message) {
+  public function dispatchDigestMessage($message) {
 
  }
+
+ /**
+  * generateSingleMessages():
+  *
+  * @param array $message
+  *   Values to create message for processing in transactionalQueue.
+  */
+  public function generateSingleMessage($address, $messageDetails) {
+
+    // $this->transactionQueue->publish($message, 'user.registration.transactional');
+  }
+
+ /**
+  * dispatchSingleMessages(): Send message to transactionalQueue to trigger sending transactional email message
+  * in signle campaign signup format.
+  *
+  * @param array $message
+  *   Values to create message for processing in transactionalQueue.
+  */
+  public function dispatchSingleMessage($payload) {
+
+    // $this->transactionQueue->publish($message, 'user.registration.transactional');
+  }
 
 }
