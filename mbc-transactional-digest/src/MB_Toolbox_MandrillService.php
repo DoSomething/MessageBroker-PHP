@@ -228,7 +228,7 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   */
   public function generateSingleMessage($address, $messageDetails) {
 
-    // $this->transactionQueue->publish($message, 'user.registration.transactional');
+    $this->transactionQueue->publish($message, 'campaign.signup-digest.transactional');
   }
 
  /**
@@ -240,7 +240,7 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   */
   public function dispatchSingleMessage($payload) {
 
-    // $this->transactionQueue->publish($message, 'user.registration.transactional');
+    $this->transactionQueue->publish($message, 'campaign.signup.transactional');
   }
 
 }
