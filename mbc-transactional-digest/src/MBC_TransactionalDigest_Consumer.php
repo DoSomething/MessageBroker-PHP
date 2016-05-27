@@ -299,7 +299,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    */
   public function timeToProcess() {
 
-    if (isset($this->lastProcessed) && $this->lastProcessed + self::TRANSACTIONAL_DIGEST_CYCLE < time()) {
+    if (($this->lastProcessed + self::TRANSACTIONAL_DIGEST_CYCLE) < time()) {
       return true;
     }
     return false;
