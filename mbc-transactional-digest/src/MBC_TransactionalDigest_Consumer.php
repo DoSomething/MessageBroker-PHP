@@ -133,9 +133,10 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    */
   protected function canProcess() {
 
-    if (empty($this->message['email'])) {
+    if (empty($this->message['email']) && empty($this->message['mobile']) && empty($this->message['ott'])) {
       return false;
     }
+
     if (empty($this->message['activity'])) {
       return false;
     }
