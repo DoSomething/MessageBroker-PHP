@@ -12,7 +12,7 @@ define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-use DoSomething\ MBC_TransactionalDigest\MBC_TransactionalDigest_Shim;
+use DoSomething\ MBC_TransactionalDigest\MBP_TransactionalDigest_Producer;
 
 // Load configuration settings specific to this application
 require_once __DIR__ . '/mbc-transactional-digest_shim.config.inc';
@@ -21,7 +21,7 @@ require_once __DIR__ . '/mbc-transactional-digest_shim.config.inc';
 // Kick off
 echo '------- mbc-transactional-digest_shim START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
-$mbpTransactionalDigest = new MBP_TransactionalDigest_Producer();
+$mbpTransactionalDigest = new  MBP_TransactionalDigest_Producer();
 $mbpTransactionalDigest->produceShim();
 
 echo '------- mbc-transactional-digest_shim END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
