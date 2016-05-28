@@ -2,7 +2,7 @@
 /**
  * The TransactionalDigest collection of classes ...
  */
-namespace DoSomething\MBP_UserDigest;
+namespace DoSomething\MBC_TransactionalDigest;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox_BaseProducer;
@@ -26,7 +26,7 @@ class MBP_TransactionalDigest_Producer extends MB_Toolbox_BaseProducer
    */
   public function __construct() {
 
-    perent::__construct();
+    parent::__construct();
     $this->shimCount = 0;
   }
 
@@ -35,8 +35,9 @@ class MBP_TransactionalDigest_Producer extends MB_Toolbox_BaseProducer
    */
   public function produceShim() {
 
-    $routingKey = 'transactionalDigest';
-    $payload = $this->generatePayload();
+    $routingKey = 'campaign.signup.transactional';
+    $data = null;
+    $payload = $this->generatePayload($data);
     $payload = parent::produceMessage($payload, $routingKey);
   }
   
@@ -46,10 +47,13 @@ class MBP_TransactionalDigest_Producer extends MB_Toolbox_BaseProducer
    * @return array
    *   Formatted payload
    */
-  protected function generatePayload() {
+  protected function generatePayload($data) {
 
-    $payload = parent::generatePayload();
+    $payload = parent::generatePayload($data);
     $payload['shimCount'] = $this->shimCount++;
+    $payload['activity'] = 'shim';
+
+    echo '- shimCount: ' . $this->shimCount, PHP_EOL;
 
     return $payload;
   }
