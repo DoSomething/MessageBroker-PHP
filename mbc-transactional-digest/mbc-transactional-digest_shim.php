@@ -21,7 +21,7 @@ require_once __DIR__ . '/mbc-transactional-digest_shim.config.inc';
 // Kick off
 echo '------- mbc-transactional-digest_shim START - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
-$mbpTransactionalDigest = new  MBP_TransactionalDigest_Producer();
+$mbpTransactionalDigest = new MBP_TransactionalDigest_Producer();
 $mbpTransactionalDigest->produceShim();
 
 echo '------- mbc-transactional-digest_shim END - ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
