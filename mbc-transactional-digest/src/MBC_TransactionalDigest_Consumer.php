@@ -19,8 +19,8 @@ use \Exception;
 class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 {
 
-  const TRANSACTIONAL_DIGEST_WINDOW = 5;
-  const TRANSACTIONAL_DIGEST_CYCLE = 2;
+  const TRANSACTIONAL_DIGEST_WINDOW = 6;
+  const TRANSACTIONAL_DIGEST_CYCLE = 3;
 
   /**
    * mb-logging-api configuration settings.
@@ -92,10 +92,13 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         $this->setter($this->message);
         $this->messageBroker->sendAck($this->message['payload']);
       }
-      elseif (isset($this->message['log-type']) && $this->message['log-type'] == 'shim') {
-        echo '* Shim message encounter... time to sleep.', PHP_EOL;
-        sleep(self::SHIM_SLEEP);
-        $this->processShim();
+      elseif (isset($this->message['activity']) && $this->message['activity'] == 'shim') {
+        echo '* Shim message encounter... thanks for the wakeup, removing from queue.', PHP_EOL;
+        $this->messageBroker->sendAck($this->message['payload']);
+      }
+      elseif ($this->message['application_id'] != 'US') {
+        echo '* Non US application campaign signup, removing from queue.', PHP_EOL;
+        $this->messageBroker->sendAck($this->message['payload']);
       }
       else {
         echo '- Message can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
@@ -141,6 +144,9 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       return false;
     }
     if (isset($this->message['activity']) && $this->message['activity'] != 'campaign_signup') {
+      return false;
+    }
+    if ($this->message['application_id'] != 'US') {
       return false;
     }
     if (empty($this->message['user_language'])) {
