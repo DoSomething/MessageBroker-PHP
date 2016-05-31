@@ -19,8 +19,8 @@ use \Exception;
 class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 {
 
-  const TRANSACTIONAL_DIGEST_WINDOW = 6;
-  const TRANSACTIONAL_DIGEST_CYCLE = 3;
+  const TRANSACTIONAL_DIGEST_WINDOW = 60;
+  const TRANSACTIONAL_DIGEST_CYCLE = 30;
 
   /**
    * mb-logging-api configuration settings.
@@ -102,8 +102,9 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       }
       else {
         echo '- Message can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
-        $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
+        // $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
         // parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Generation Error');
+        $this->messageBroker->sendAck($this->message['payload']);
 
       }
     }
@@ -311,7 +312,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
    */
   public function timeToProcess() {
 
-    if (($this->lastProcessed + self::TRANSACTIONAL_DIGEST_CYCLE) < time()) {
+    if ($this->lastProcessed < (time() - self::TRANSACTIONAL_DIGEST_CYCLE)) {
       return true;
     }
     return false;
