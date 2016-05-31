@@ -217,7 +217,7 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   public function dispatchDigestMessage($payload) {
 
     $message = json_encode($payload);
-    // $this->transactionQueue->publish($message, 'campaigns.signup-digest.transactional');
+    $this->transactionQueue->publish($message, 'campaigns.signup-digest.transactional');
   }
 
  /**
@@ -240,7 +240,7 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   */
   public function dispatchSingleMessage($payload) {
 
-    $this->transactionQueue->publish($message, 'campaign.signup.transactional');
+    // $this->transactionQueue->publish($message, 'campaign.signup.transactional');
   }
 
 }
