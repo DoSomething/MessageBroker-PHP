@@ -18,8 +18,24 @@ class MBP_LoggingReports_Users
 {
 
   const MB_LOGGING_API = '/api/v1';
-  const NICHE_USER_BUDGET = 33333;
   const AFTERSCHOOL_USER_BUDGET = 'Unlimited';
+
+  // Monthly user budget
+  private static $NICHE_USER_BUDGET = [
+    1 => 33333,
+    2 => 33333,
+    3 => 33333,
+    4 => 33333,
+    5 => 33333,
+    6 => 48435,
+    7 => 33333,
+    8 => 33333,
+    9 => 33333,
+    10 => 33333,
+    11 => 33333,
+    12 => 33333,
+  ];
+
 
   /**
    * Message Broker connection to send messages to send email request for report message.
@@ -358,7 +374,7 @@ class MBP_LoggingReports_Users
           'fallback' => 'User Import Daily Report: After School',
           'author_name' => 'After School',
           'author_icon' => 'http://a4.mzstatic.com/us/r30/Purple69/v4/f7/43/fc/f743fc64-0cc6-171d-2f86-8649b5d3a8e1/icon175x175.jpeg',
-          'title' => date('F', strtotime($data['userImportCSV']['startDate'])) . ' User Imports: ' . $reportRange,
+          'title' => date('F', strtotime($data['userImportCSV']['startDate'])) . ' Planet Zombie User Imports: ' . $reportRange,
           'title_link' => 'https://www.stathat.com/v/stats/7CNJ/tf/1M1h'
         ];
       }
@@ -657,6 +673,9 @@ class MBP_LoggingReports_Users
   private function budgetStatus($source, $type, $newUsers) {
 
     if ($source == 'niche') {
+
+      $currentMonth = date('n');
+      $budgetPercentage = 100 - ($this->NICHE_USER_BUDGET[$currentMonth] - $newUsers) / $this->NICHE_USER_BUDGET[$currentMonth] * 100;
       $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $newUsers) / self::NICHE_USER_BUDGET * 100;
       $status['budgetPercentage'] = round($budgetPercentage, 1) . '%';
       $status['budgetState'] = $this->getBudgetState($status['budgetPercentage']);
@@ -672,8 +691,7 @@ class MBP_LoggingReports_Users
       }
     }
     if ($source == 'afterschool') {
-      $budgetPercentage = self::AFTERSCHOOL_USER_BUDGET;
-      $status['budgetPercentage'] = 'Unlimited';
+      $status['budgetPercentage'] = self::AFTERSCHOOL_USER_BUDGET;
       $status['budgetState'] = $this->getBudgetState($status['budgetPercentage']);
       $status['budgetBackgroundColor'] = $this->setBudgetColor($status['budgetState']);
       $status['budgetProjectedCompletion'] = '';
