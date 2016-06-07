@@ -374,7 +374,7 @@ class MBP_LoggingReports_Users
           'fallback' => 'User Import Daily Report: After School',
           'author_name' => 'After School',
           'author_icon' => 'http://a4.mzstatic.com/us/r30/Purple69/v4/f7/43/fc/f743fc64-0cc6-171d-2f86-8649b5d3a8e1/icon175x175.jpeg',
-          'title' => date('F', strtotime($data['userImportCSV']['startDate'])) . ' Planet Zombie User Imports: ' . $reportRange,
+          'title' => 'Planet Zombie User Imports: ' . $reportRange,
           'title_link' => 'https://www.stathat.com/v/stats/7CNJ/tf/1M1h'
         ];
       }
@@ -675,7 +675,7 @@ class MBP_LoggingReports_Users
     if ($source == 'niche') {
 
       $currentMonth = date('n');
-      $budgetPercentage = 100 - ($this->NICHE_USER_BUDGET[$currentMonth] - $newUsers) / $this->NICHE_USER_BUDGET[$currentMonth] * 100;
+      $budgetPercentage = 100 - (self::NICHE_USER_BUDGET[$currentMonth] - $newUsers) / self::NICHE_USER_BUDGET[$currentMonth] * 100;
       $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $newUsers) / self::NICHE_USER_BUDGET * 100;
       $status['budgetPercentage'] = round($budgetPercentage, 1) . '%';
       $status['budgetState'] = $this->getBudgetState($status['budgetPercentage']);
