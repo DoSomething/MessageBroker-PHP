@@ -22,19 +22,19 @@ class MBP_LoggingReports_Users
 
   // Monthly user budget
   private static $NICHE_USER_BUDGET = [
-    1 => 33333,
-    2 => 33333,
-    3 => 33333,
-    4 => 33333,
-    5 => 33333,
-    6 => 48435,
-    7 => 33333,
-    8 => 33333,
-    9 => 33333,
-    10 => 33333,
-    11 => 33333,
-    12 => 33333,
-  ];
+      1 => 33333,
+      2 => 33333,
+      3 => 33333,
+      4 => 33333,
+      5 => 33333,
+      6 => 48435,
+      7 => 33333,
+      8 => 33333,
+      9 => 33333,
+      10 => 33333,
+      11 => 33333,
+      12 => 33333,
+    ];
 
 
   /**
@@ -93,6 +93,7 @@ class MBP_LoggingReports_Users
     $this->mbLoggingAPIUrl = $mbLoggingAPIConfig['host'] . ':' . $mbLoggingAPIConfig['port'];
     $this->statHat = $this->mbConfig->getProperty('statHat');
     $this->allowedSources = unserialize(ALLOWED_SOURCES);
+
   }
 
   /**
@@ -675,16 +676,15 @@ class MBP_LoggingReports_Users
     if ($source == 'niche') {
 
       $currentMonth = date('n');
-      $budgetPercentage = 100 - (self::NICHE_USER_BUDGET[$currentMonth] - $newUsers) / self::NICHE_USER_BUDGET[$currentMonth] * 100;
-      $budgetPercentage = 100 - (self::NICHE_USER_BUDGET - $newUsers) / self::NICHE_USER_BUDGET * 100;
+      $budgetPercentage = 100 - (self::$NICHE_USER_BUDGET[$currentMonth] - $newUsers) / self::$NICHE_USER_BUDGET[$currentMonth] * 100;
       $status['budgetPercentage'] = round($budgetPercentage, 1) . '%';
       $status['budgetState'] = $this->getBudgetState($status['budgetPercentage']);
       $status['budgetBackgroundColor'] = $this->setBudgetColor($status['budgetState'] );
 
       $averageDailyNewUsers = $newUsers / date('j');
-      $projectedDaysInMonthToComplete = self::NICHE_USER_BUDGET / $averageDailyNewUsers;
+      $projectedDaysInMonthToComplete = self::$NICHE_USER_BUDGET[$currentMonth] / $averageDailyNewUsers;
       if (round($projectedDaysInMonthToComplete, 0) > date('t')) {
-        $status['budgetProjectedCompletion'] = '** Projected new user rate will not complete budget.';
+        $status['budgetProjectedCompletion'] = '** Projected new user rate (' . round($averageDailyNewUsers, 0) . '/day) will not complete budget.';
       }
       else {
         $status['budgetProjectedCompletion'] = '** Projected budget completion: ' . date('F') . ' ' . round($projectedDaysInMonthToComplete, 0) . ', ' . date('Y');
