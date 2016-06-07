@@ -33,6 +33,9 @@ if (isset($_GET['startDate'])) {
 elseif (isset($argv[2])) {
   $startDate = $argv[2];
 }
+else {
+  $startDate = date('d-m-Y');
+}
 
 echo '------- mbp-logging-reports START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
