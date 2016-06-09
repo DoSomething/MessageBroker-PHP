@@ -405,7 +405,8 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
     $cURLparameters['activity'] = $payloadDetails['activity'];
 
     $post = array();
-    $post['source'] = $payloadDetails['source'];
+
+    $post['source'] = $payloadDetails['source'] == 'niche_mb_import' ? 'niche' : $payloadDetails['source'];
     $post['activity_timestamp'] = $payloadDetails['activity_timestamp'];
     $post['message'] = $payloadDetails['message'];
 
