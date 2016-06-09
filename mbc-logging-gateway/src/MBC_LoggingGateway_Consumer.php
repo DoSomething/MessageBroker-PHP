@@ -267,7 +267,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
       $this->messageBroker->sendAck($this->message['payload']);
     }
     else {
-      $error = 'Error code: ' . $result[1] . ', message: ' .  $result[0];
+      $error = 'Error code: ' . $result[1] . ', message: ' .  print_r($result[0], true);
       throw new Exception($error);
     }
   }
@@ -406,7 +406,17 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
 
     $post = array();
 
-    $post['source'] = $payloadDetails['source'] == 'niche_mb_import' ? 'niche' : $payloadDetails['source'];
+    // Filter source to accepted values
+    if ($payloadDetails['source'] == 'niche_mb_import') {
+      $post['source'] = 'niche';
+    }
+    elseif ($payloadDetails['source'] == 'campaigns') {
+       $post['source'] = 'us';
+    }
+    else {
+       $post['source'] = $payloadDetails['source'];
+    }
+
     $post['activity_timestamp'] = $payloadDetails['activity_timestamp'];
     $post['message'] = $payloadDetails['message'];
 
