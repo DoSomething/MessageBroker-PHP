@@ -405,6 +405,7 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
     $cURLparameters['activity'] = $payloadDetails['activity'];
 
     $post = array();
+    $validSources = ['niche', 'hercampus', 'att-ichannel', 'teenlife', 'cgg', 'agg', 'us', 'ca', 'uk', 'gb', 'id', 'br', 'mx'];
 
     // Filter source to accepted values
     if ($payloadDetails['source'] == 'niche_mb_import') {
@@ -413,8 +414,14 @@ class MBC_LoggingGateway_Consumer extends MB_Toolbox_BaseConsumer
     elseif ($payloadDetails['source'] == 'campaigns') {
        $post['source'] = 'us';
     }
+    elseif (strpos($payloadDetails['source'], 'node/') !== false) {
+       $post['source'] = 'us';
+    }
+    elseif (!in_array(strtolower($payloadDetails['source']), $validSources)) {
+      throw new Exception('Unsupported source: ' . $payloadDetails['source']);
+    }
     else {
-       $post['source'] = $payloadDetails['source'];
+      $post['source'] = 'us';
     }
 
     $post['activity_timestamp'] = $payloadDetails['activity_timestamp'];
