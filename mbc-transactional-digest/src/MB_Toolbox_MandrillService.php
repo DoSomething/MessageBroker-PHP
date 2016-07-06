@@ -228,15 +228,13 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   */
   public function generateSingleMessage($address, $messageDetails) {
 
-    $this->transactionQueue->publish($message, 'campaign.signup-digest.transactional');
   }
 
  /**
-  * dispatchSingleMessages(): Send message to transactionalQueue to trigger sending transactional email message
-  * in signle campaign signup format.
+  * Send message to transactionalQueue to trigger sending transactional email message
+  * in single campaign signup format.
   *
-  * @param array $message
-  *   Values to create message for processing in transactionalQueue.
+  * @param array $message Values to create message for processing in transactionalQueue.
   */
   public function dispatchSingleMessage($payload) {
 
