@@ -113,7 +113,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       else {
         echo '- Message can\'t be processed, sending to deadLetterQueue (DISABLED while filtering for @dosomething.org only addresses).', PHP_EOL;
         // $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
-        // parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Generation Error');
+        // parent::deadLetter($this->message, 'MBC_TransactionalDigest_Consumer->consumeQueue() Generation Error');
         $this->messageBroker->sendAck($this->message['payload']);
 
       }
@@ -142,7 +142,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     catch(Exception $e) {
       echo 'Error attempting to process transactional digest request. Error: ' . $e->getMessage();
       $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception', 1);
-      parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() process() Error', $e->getMessage());
+      parent::deadLetter($this->message, 'MBC_TransactionalDigest_Consumer->consumeQueue() process() Error', $e->getMessage());
       $this->messageBroker->sendAck($this->message['payload']);
     }
 
