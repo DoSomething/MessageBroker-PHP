@@ -97,7 +97,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     parent::consumeQueue($payload);
 
     try {
-      if ($this->canProcess()) {
+      if ($this->canProcess($this->message)) {
         parent::logConsumption(['email', 'event_id']);
         $this->setter($this->message);
         $this->messageBroker->sendAck($this->message['payload']);
@@ -135,7 +135,11 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     // Batch time reached, generate digest and dispatch messages to transactional queues
     try {
       if ($this->timeToProcess()) {
-        $this->process();
+
+        // Pass in parameters to process() to allow for unit test coverage
+        // @todo: Break out more params value to made process() autonomous
+        $params['users'] = $this->users;
+        $this->process($params);
         $this->lastProcessed = time();
       }
     }
@@ -152,31 +156,33 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   /**
    * Conditions to test before processing the message.
    *
+   * @param array $message Message settings to be reviewed to determine if the message can be processed.
+   *
    * @return boolean
    */
-  protected function canProcess() {
+  protected function canProcess($message) {
 
-    if (empty($this->message['email']) && empty($this->message['mobile']) && empty($this->message['ott'])) {
-      return false;
-    }
-
-    if (empty($this->message['activity'])) {
-      return false;
-    }
-    if (isset($this->message['activity']) && $this->message['activity'] != 'campaign_signup') {
-      return false;
-    }
-    if ($this->message['application_id'] != 'US') {
-      return false;
-    }
-    if (empty($this->message['user_language'])) {
+    if (empty($message['email']) && empty($message['mobile']) && empty($message['ott'])) {
       return false;
     }
 
-    if (isset($this->users[$this->message['email']][$this->message['event_id']])) {
-      $message = 'MBC_TransactionalDigest_Consumer->canProcess(): Duplicate campaign signup for '.$this->message['email'].' to campaign ID: '.$this->message['event_id'];
-      echo $message, PHP_EOL;
-      throw new Exception($message);
+    if (empty($message['activity'])) {
+      return false;
+    }
+    if (isset($message['activity']) && $message['activity'] != 'campaign_signup') {
+      return false;
+    }
+    if ($message['application_id'] != 'US') {
+      return false;
+    }
+    if (empty($message['user_language'])) {
+      return false;
+    }
+
+    if (isset($this->users[$message['email']][$message['event_id']])) {
+      $errorMessage = 'MBC_TransactionalDigest_Consumer->canProcess(): Duplicate campaign signup for ' . $message['email'].' to campaign ID: ' . $message['event_id'];
+      echo $errorMessage, PHP_EOL;
+      throw new Exception($errorMessage);
     }
 
     // TEST MODE
@@ -237,12 +243,15 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * process(): Gather message settings into submission to mb-logging-api
+   * Gather message settings into submission to mb-logging-api
+   *
+   * @param array $params
+   * @todo: Break out more params value to made process() autonomous
    */
-  protected function process() {
+  protected function process($params) {
 
     // Build transactional requests for each of the users
-    foreach ($this->users as $address => $messageDetails) {
+    foreach ($params['users'] as $address => $messageDetails) {
 
       if ($this->timeToProcessUser($messageDetails)) {
 
