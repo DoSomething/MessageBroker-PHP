@@ -228,6 +228,7 @@ class MB_Toolbox_Campaign
       return $result[0];
     }
     elseif ($result[1] == 200 && is_array($result[0])) {
+      echo 'Call to ' . $campaignAPIUrl . ' returned  200 with rejected response. nid: ' . $nid, PHP_EOL;
       throw new Exception('Call to ' . $campaignAPIUrl . ' returned  200 with rejected response. nid: ' . $nid);
     }
     elseif ($result[1] == 403) {
