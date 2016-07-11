@@ -11,7 +11,7 @@ define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-use DoSomething\ MBC_TransactionalDigest\MBC_TransactionalDigest_Consumer;
+use DoSomething\MBC_TransactionalDigest\MBC_TransactionalDigest_Consumer;
 
 // Load configuration settings specific to this application
 require_once __DIR__ . '/mbc-transactional-digest.config.inc';
