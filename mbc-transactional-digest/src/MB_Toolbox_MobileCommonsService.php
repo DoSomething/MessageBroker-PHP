@@ -81,9 +81,9 @@ class MB_Toolbox_MobileCommonsService extends MB_Toolbox_BaseService
   * @return string $campaignsMarkup
   *   All of the message campaigns formatted by the service requirements.
   */
-  public function generateCampaignsMarkup($settings) {
+  public function generateCampaignsMarkup($campaigns) {
 
-    $campaignTempateDivider = $this->campaignTemplateDivider;
+    $campaignTempateDivider = $this->campaignTempateDivider;
     $campaignsMarkup = null;
     $campaignCounter = 0;
     $totalCampaigns = count($campaigns);

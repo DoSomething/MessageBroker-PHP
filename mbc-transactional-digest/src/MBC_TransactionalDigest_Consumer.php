@@ -19,8 +19,18 @@ use \Exception;
 class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 {
 
-  const TRANSACTIONAL_DIGEST_WINDOW = 60;
-  const TRANSACTIONAL_DIGEST_CYCLE = 30;
+  /**
+   * The amount of time in seconds between campaign signups that result in a digest message
+   * of signups rather than individual transactional messages.
+   */
+  const TRANSACTIONAL_DIGEST_WINDOW = 300;
+
+  /**
+   * The time interval that collected signups are reviewed for generation of digest messages.
+   * This is the potential maximum amount of time in seconds that can pass from the users
+   * campaign signup before they receive a message.
+   */
+  const TRANSACTIONAL_DIGEST_CYCLE = 60;
 
   /**
    * mb-logging-api configuration settings.
@@ -87,7 +97,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     parent::consumeQueue($payload);
 
     try {
-      if ($this->canProcess()) {
+      if ($this->canProcess($this->message)) {
         parent::logConsumption(['email', 'event_id']);
         $this->setter($this->message);
         $this->messageBroker->sendAck($this->message['payload']);
@@ -101,7 +111,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         $this->messageBroker->sendAck($this->message['payload']);
       }
       else {
-        echo '- Message can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
+        echo '- Message can\'t be processed, sending to deadLetterQueue (DISABLED while filtering for @dosomething.org only addresses).', PHP_EOL;
         // $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
         // parent::deadLetter($this->message, 'MBC_TransactionalDigest_Consumer->consumeQueue() Generation Error');
         $this->messageBroker->sendAck($this->message['payload']);
@@ -109,14 +119,27 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       }
     }
     catch(Exception $e) {
-      echo 'Error sending transactional request to transactionalQueue, retrying... Error: ' . $e->getMessage();
-      $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception: ??', 1);
+      if (strpos($e->getMessage(), 'returned 200 with rejected response.') !== false) {
+        echo '- '.$e->getMessage(), PHP_EOL;
+        // parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Generation Error');
+        $this->messageBroker->sendAck($this->message['payload']);
+      }
+      else {
+        echo '- '.$e->getMessage(), PHP_EOL;
+        $this->statHat->ezCount('mbc-transactional-digest: MBC_TransactionalDigest_Consumer: Exception: '.$e->getMessage(), 1);
+        // parent::deadLetter($this->message, 'MBC_LoggingGateway_Consumer->consumeLoggingGatewayQueue() Generation Error');
+        $this->messageBroker->sendAck($this->message['payload']);
+      }
     }
 
     // Batch time reached, generate digest and dispatch messages to transactional queues
     try {
       if ($this->timeToProcess()) {
-        $this->process();
+
+        // Pass in parameters to process() to allow for unit test coverage
+        // @todo: Break out more params value to made process() autonomous
+        $params['users'] = $this->users;
+        $this->process($params);
         $this->lastProcessed = time();
       }
     }
@@ -133,37 +156,42 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   /**
    * Conditions to test before processing the message.
    *
+   * @param array $message Message settings to be reviewed to determine if the message can be processed.
+   *
    * @return boolean
    */
-  protected function canProcess() {
+  protected function canProcess($message) {
 
-    if (empty($this->message['email']) && empty($this->message['mobile']) && empty($this->message['ott'])) {
-      return false;
-    }
-
-    if (empty($this->message['activity'])) {
-      return false;
-    }
-    if (isset($this->message['activity']) && $this->message['activity'] != 'campaign_signup') {
-      return false;
-    }
-    if ($this->message['application_id'] != 'US') {
-      return false;
-    }
-    if (empty($this->message['user_language'])) {
+    if (empty($message['email']) && empty($message['mobile']) && empty($message['ott'])) {
       return false;
     }
 
-    if (isset($this->users[$this->message['email']][$this->message['event_id']])) {
-      $message = 'MBC_TransactionalDigest_Consumer->canProcess(): Duplicate campaign signup for '.$this->message['email'].' to campaign ID: '.$this->message['event_id'];
-      echo $message, PHP_EOL;
-      throw new Exception($message);
+    if (empty($message['activity'])) {
+      return false;
+    }
+    if (isset($message['activity']) && $message['activity'] != 'campaign_signup') {
+      return false;
+    }
+    if ($message['application_id'] != 'US') {
+      return false;
+    }
+    if (empty($message['user_language'])) {
+      return false;
+    }
+
+    if (isset($this->users[$message['email']][$message['event_id']])) {
+      $errorMessage = 'MBC_TransactionalDigest_Consumer->canProcess(): Duplicate campaign signup for ' . $message['email'].' to campaign ID: ' . $message['event_id'];
+      echo $errorMessage, PHP_EOL;
+      throw new Exception($errorMessage);
     }
 
     // TEST MODE
+    /*
     if (strpos($this->message['email'], '@dosomething.org') === false) {
+      echo 'Non @dosomething.org address, skipping.', PHP_EOL;
       return false;
     }
+    */
 
     return true;
   }
@@ -215,17 +243,21 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * process(): Gather message settings into submission to mb-logging-api
+   * Gather message settings into submission to mb-logging-api
+   *
+   * @param array $params
+   * @todo: Break out more params value to made process() autonomous
    */
-  protected function process() {
+  protected function process($params) {
 
     // Build transactional requests for each of the users
-    foreach ($this->users as $address => $messageDetails) {
+    foreach ($params['users'] as $address => $messageDetails) {
 
-      if (isset($messageDetails['last_transaction_stamp']) && $messageDetails['last_transaction_stamp'] < (time() - self::TRANSACTIONAL_DIGEST_WINDOW)) {
+      if ($this->timeToProcessUser($messageDetails)) {
 
-        // Digest messages are composed of at least two signups in the DIGEST_WINDOW. If only one campaign signup, \
-        // send message to transactionalQueue to send standard campaign signup message.
+        // Digest messages are composed of at least two signups in the DIGEST_WINDOW. If only one
+        // campaign signup, send message to transactionalQueue to send standard campaign signup
+        // message.
         $medium = $this->whatMedium($address);
         if (count($messageDetails['campaigns']) > 1) {
           // Toggle between message services depending on communication medium - eMail vs SMS vs OTT
@@ -238,10 +270,33 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
           $this->mbMessageServices[$medium]->dispatchSingleMessage($message);
         }
         unset($this->users[$address]);
-
       }
-
     }
+  }
+
+  /**
+   * Determine if the message being processed signals that's time to process. The results could be a
+   * digest campaign signup message if there's more than one signup or forwarding the signup to the
+   * transaction queue to generate a simple singe transactional campaign signup message.
+   *
+   * @param array $messageDetails Details of the message being processed.
+   *
+   * @returns boolean
+   */
+  private function timeToProcessUser($messageDetails) {
+
+    if (empty($messageDetails['last_transaction_stamp'])) {
+      return false;
+    }
+
+    $collectionTimeframe = time() - self::TRANSACTIONAL_DIGEST_WINDOW;
+
+    // Was the last transaction still within the collection time frame?
+    if ($messageDetails['last_transaction_stamp'] > $collectionTimeframe) {
+      return false;
+    }
+
+    return true;
   }
 
   /**
