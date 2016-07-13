@@ -186,12 +186,10 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
     }
 
     // TEST MODE
-    /*
     if (strpos($this->message['email'], '@dosomething.org') === false) {
       echo 'Non @dosomething.org address, skipping.', PHP_EOL;
       return false;
     }
-    */
 
     return true;
   }
