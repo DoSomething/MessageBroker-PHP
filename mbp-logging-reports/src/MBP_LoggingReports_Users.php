@@ -376,7 +376,7 @@ class MBP_LoggingReports_Users
           'fallback' => 'User Import Daily Report: After School',
           'author_name' => 'After School',
           'author_icon' => 'http://a4.mzstatic.com/us/r30/Purple69/v4/f7/43/fc/f743fc64-0cc6-171d-2f86-8649b5d3a8e1/icon175x175.jpeg',
-          'title' => AFTERSCHOOL_CAMPAIGN . ' User Imports: ' . $reportRange,
+          'title' => self::AFTERSCHOOL_CAMPAIGN . ' User Imports: ' . $reportRange,
           'title_link' => 'https://www.stathat.com/v/stats/7CNJ/tf/1M1h'
         ];
       }
