@@ -10,7 +10,7 @@ namespace DoSomething\MBC_LoggingReports\Test;
  */
 #class MBP_LoggingReportsTest extends PHPUnit_Framework_TestCase {
  
-class MBC_LoggingProcessoryTest extends PHPUnit_Framework_TestCase {
+class MBC_LoggingProcessoryTest extends \PHPUnit_Framework_TestCase {
   
   public function setUp(){ }
   public function tearDown(){ }
