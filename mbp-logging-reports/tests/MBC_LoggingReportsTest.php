@@ -8,7 +8,7 @@ namespace DoSomething\MBC_LoggingReports\Test;
 /**
  * MBP_LoggingReportsTest: test coverage for MBP_LoggingReports class.
  */
-class MBP_LoggingReportsTest extends PHPUnit_Framework_TestCase {
+#class MBP_LoggingReportsTest extends PHPUnit_Framework_TestCase {
  
 class MBC_LoggingProcessoryTest extends PHPUnit_Framework_TestCase {
   
