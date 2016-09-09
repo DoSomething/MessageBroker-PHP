@@ -425,108 +425,103 @@ class MBP_LoggingReports_Users
    */
   private function getRecipients($type, $sources) {
 
-    $recipients = null;
+    $recipients = [];
 
     if ($type = 'runningMonth') {
 
+      // --- After school ---
       $recipients['afterschool'] = [
-        'OK' => [
-          'email' => [
+        // Info.
+        'OK' =>
+        [
+          'email' => [],
+          'slack' =>
             [
-              'address' => 'dlee@dosomething.org',
-              'name' => 'Dee'
-            ]
-          ],
-          'slack' => [
-            '#quicksilver',
-            '#after-school-internal'
-          ]
+              '#quicksilver',
+              '#after-school-internal',
+            ],
         ],
-        'Warning' => [
-          'email' => [
+
+        // Warning.
+        'Warning' =>
+        [
+          'email' => [],
+          'slack' =>
             [
-              'address' => 'dlee@dosomething.org',
-              'name' => 'Dee'
-            ]
-          ],
-          'slack' => [
-            '#after-school-internal',
-            '#quicksilver'
-          ]
+              '#after-school-internal',
+              '#quicksilver',
+            ],
         ],
-        'Alert' => [
-          'email' => [
+
+        // Notification.
+        'Alert' =>
+        [
+          'email' => [],
+          'slack' =>
             [
-              'address' => 'dlee@dosomething.org',
-              'name' => 'Dee'
-            ]
-          ],
-          'slack' => [
-            '#after-school-internal',
-            '#quicksilver',
-            '@dee',
-            '@fantini'
-          ]
-        ]
+              '#after-school-internal',
+              '#quicksilver',
+              '@fantini',
+            ],
+        ],
+
       ];
 
+      // --- Niche ---
       $recipients['niche'] = [
-        'OK' => [
-          'email' => [
+        // Info.
+        'OK' =>
+        [
+          'email' => [],
+          'slack' =>
             [
-              'address' => 'dlee@dosomething.org',
-              'name' => 'Dee'
-            ]
-          ],
-          'slack' => [
-            '#quicksilver',
-            '#niche_monitoring'
-          ]
-        ],
-        'Warning' => [
-          'email' => [
-            [
-              'address' => 'dlee@dosomething.org',
-              'name' => 'Dee'
+              '#quicksilver',
+              '#niche_monitoring',
             ],
+        ],
+
+        // Warning.
+        'Warning' =>
+        [
+          'email' => [
             [
               'address' => 'mranalli@dosomething.org',
-              'name' => 'Marissa'
-            ]
+              'name' => 'Marissa',
+            ],
           ],
-          'slack' => [
-            '#quicksilver',
-            '#niche_monitoring',
-            '@dee'
-          ]
+          'slack' =>
+            [
+              '#quicksilver',
+              '#niche_monitoring',
+            ],
         ],
-        'Alert' => [
-          'email' => [
+
+        // Notification.
+        'Alert' =>
+        [
+          'email' =>
             [
-              'address' => 'dlee@dosomething.org',
-              'name' => 'Dee'
+              [
+                'address' => 'mranalli@dosomething.org',
+                'name' => 'Marissa',
+              ],
+              [
+                'address' => 'mike@niche.com',
+                'name' => 'Mike',
+              ],
             ],
+          'slack' =>
             [
-              'address' => 'mranalli@dosomething.org',
-              'name' => 'Marissa'
+              '#quicksilver',
+              '#niche_monitoring',
+              '@marissaranalli',
             ],
-            [
-              'address' => 'mike@niche.com',
-              'name' => 'Mike'
-            ]
-          ],
-          'slack' => [
-            '#quicksilver',
-            '#niche_monitoring',
-            '@dee',
-            '@marissaranalli'
-          ]
-        ]
+        ],
       ];
 
     }
 
-    if (count($recipients) == 0) {
+    if (!count($recipients)) {
       throw new Exception('getRecipients() did not generate $recipients entries.');
     }
 
@@ -546,7 +541,7 @@ class MBP_LoggingReports_Users
    *   The status of the import process relative to the budget for the source.
    */
   private function dispatchEmailReport($source, $composedReport, $recipients, $status = 'OK') {
-    
+
     $memberCount = $this->mbToolbox->getDSMemberCount();
 
     foreach ($recipients as $sourceTo => $to) {
