@@ -605,8 +605,8 @@ class MBP_LoggingReports_Users
           if (strpos($recipient, '@') !== false) {
             $tos[] = $recipient;
           }
-          $this->slack->alert($channelNames, $attachment, $tos);
         }
+        $this->slack->alert($channelNames, $attachment, $tos);
       }
     }
   }
