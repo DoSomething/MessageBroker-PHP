@@ -250,6 +250,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
     // Build transactional requests for each of the users
     foreach ($params['users'] as $address => $messageDetails) {
+      echo '** Processing ' . $address . '.', PHP_EOL;
 
       if ($this->timeToProcessUser($messageDetails)) {
 
@@ -260,15 +261,20 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         if (count($messageDetails['campaigns']) > 1) {
           // Toggle between message services depending on communication medium - eMail vs SMS vs OTT
           $messageDetails['campaignsMarkup'] = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
+          echo '*** Sending ' . $medium . ' digest to ' . $address . '.', PHP_EOL;
           $message = $this->mbMessageServices[$medium]->generateDigestMessage($address, $messageDetails);
           $this->mbMessageServices[$medium]->dispatchDigestMessage($message);
         }
         else {
+          echo '*** Sending normal transactional ' . $medium . ' to ' . $address . '.', PHP_EOL;
           $message = $this->mbMessageServices[$medium]->generateSingleMessage($address, $messageDetails);
           $this->mbMessageServices[$medium]->dispatchSingleMessage($message);
         }
         unset($this->users[$address]);
       }
+      else {
+         echo '*** Waiting some more for ' . $address . '.', PHP_EOL;
+       }
     }
   }
 
