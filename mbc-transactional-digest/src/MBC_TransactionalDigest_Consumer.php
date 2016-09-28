@@ -102,8 +102,12 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         $this->setter($this->message);
         $this->messageBroker->sendAck($this->message['payload']);
       }
-      elseif (isset($this->message['activity']) && $this->message['activity'] == 'shim') {
+      elseif (isset($this->message['activity']) && $this->message['activity'] === 'shim') {
         echo '* Shim message encounter... thanks for the wakeup, removing from queue.', PHP_EOL;
+        $this->messageBroker->sendAck($this->message['payload']);
+      }
+      elseif (isset($this->message['activity']) && $this->message['activity'] === 'campaign_signup_single') {
+        echo '* Skipping own campaign_signup_single message, it\'s intended for the mbc-transactional-email.', PHP_EOL;
         $this->messageBroker->sendAck($this->message['payload']);
       }
       elseif ($this->message['application_id'] != 'US') {
@@ -316,7 +320,8 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
     $userDetails = [
       'campaigns' => [],
-      'first_name' => $message['merge_vars']['FNAME']
+      'first_name' => $message['merge_vars']['FNAME'],
+      'original_message' => $message['original'],
     ];
 
     return $userDetails;
