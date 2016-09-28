@@ -115,7 +115,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         $this->messageBroker->sendAck($this->message['payload']);
       }
       else {
-        echo '- Message can\'t be processed, sending to deadLetterQueue (DISABLED while filtering for @dosomething.org only addresses).', PHP_EOL;
+        echo '- Message can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
         // $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
         // parent::deadLetter($this->message, 'MBC_TransactionalDigest_Consumer->consumeQueue() Generation Error');
         $this->messageBroker->sendAck($this->message['payload']);
@@ -188,13 +188,6 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       echo $errorMessage, PHP_EOL;
       throw new Exception($errorMessage);
     }
-
-    // TEST MODE
-    if (strpos($this->message['email'], '@dosomething.org') === false) {
-      echo 'Non @dosomething.org address, skipping.', PHP_EOL;
-      return false;
-    }
-
     return true;
   }
 
