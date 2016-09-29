@@ -102,8 +102,12 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         $this->setter($this->message);
         $this->messageBroker->sendAck($this->message['payload']);
       }
-      elseif (isset($this->message['activity']) && $this->message['activity'] == 'shim') {
+      elseif (isset($this->message['activity']) && $this->message['activity'] === 'shim') {
         echo '* Shim message encounter... thanks for the wakeup, removing from queue.', PHP_EOL;
+        $this->messageBroker->sendAck($this->message['payload']);
+      }
+      elseif (isset($this->message['activity']) && $this->message['activity'] === 'campaign_signup_single') {
+        echo '* Skipping own campaign_signup_single message, it\'s intended for the mbc-transactional-email.', PHP_EOL;
         $this->messageBroker->sendAck($this->message['payload']);
       }
       elseif ($this->message['application_id'] != 'US') {
@@ -111,7 +115,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         $this->messageBroker->sendAck($this->message['payload']);
       }
       else {
-        echo '- Message can\'t be processed, sending to deadLetterQueue (DISABLED while filtering for @dosomething.org only addresses).', PHP_EOL;
+        echo '- Message can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
         // $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
         // parent::deadLetter($this->message, 'MBC_TransactionalDigest_Consumer->consumeQueue() Generation Error');
         $this->messageBroker->sendAck($this->message['payload']);
@@ -184,13 +188,6 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       echo $errorMessage, PHP_EOL;
       throw new Exception($errorMessage);
     }
-
-    // TEST MODE
-    if (strpos($this->message['email'], '@dosomething.org') === false) {
-      echo 'Non @dosomething.org address, skipping.', PHP_EOL;
-      return false;
-    }
-
     return true;
   }
 
@@ -250,6 +247,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
     // Build transactional requests for each of the users
     foreach ($params['users'] as $address => $messageDetails) {
+      echo '** Processing ' . $address . '.', PHP_EOL;
 
       if ($this->timeToProcessUser($messageDetails)) {
 
@@ -260,15 +258,20 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         if (count($messageDetails['campaigns']) > 1) {
           // Toggle between message services depending on communication medium - eMail vs SMS vs OTT
           $messageDetails['campaignsMarkup'] = $this->mbMessageServices[$medium]->generateCampaignsMarkup($messageDetails['campaigns']);
+          echo '*** Sending ' . $medium . ' digest to ' . $address . '.', PHP_EOL;
           $message = $this->mbMessageServices[$medium]->generateDigestMessage($address, $messageDetails);
           $this->mbMessageServices[$medium]->dispatchDigestMessage($message);
         }
         else {
+          echo '*** Sending normal transactional ' . $medium . ' to ' . $address . '.', PHP_EOL;
           $message = $this->mbMessageServices[$medium]->generateSingleMessage($address, $messageDetails);
           $this->mbMessageServices[$medium]->dispatchSingleMessage($message);
         }
         unset($this->users[$address]);
       }
+      else {
+         echo '*** Waiting some more for ' . $address . '.', PHP_EOL;
+       }
     }
   }
 
@@ -310,7 +313,8 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
 
     $userDetails = [
       'campaigns' => [],
-      'first_name' => $message['merge_vars']['FNAME']
+      'first_name' => $message['merge_vars']['FNAME'],
+      'original_message' => $message['original'],
     ];
 
     return $userDetails;

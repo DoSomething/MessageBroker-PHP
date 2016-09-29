@@ -227,7 +227,10 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   *   Values to create message for processing in transactionalQueue.
   */
   public function generateSingleMessage($address, $messageDetails) {
-
+    $message = $messageDetails['original_message'];
+    // Override activity.
+    $message['activity'] = 'campaign_signup_single';
+    return $message;
   }
 
  /**
@@ -237,8 +240,8 @@ class MB_Toolbox_MandrillService extends MB_Toolbox_BaseService
   * @param array $message Values to create message for processing in transactionalQueue.
   */
   public function dispatchSingleMessage($payload) {
-
-    // $this->transactionQueue->publish($message, 'campaign.signup.transactional');
+    $message = json_encode($payload);
+    $this->transactionQueue->publish($message, 'campaign.signup.transactional');
   }
 
 }
