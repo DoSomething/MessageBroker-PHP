@@ -1,10 +1,9 @@
 {
-  "name": "mbc--a1-START_HERE",
+  "name": "Messaging Groups Management",
   "type": "project",
   "version": "0.1.0",
-  "description": "A consumer app for the Message Broker system that consumes entries on the ?? Queue to make entries / updates to the ??.",
-  "keywords": ["message broker"],
-  "homepage": "https://github.com/DoSomething/messagebroker-ds-PHP.git",
+  "description": "A consumer app to manage Messaging Groups on Mobile Commons.",
+  "homepage": "https://github.com/DoSomething/Quicksilver-PHP",
   "license" : "MIT",
   "authors":
     [
@@ -14,7 +13,7 @@
       }
     ],
   "require": {
-    "php": ">= 5.3.0",
+    "php": ">= 5.6.0",
     "DoSomething/messagebroker-phplib": "0.2.*",
     "dosomething/mb-toolbox": "0.4.*",
     "dosomething/stathat": "1.*"
@@ -24,30 +23,7 @@
   },
   "autoload": {
     "psr-4": {
-      "DoSomething\\MBC_A1_StartHere\\": "src/"
+      "DoSomething\\MessagingGroupsConsumer\\": "src/"
     }
-  },
-  "scripts": {
-    "pre-package-install":
-      [
-        "./bin/install.sh"
-      ],
-    "post-package-install":
-      [
-        "./vendor/bin/phpunit"
-      ],
-    "pre-package-update":
-      [
-        "git checkout master",
-        "git pull"
-      ],
-    "post-package-update":
-      [
-        "./vendor/bin/phpunit"
-      ],
-    "post-package-uninstall":
-      [
-        "./bin/uninstall.sh"
-      ]
   }
 }

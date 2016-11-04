@@ -11,12 +11,12 @@ date_default_timezone_set('America/New_York');
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Load configuration settings specific to this application
-require_once __DIR__ . '/mbc-a1-startHere.config.inc';
+require_once __DIR__ . '/messaging-groups-consumer.config.inc';
 
-echo '------- mbc-a1-startHere START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+echo '------- messaging-groups-consumer START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 // Kick off - blocking, waiting for messages in the queue
 $mb = new MessageBroker($credentials, $config);
-$mb->consumeMessage(array(new MBC_A1_StartHere($mb, $settings), 'startHere'));
+$mb->consumeMessage(array(new MessagingGroupsConsumer($mb, $settings), 'consume'));
 
-echo '------- mbc-a1-startHere END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+echo '------- messaging-groups-consumer END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
