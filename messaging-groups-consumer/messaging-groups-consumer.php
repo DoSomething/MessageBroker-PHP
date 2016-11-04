@@ -1,9 +1,11 @@
 <?php
 /**
- * mbc-a1_START_HERE.php
+ * messaging-groups-consumer.php
  *
- * Collect ?? from the ?? Queue. Process the entries to ??.
+ * A consumer app to manage Messaging Groups on Mobile Commons.
  */
+
+use DoSomething\MessagingGroupsConsumer\MessagingGroupsConsumer;
 
 date_default_timezone_set('America/New_York');
 

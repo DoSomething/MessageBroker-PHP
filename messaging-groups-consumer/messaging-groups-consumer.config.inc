@@ -38,13 +38,13 @@ $config['exchange'] = array(
   'durable' => $transactionalExchange->durable,
   'auto_delete' => $transactionalExchange->auto_delete,
 );
-foreach ($transactionalExchange->queues->someQueue->binding_patterns as $binding_key) {
+foreach ($transactionalExchange->queues->messagingGroupsQueue->binding_patterns as $binding_key) {
   $config['queue'][] = array(
-    'name' => $transactionalExchange->queues->someQueue->name,
-    'passive' => $transactionalExchange->queues->someQueue->passive,
-    'durable' =>  $transactionalExchange->queues->someQueue->durable,
-    'exclusive' =>  $transactionalExchange->queues->someQueue->exclusive,
-    'auto_delete' =>  $transactionalExchange->queues->someQueue->auto_delete,
+    'name' => $transactionalExchange->queues->messagingGroupsQueue->name,
+    'passive' => $transactionalExchange->queues->messagingGroupsQueue->passive,
+    'durable' =>  $transactionalExchange->queues->messagingGroupsQueue->durable,
+    'exclusive' =>  $transactionalExchange->queues->messagingGroupsQueue->exclusive,
+    'auto_delete' =>  $transactionalExchange->queues->messagingGroupsQueue->auto_delete,
     'bindingKey' => $binding_key,
   );
 }

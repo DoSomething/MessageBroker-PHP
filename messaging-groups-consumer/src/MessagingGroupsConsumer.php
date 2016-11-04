@@ -1,6 +1,6 @@
 <?php
-/*
- * MBC_A1_StartHere: ??
+/**
+ * MessagingGroupsConsumer
  */
 
 namespace DoSomething\MessagingGroupsConsumer;
@@ -17,14 +17,14 @@ class MessagingGroupsConsumer
   private $messageBroker;
 
   /**
-   * Setting from external services - Mailchimp.
+   * Setting from external services.
    *
    * @var array
    */
   private $settings;
 
   /**
-   * Setting from external services - Mailchimp.
+   * Setting from external services - StatHat.
    *
    * @var array
    */
