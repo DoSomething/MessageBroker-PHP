@@ -316,7 +316,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
     echo '** Removing user ' . $removeRequest['phone_number']
       . ' from group ' . $removeRequest['group_id']
       . '.' . PHP_EOL;
-    $remvoeResult = $mobileCommons->groups_members_delete($removeRequest);
+    $mobileCommons->groups_members_delete($removeRequest);
 
     // Add user from doing completed.
     $addRequest = [
