@@ -7,6 +7,7 @@ namespace DoSomething\MessagingGroupsConsumer;
 
 use DoSomething\MB_Toolbox\MB_Toolbox_BaseConsumer;
 use DoSomething\StatHat\Client as StatHat;
+use \Exception;
 
 class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
 {
@@ -26,10 +27,9 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
 
       if ($this->canProcess($this->message)) {
 
-        $this->setter($this->message);
-        $this->process([]);
+        $params = $this->setter($this->message);
+        $this->process($params);
         // Cleanup for next message
-        // unset($this->mobileMessage);
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: process', 1);
 
         // Ack in Service process() due to nested try/catch
@@ -120,7 +120,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
     }
 
     // Check that application id is allowed.
-    $supportedApps = array_keys($this->mbConfig->getProperty('mobileCommons_config'));
+    $supportedApps = ['US', 'MUI'];
     if (!in_array($message['application_id'], $supportedApps)) {
       echo '** canProcess(): Unsupported application: '
         . $message['application_id'] . '.' . PHP_EOL;
@@ -150,8 +150,32 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
+    // Check campaign id presence.
+    if (empty($message['event_id'])) {
+      echo '** canProcess(): campaign id is nor provided.' . PHP_EOL;
+      parent::reportErrorPayload();
+
+      return false;
+    }
+
     // Check user on MoCo.
-    // $mobileCommons = $this->mbConfig->getProperty('mbMobileCommons');
+    $mobileCommons = $this->mbConfig->getProperty('mobileCommons');
+
+    // Check existing wrapper.
+    $mobileCommonsWrapper = $this->mbConfig->getProperty('mobileCommonsWrapper');
+    $mobileCommonsAccountExists = $mobileCommonsWrapper->checkExisting(
+      $mobileCommons,
+      $message['mobile']
+    );
+
+    if (!$mobileCommonsAccountExists) {
+      $message = '** canProcess(): account is not MobileCommons subscriber: '
+        . $message['mobile'] . '.' . PHP_EOL;
+      echo $message;
+      parent::reportErrorPayload();
+
+      throw new Exception($message);
+    }
 
     return true;
   }

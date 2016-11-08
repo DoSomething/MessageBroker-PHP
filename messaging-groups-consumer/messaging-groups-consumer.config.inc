@@ -34,18 +34,6 @@ $mbConfig->setProperty('rabbitapi_credentials', [
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', array('messagingGroupsQueue'));
 $mbConfig->setProperty('rabbit_config', $mbRabbitConfig);
 
-$mbConfig->setProperty('mobileCommons_config', [
-  'US' => [
-    'username' => getenv("MOBILE_COMMONS_US_USER"),
-    'password' => getenv("MOBILE_COMMONS_US_PASSWORD"),
-    'company_key' => getenv("MOBILE_COMMONS_US_COMPANY_KEY"),
-  ],
-  'MUI' => [
-    'username' => getenv("MOBILE_COMMONS_US_USER"),
-    'password' => getenv("MOBILE_COMMONS_US_PASSWORD"),
-    'company_key' => getenv("MOBILE_COMMONS_US_COMPANY_KEY"),
-  ],
-]);
 
 // Create untility objects for access anywhere within the application as a single instance
 $messageBrokerConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['messagingGroupsQueue']);
@@ -61,7 +49,17 @@ $mbConfig->setProperty('statHat', new StatHat([
 ]));
 
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
-$mbConfig->setProperty('mbMobileCommons', new MB_MobileCommons());
+
+// Mobile commons.
+$mobileCommonsConfig = [
+  'username' => getenv("MOBILE_COMMONS_US_USER"),
+  'password' => getenv("MOBILE_COMMONS_US_PASSWORD"),
+  'company_key' => getenv("MOBILE_COMMONS_US_COMPANY_KEY"),
+];
+$mbConfig->setProperty('mobileCommons', new \MobileCommons($mobileCommonsConfig));
+$mbConfig->setProperty('mobileCommonsWrapper', new MB_MobileCommons());
+
+// Rabbit Management.
 $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
   'domain' => getenv("MB_RABBITMQ_MANAGEMENT_API_HOST"),
   'port' => getenv('MB_RABBITMQ_MANAGEMENT_API_PORT'),
