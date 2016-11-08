@@ -5,12 +5,21 @@
 
 namespace DoSomething\MessagingGroupsConsumer;
 
+use \SimpleXMLElement;
+use \Exception;
+
 use DoSomething\MB_Toolbox\MB_Toolbox_BaseConsumer;
 use DoSomething\StatHat\Client as StatHat;
-use \Exception;
 
 class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
 {
+
+  /**
+   * Gambit campaign.
+   *
+   * @var boolean|string
+   */
+  private $gambitCampaign = false;
 
   /**
    * Initial method triggered by blocked call in mbc-registration-mobile.php.
@@ -20,6 +29,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
    */
   public function consumeMessagingGroupsQueue($payload) {
     echo '------ messaging-groups-consumer - MessagingGroupsConsumer->consumeRegistrationMobileQueue() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
+    $this->gambitCampaign = false;
 
     parent::consumeQueue($payload);
 
@@ -29,9 +39,8 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
 
         $params = $this->setter($this->message);
         $this->process($params);
-        // Cleanup for next message
-        $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: process', 1);
 
+        $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: process', 1);
         // Ack in Service process() due to nested try/catch
       }
       else {
@@ -164,18 +173,30 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
     // Only if enabled on Gambit.
     // Todo: cache and retry.
     $gambit = $this->mbConfig->getProperty('gambit');
-    $gambitCampaign = false;
+    $this->gambitCampaign = false;
     try {
-      $gambitCampaign = $gambit->getCampaign($campaignId);
+      $this->gambitCampaign = $gambit->getCampaign($campaignId);
     } catch (Exception $e) {
       echo '** canProcess(): Can\'t access Gambit: ' . $e->getMessage()  . PHP_EOL;
 
       return false;
     }
 
-    if (empty($gambitCampaign)) {
+    if (empty($this->gambitCampaign)) {
       echo '** canProcess(): Campaign is not available on Gambit: '
         . $campaignId . ', skipping.' . PHP_EOL;
+
+      return false;
+    }
+
+    // If Campaignbot is not enabled for the campaign:
+    $groupsPresent = !empty($this->gambitCampaign->mobilecommons_group_doing)
+      && !empty($this->gambitCampaign->mobilecommons_group_completed);
+
+    if (!$groupsPresent) {
+      echo '** canProcess(): Groups are not set on Gambit for campaign: '
+        . $campaignId . ', ignoring.' . PHP_EOL;
+      parent::reportErrorPayload();
 
       return false;
     }
@@ -199,6 +220,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
       throw new Exception($message);
     }
 
+    echo '** canProcess(): passed.' . PHP_EOL;
     return true;
   }
 
@@ -209,7 +231,21 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
    *  The payload of the message being processed.
    */
   protected function setter($message) {
+    echo '** DEBUG * User: ' . $message['mobile'] . ', '
+      . 'activity: ' . $message['activity'] . ', '
+      . 'gambit campaign: ' . $this->gambitCampaign->id . ', '
+      . 'group doing: ' . $this->gambitCampaign->mobilecommons_group_doing . ', '
+      . 'group completed: ' . $this->gambitCampaign->mobilecommons_group_completed
+      . '.' . PHP_EOL;
 
+    // Get MoCo account.
+    // $mobileCommons = $this->mbConfig->getProperty('mobileCommons');
+    // $result = [];
+    // $profile = $mobileCommons->profiles_get([
+    //   'phone_number' => $message['mobile'],
+    // ]);
+    // var_dump($profile);
+    return $message;
   }
 
   /**
@@ -218,8 +254,88 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
    * @param array $payload
    *   The contents of the queue entry
    */
-  protected function process($params) {
-    $this->messageBroker->sendAck($this->message['payload']);
+  protected function process($message) {
+    try {
+      $result = false;
+      switch ($message['activity']) {
+        case 'campaign_signup':
+          $result = $this->processSignup($message);
+          break;
+
+        case 'campaign_reportback':
+          $result = $this->processReportback($message);
+          break;
+
+        default:
+          echo 'This should never happen.' . PHP_EOL;
+          break;
+      }
+
+      if ($result instanceof SimpleXMLElement && (string) $result['success'] == 'true') {
+        echo '*** Success!' . PHP_EOL;
+      } else {
+        $error = '*** Might be an unknown error: ' . var_export($result, true) . PHP_EOL;
+        echo $error;
+        parent::deadLetter(
+          $this->message,
+          'MessagingGroupsConsumer->process()',
+          $error
+        );
+      }
+
+      $this->messageBroker->sendAck($message['payload']);
+    } catch (Exception $e) {
+      echo 'MobileCommons error: ' . $e->getMessage();
+      parent::deadLetter($this->message, 'MessagingGroupsConsumer->process()', $e);
+      $this->messageBroker->sendNack($message['payload'], false, false);
+    }
+
+  }
+
+  /**
+   * On signup, add user to doing group.
+   */
+  private function processSignup($message) {
+    $mobileCommons = $this->mbConfig->getProperty('mobileCommons');
+    $request = [
+      'phone_number' => $message['mobile'],
+      'group_id'     => $this->gambitCampaign->mobilecommons_group_doing,
+    ];
+
+    // Add user to doing group.
+    echo '** Adding user ' . $request['phone_number']
+      . ' to group ' . $request['group_id']
+      . '.' . PHP_EOL;
+
+    return $mobileCommons->groups_members_create($request);
+  }
+
+  /**
+   * On signup, remove user from doing group amd add to completed group.
+   */
+  private function processReportback($message) {
+    $mobileCommons = $this->mbConfig->getProperty('mobileCommons');
+
+    // Remove user from doing group.
+    $removeRequest = [
+      'phone_number' => $message['mobile'],
+      'group_id'     => $this->gambitCampaign->mobilecommons_group_doing,
+    ];
+    echo '** Removing user ' . $removeRequest['phone_number']
+      . ' from group ' . $removeRequest['group_id']
+      . '.' . PHP_EOL;
+    $remvoeResult = $mobileCommons->groups_members_delete($removeRequest);
+
+    // Add user from doing completed.
+    $addRequest = [
+      'phone_number' => $message['mobile'],
+      'group_id'     => $this->gambitCampaign->mobilecommons_group_completed,
+    ];
+    echo '** Adding user ' . $addRequest['phone_number']
+      . ' to group ' . $addRequest['group_id']
+      . '.' . PHP_EOL;
+
+    return $mobileCommons->groups_members_create($addRequest);
   }
 
 }
