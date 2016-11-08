@@ -36,7 +36,7 @@ require_once __DIR__ . '/messaging-groups-consumer.config.inc';
 echo '------- messaging-groups-consumer START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 // Kick off - blocking, waiting for messages in the queue
 $mb = $mbConfig->getProperty('messageBroker');
-$mb->consume(array(new MessagingGroupsConsumer(), 'consumeQueue'), QOS_SIZE);
+$mb->consume(array(new MessagingGroupsConsumer(), 'consumeMessagingGroupsQueue'), QOS_SIZE);
 echo '------- messaging-groups-consumer END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 
