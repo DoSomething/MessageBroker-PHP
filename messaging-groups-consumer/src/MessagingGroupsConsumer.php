@@ -158,6 +158,28 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
+    // Check that campaign is enabled on Gambit.
+    $campaignId = (int) $message['event_id'];
+
+    // Only if enabled on Gambit.
+    // Todo: cache and retry.
+    $gambit = $this->mbConfig->getProperty('gambit');
+    $gambitCampaign = false;
+    try {
+      $gambitCampaign = $gambit->getCampaign($campaignId);
+    } catch (Exception $e) {
+      echo '** canProcess(): Can\'t access Gambit: ' . $e->getMessage()  . PHP_EOL;
+
+      return false;
+    }
+
+    if (empty($gambitCampaign)) {
+      echo '** canProcess(): Campaign is not available on Gambit: '
+        . $campaignId . ', skipping.' . PHP_EOL;
+
+      return false;
+    }
+
     // Check user on MoCo.
     $mobileCommons = $this->mbConfig->getProperty('mobileCommons');
 
