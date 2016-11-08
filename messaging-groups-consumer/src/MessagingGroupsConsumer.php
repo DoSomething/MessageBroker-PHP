@@ -237,14 +237,6 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
       . 'group doing: ' . $this->gambitCampaign->mobilecommons_group_doing . ', '
       . 'group completed: ' . $this->gambitCampaign->mobilecommons_group_completed
       . '.' . PHP_EOL;
-
-    // Get MoCo account.
-    // $mobileCommons = $this->mbConfig->getProperty('mobileCommons');
-    // $result = [];
-    // $profile = $mobileCommons->profiles_get([
-    //   'phone_number' => $message['mobile'],
-    // ]);
-    // var_dump($profile);
     return $message;
   }
 
