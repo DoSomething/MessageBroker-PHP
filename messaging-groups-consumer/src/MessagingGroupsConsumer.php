@@ -27,15 +27,15 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
       if ($this->canProcess($this->message)) {
 
         $this->setter($this->message);
-        $this->process($this->mobileMessage);
+        $this->process([]);
         // Cleanup for next message
-        unset($this->mobileMessage);
+        // unset($this->mobileMessage);
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: process', 1);
 
         // Ack in Service process() due to nested try/catch
       }
       else {
-        echo '- failed canProcess(), removing from queue.', PHP_EOL;
+        echo '- canProcess() is not passed, removing from queue.', PHP_EOL;
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: skipping', 1);
         $this->messageBroker->sendAck($this->message['payload']);
       }
@@ -91,7 +91,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
 
     // @todo: Throttle the number of consumers running. Based on the number of messages
     // waiting to be processed start / stop consumers. Make "reactive"!
-    $queueStatus = parent::queueStatus('consumeMessagingGroupsQueue');
+    $queueStatus = parent::queueStatus('messagingGroupsQueue');
 
     echo  PHP_EOL . '------ messaging-groups-consumer - MessagingGroupsConsumer->consumeRegistrationMobileQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
   }
@@ -105,7 +105,55 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
    * @retun boolean
    */
   protected function canProcess($message) {
-    var_dump($message); die();
+    // Check mobile number presence.
+    if (empty($message['mobile'])) {
+      echo '** canProcess(): mobile number was not defined, skipping.' . PHP_EOL;
+
+      return false;
+    }
+
+    // Check application id.
+    if (empty($message['application_id'])) {
+      echo '** canProcess(): application_id not set.' . PHP_EOL;
+
+      return false;
+    }
+
+    // Check that application id is allowed.
+    $supportedApps = array_keys($this->mbConfig->getProperty('mobileCommons_config'));
+    if (!in_array($message['application_id'], $supportedApps)) {
+      echo '** canProcess(): Unsupported application: '
+        . $message['application_id'] . '.' . PHP_EOL;
+
+      return false;
+    }
+
+
+    // Check activity presence.
+    if (empty($message['activity'])) {
+      echo '** canProcess(): activity not set.' . PHP_EOL;
+      parent::reportErrorPayload();
+
+      return false;
+    }
+
+    // Check that the activity is allowed.
+    $allowedActivities = [
+      'campaign_signup',
+      'campaign_reportback',
+    ];
+    if (!in_array($message['activity'], $allowedActivities)) {
+      echo '** canProcess(): activity is not supported: '
+        . $message['activity'] . '.' . PHP_EOL;
+      parent::reportErrorPayload();
+
+      return false;
+    }
+
+    // Check user on MoCo.
+    // $mobileCommons = $this->mbConfig->getProperty('mbMobileCommons');
+
+    return true;
   }
 
   /**
@@ -125,7 +173,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
    *   The contents of the queue entry
    */
   protected function process($params) {
-
+    $this->messageBroker->sendAck($this->message['payload']);
   }
 
 }
