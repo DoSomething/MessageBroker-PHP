@@ -17,13 +17,13 @@ define('QOS_SIZE', 1);
 
 // Manage enviroment setting
 if (isset($_GET['environment']) && allowedEnviroment($_GET['environment'])) {
-    define('ENVIRONMENT', $_GET['environment']);
+  define('ENVIRONMENT', $_GET['environment']);
 } elseif (isset($argv[1])&& allowedEnviroment($argv[1])) {
-    define('ENVIRONMENT', $argv[1]);
+  define('ENVIRONMENT', $argv[1]);
 } elseif ($env = loadConfig() && defined('ENVIRONMENT')) {
-    echo 'environment.php exists, ENVIRONMENT defined as: ' . ENVIRONMENT, PHP_EOL;
+  echo 'environment.php exists, ENVIRONMENT defined as: ' . ENVIRONMENT, PHP_EOL;
 } elseif (allowedEnviroment('local')) {
-    define('ENVIRONMENT', 'local');
+  define('ENVIRONMENT', 'local');
 }
 
 
@@ -50,18 +50,18 @@ echo '------- messaging-groups-consumer END: ' . date('j D M Y G:i:s T') . ' ---
 function allowedEnviroment($setting)
 {
 
-    $allowedEnviroments = [
-        'local',
-        'dev',
-        'thor',
-        'prod',
-    ];
+  $allowedEnviroments = [
+    'local',
+    'dev',
+    'thor',
+    'prod',
+  ];
 
-    if (in_array($setting, $allowedEnviroments)) {
-        return true;
-    }
+  if (in_array($setting, $allowedEnviroments)) {
+    return true;
+  }
 
-    return false;
+  return false;
 }
 
 /**
@@ -71,11 +71,11 @@ function allowedEnviroment($setting)
  */
 function loadConfig() {
 
-    // Check that environment config file exists
-    if (!file_exists(__DIR__ . '/environment.php')) {
-        return false;
-    }
-    include(__DIR__ . '/environment.php');
+  // Check that environment config file exists
+  if (!file_exists(__DIR__ . '/environment.php')) {
+    return false;
+  }
+  include(__DIR__ . '/environment.php');
 
-    return true;
+  return true;
 }
