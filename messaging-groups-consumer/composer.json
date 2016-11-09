@@ -1,0 +1,30 @@
+{
+  "name": "Messaging Groups Management",
+  "type": "project",
+  "version": "0.1.0",
+  "description": "A consumer app to manage Messaging Groups on Mobile Commons.",
+  "homepage": "https://github.com/DoSomething/Quicksilver-PHP",
+  "license" : "MIT",
+  "authors":
+    [
+      {
+        "name": "DoSomething and contributors",
+        "homepage": "http://www.dosomething.org"
+      }
+    ],
+  "require": {
+    "php": ">= 5.6.0",
+    "DoSomething/messagebroker-phplib": "0.3.*",
+    "dosomething/mb-toolbox": "^0.13.1",
+    "dosomething/stathat": "2.*",
+    "dosomething/gateway": "@dev"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.0.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "DoSomething\\MessagingGroupsConsumer\\": "src/"
+    }
+  }
+}
