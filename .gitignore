@@ -9,6 +9,9 @@ vendor/
 # Ignore testing working files
 tests/phpunit.xml
 
+# All environment files.
+environment.php
+
 # Ignore config settings with sensative account creds
 config.inc
 
