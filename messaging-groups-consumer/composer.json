@@ -13,7 +13,7 @@
       }
     ],
   "require": {
-    "php": ">= 5.6.0",
+    "php": ">= 5.5.0",
     "DoSomething/messagebroker-phplib": "0.3.*",
     "dosomething/mb-toolbox": "^0.13.1",
     "dosomething/stathat": "2.*",
