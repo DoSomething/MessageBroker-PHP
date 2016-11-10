@@ -154,7 +154,6 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
     if (!in_array($message['activity'], $allowedActivities)) {
       echo '** canProcess(): activity is not supported: '
         . $message['activity'] . '.' . PHP_EOL;
-      parent::reportErrorPayload();
 
       return false;
     }
