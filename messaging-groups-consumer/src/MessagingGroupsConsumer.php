@@ -13,6 +13,12 @@ use DoSomething\StatHat\Client as StatHat;
 
 class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
 {
+  /**
+   * Gambit campaigns cache.
+   *
+   * @var array
+   */
+  private $gambitCampaignsCache = [];
 
   /**
    * Gambit campaign.
@@ -20,6 +26,28 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
    * @var boolean|string
    */
   private $gambitCampaign = false;
+
+  /**
+   * Constructor compatible with MBC_BaseConsumer.
+   */
+  public function __construct($targetMBconfig = 'messageBroker') {
+    parent::__construct($targetMBconfig);
+
+    // Cache gambit campaigns,
+    $gambit = $this->mbConfig->getProperty('gambit');
+    $gambitCampaigns = $gambit->getAllCampaigns();
+
+    foreach ($gambitCampaigns as $campaign) {
+      if ($campaign->campaignbot === true) {
+        $this->gambitCampaignsCache[$campaign->id] = $campaign;
+      }
+    }
+
+    if (count($this->gambitCampaignsCache) < 1) {
+      // Basically, die.
+      throw new Exception('No gambit connetion.');
+    }
+  }
 
   /**
    * Initial method triggered by blocked call in mbc-registration-mobile.php.
@@ -170,23 +198,13 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
     $campaignId = (int) $message['event_id'];
 
     // Only if enabled on Gambit.
-    // Todo: cache and retry.
-    $gambit = $this->mbConfig->getProperty('gambit');
-    $this->gambitCampaign = false;
-    try {
-      $this->gambitCampaign = $gambit->getCampaign($campaignId);
-    } catch (Exception $e) {
-      echo '** canProcess(): Can\'t access Gambit: ' . $e->getMessage()  . PHP_EOL;
-
-      return false;
-    }
-
-    if (empty($this->gambitCampaign)) {
+    if (!array_key_exists($campaignId, $this->gambitCampaignsCache)) {
       echo '** canProcess(): Campaign is not available on Gambit: '
         . $campaignId . ', skipping.' . PHP_EOL;
 
       return false;
     }
+    $this->gambitCampaign = $this->gambitCampaignsCache[$campaignId];
 
     // If Campaignbot is not enabled for the campaign:
     $groupsPresent = !empty($this->gambitCampaign->mobilecommons_group_doing)
