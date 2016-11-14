@@ -55,6 +55,33 @@ class MessagingGroupsBackfillProducer extends MB_Toolbox_BaseProducer
   public function processReportbackCSV() {
     echo '** mbp-user-import->processReportbackCSV() '
         . ' START: ' . date('j D M Y G:i:s T') . ' -------' . PHP_EOL;
+
+    // $sql = "
+    //   SELECT mob.field_mobile_value AS mobile, dd.nid AS campaign_id, dd.run_nid AS run_nid, dd.rbid
+    //   FROM `dosomething_reportback` AS `dd`
+    //   LEFT JOIN `field_data_field_mobile` AS mob ON mob.entity_id = dd.uid
+    //   WHERE `run_nid` IN (7298, 7280, 7279, 7319, 7324) AND mob.field_mobile_value IS NOT NULL
+    // "
+    $csv = Reader::createFromPath('./data/ds-reportbacks.csv');
+
+    // Skip first row.
+    $data = $csv
+      ->setOffset(1)
+      ->fetchAssoc(["mobile","campaign_id","run_nid","sid"]);
+
+    foreach ($data as $row) {
+      $data = [
+        'mobile' => $row['mobile'],
+        'application_id' => 'US',
+        'activity' => 'campaign_reportback',
+        'event_id' => $row['campaign_id'],
+      ];
+      echo '*** Sending ' . json_encode($row) . PHP_EOL;
+      $this->produceMessage(
+        $this->generatePayload($data),
+        'messaging_groups_direct'
+      );
+    }
   }
 
 
