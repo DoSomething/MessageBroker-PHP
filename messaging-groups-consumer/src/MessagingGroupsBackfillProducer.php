@@ -34,7 +34,6 @@ class MessagingGroupsBackfillProducer extends MB_Toolbox_BaseProducer
     // Skip first row.
     $data = $csv
       ->setOffset(1)
-      ->setLimit(1)
       ->fetchAssoc(["mobile","campaign_id","run_nid","sid"]);
 
     foreach ($data as $row) {
