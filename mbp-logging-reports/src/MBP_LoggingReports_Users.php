@@ -19,7 +19,7 @@ class MBP_LoggingReports_Users
 
   const MB_LOGGING_API = '/api/v1';
   const AFTERSCHOOL_USER_BUDGET = 'Unlimited';
-  const AFTERSCHOOL_CAMPAIGN = 'Lose Your V-Card';
+  const AFTERSCHOOL_CAMPAIGN = 'Explain the Pain Text';
 
   // Monthly user budget
   private static $NICHE_USER_BUDGET = [
