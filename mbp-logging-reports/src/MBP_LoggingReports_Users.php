@@ -21,7 +21,7 @@ class MBP_LoggingReports_Users
   const AFTERSCHOOL_USER_BUDGET = 'Unlimited';
   const AFTERSCHOOL_CAMPAIGN = 'Explain the Pain Text';
 
-  // Monthly user budget
+  // Monthly user budget (in imported users number).
   private static $NICHE_USER_BUDGET = [
     1 => 0,
     2 => 0,
@@ -33,7 +33,7 @@ class MBP_LoggingReports_Users
     8 => 43334,
     9 => 43334,
     10 => 43334,
-    11 => 43334,
+    11 => 61000,
     12 => 0,
   ];
 
