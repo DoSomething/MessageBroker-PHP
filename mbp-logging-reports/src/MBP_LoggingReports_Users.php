@@ -672,8 +672,14 @@ class MBP_LoggingReports_Users
     if ($source == 'niche') {
 
       $currentMonth = date('n');
-      $budgetPercentage = 100 - (self::$NICHE_USER_BUDGET[$currentMonth] - $newUsers) / self::$NICHE_USER_BUDGET[$currentMonth] * 100;
-      $status['budgetPercentage'] = round($budgetPercentage, 1) . '%';
+      $budget = &self::$NICHE_USER_BUDGET[$currentMonth];
+      if (!$budget) {
+        $status['budgetPercentage'] = 'Unlimited';
+      } else {
+        $budgetPercentage = 100 - ($budget - $newUsers) / $budget * 100;
+        $status['budgetPercentage'] = round($budgetPercentage, 1) . '%';
+      }
+
       $status['budgetState'] = $this->getBudgetState($status['budgetPercentage']);
       $status['budgetBackgroundColor'] = $this->setBudgetColor($status['budgetState'] );
 
