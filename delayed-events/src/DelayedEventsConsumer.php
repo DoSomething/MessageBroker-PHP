@@ -13,6 +13,9 @@ use DoSomething\StatHat\Client as StatHat;
 
 class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 {
+
+  const TEXT_QUEUE_NAME = 'dispatchDelayedTextsQueue';
+
   /**
    * Gambit campaigns cache.
    *
@@ -27,26 +30,32 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
    */
   private $gambitCampaign = false;
 
+
   /**
    * Constructor compatible with MBC_BaseConsumer.
    */
   public function __construct($targetMBconfig = 'messageBroker') {
     parent::__construct($targetMBconfig);
 
-    // Cache gambit campaigns,
-    $gambit = $this->mbConfig->getProperty('gambit');
-    $gambitCampaigns = $gambit->getAllCampaigns();
+    // // Cache gambit campaigns,
+    // $gambit = $this->mbConfig->getProperty('gambit');
+    // $gambitCampaigns = $gambit->getAllCampaigns();
 
-    foreach ($gambitCampaigns as $campaign) {
-      if ($campaign->campaignbot === true) {
-        $this->gambitCampaignsCache[$campaign->id] = $campaign;
-      }
-    }
+    // foreach ($gambitCampaigns as $campaign) {
+    //   if ($campaign->campaignbot === true) {
+    //     $this->gambitCampaignsCache[$campaign->id] = $campaign;
+    //   }
+    // }
 
-    if (count($this->gambitCampaignsCache) < 1) {
-      // Basically, die.
-      throw new Exception('No gambit connetion.');
-    }
+    // if (count($this->gambitCampaignsCache) < 1) {
+    //   // Basically, die.
+    //   throw new Exception('No gambit connetion.');
+    // }
+  }
+
+  public function hasFinishedProcessing() {
+    $queueStatus = $this->mbRabbitMQManagementAPI->queueStatus(self::TEXT_QUEUE_NAME);
+    return $queueStatus['ready'] === 0 && $queueStatus['unacked'] == 0;
   }
 
   /**
@@ -56,7 +65,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
    *   The contents of the queue entry message being processed.
    */
   public function consumeDelayedEvent($payload) {
-    echo '------ delayed-events-consumer - DelayedEventsConsumer->consumeRegistrationMobileQueue() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
+    echo '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvent() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
     $this->gambitCampaign = false;
 
     parent::consumeQueue($payload);
@@ -119,7 +128,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 
         // Uknown exception, save the message to deadLetter queue.
         $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: Exception: deadLetter', 1);
-        parent::deadLetter($this->message, 'DelayedEventsConsumer->consumeRegistrationMobileQueue() Error', $e);
+        parent::deadLetter($this->message, 'DelayedEventsConsumer->consumeDelayedEvent() Error', $e);
 
         // Send Negative Acknowledgment, don't requeue the message.
         $this->messageBroker->sendNack($this->message['payload'], false, false);
@@ -128,9 +137,9 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 
     // @todo: Throttle the number of consumers running. Based on the number of messages
     // waiting to be processed start / stop consumers. Make "reactive"!
-    $queueStatus = parent::queueStatus('dispatchDelayedTextsQueue');
+    $queueStatus = parent::queueStatus(self::TEXT_QUEUE_NAME);
 
-    echo  PHP_EOL . '------ delayed-events-consumer - DelayedEventsConsumer->consumeRegistrationMobileQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
+    echo  PHP_EOL . '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvent() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
   }
 
   /**

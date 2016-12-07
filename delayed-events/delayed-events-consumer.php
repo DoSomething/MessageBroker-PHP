@@ -36,7 +36,13 @@ require_once __DIR__ . '/delayed-events-consumer.config.inc';
 echo '------- delayed-events-consumer START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 // Kick off - blocking, waiting for messages in the queue
 $mb = $mbConfig->getProperty('messageBroker');
-$mb->consume(array(new DelayedEventsConsumer(), 'consumeDelayedEvent'), QOS_SIZE);
+
+$consumer = new DelayedEventsConsumer();
+if (!$consumer->hasFinishedProcessing()) {
+  $mb->consume(array($consumer, 'consumeDelayedEvent'), QOS_SIZE);
+} else {
+  echo 'No new data to process.' . PHP_EOL;
+}
 echo '------- delayed-events-consumer END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 
