@@ -140,6 +140,13 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     $queueStatus = parent::queueStatus(self::TEXT_QUEUE_NAME);
 
     echo  PHP_EOL . '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvent() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
+
+
+    if ($this->hasFinishedProcessing()) {
+      // Stop the thing.
+      echo  PHP_EOL . '------ delayed-events-consumer - No nore data to process - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
+      $this->messageBroker->stop();
+    }
   }
 
   /**
