@@ -65,56 +65,61 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
   /**
    * Initial method triggered by blocked call in mbc-registration-mobile.php.
    *
-   * @param array $data
+   * @param array $messages
    *   The contents of the queue entry message being processed.
    */
-  public function consumeDelayedEvents($data) {
+  public function consumeDelayedEvents($messages) {
     echo '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvents() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
+    $this->preprocessedData = [];
     $this->gambitCampaign = false;
 
     try {
 
       $processData = [];
 
-      foreach ($data as $message) {
+      foreach ($messages as $key => $message) {
         $body = $message->getBody();
         if ($this->isSerialized($body)) {
           $payload = unserialize($body);
         } else {
           $payload = json_decode($body, true);
         }
+
+        // Check that message is decoded correctly.
         if (!$payload) {
-          echo 'Corrupted message: ' . $message->getBody() . PHP_EOL;
+          echo 'Corrupted message: ' . $body . PHP_EOL;
           $this->statHat->ezCount('MB_Toolbox: MB_Toolbox_BaseConsumer: consumeQueue Exception', 1);
+
+          unset($messages[$key]);
+          $this->messageBroker->sendNack($message, false, false);
+          continue;
+        }
+
+        // Check that message is qualified for this consumer.
+        if (!$this->canProcess($payload)) {
+          echo '- canProcess() is not passed, removing from queue:' . $body . PHP_EOL;
+          $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: skipping', 1);
+
+          unset($messages[$key]);
+          $this->messageBroker->sendNack($message, false, false);
           continue;
         }
 
         $this->statHat->ezCount('MB_Toolbox: MB_Toolbox_BaseConsumer: consumeQueue', 1);
 
-        if (!$this->canProcess($payload)) {
-          $this->messageBroker->sendNack($message, false, false);
-          continue;
-        }
-
-
-        // Process data.
-        $this->setter($payload);
+        // Preprocess data.
+        $this->setter([$message, $payload]);
 
       }
 
-      // if ($this->canProcess($pay)) {
+      if (!$this->preprocessedData) {
+        echo '- consumeDelayedEvents() no data to process.' . PHP_EOL;
+        return;
+      }
 
-      //   $params = $this->setter($this->message);
-      //   $this->process($params);
-
-      //   $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: process', 1);
-      //   // Ack in Service process() due to nested try/catch
-      // }
-      // else {
-      //   echo '- canProcess() is not passed, removing from queue.', PHP_EOL;
-      //   $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: skipping', 1);
-      //   $this->messageBroker->sendAck($this->message['payload']);
-      // }
+      // Process data.
+      $this->process($this->preprocessedData);
+      $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: process', count($this->preprocessedData));
     }
     catch(Exception $e) {
       /**
@@ -180,16 +185,16 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
    *
    * @retun boolean
    */
-  protected function canProcess($message) {
+  protected function canProcess($payload) {
     // Check mobile number presence.
-    if (empty($message['mobile'])) {
+    if (empty($payload['mobile'])) {
       echo '** canProcess(): mobile number was not defined, skipping.' . PHP_EOL;
 
       return false;
     }
 
     // Check application id.
-    if (empty($message['application_id'])) {
+    if (empty($payload['application_id'])) {
       echo '** canProcess(): application_id not set.' . PHP_EOL;
 
       return false;
@@ -197,16 +202,16 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 
     // Check that application id is allowed.
     $supportedApps = ['US', 'MUI'];
-    if (!in_array($message['application_id'], $supportedApps)) {
+    if (!in_array($payload['application_id'], $supportedApps)) {
       echo '** canProcess(): Unsupported application: '
-        . $message['application_id'] . '.' . PHP_EOL;
+        . $payload['application_id'] . '.' . PHP_EOL;
 
       return false;
     }
 
 
     // Check activity presence.
-    if (empty($message['activity'])) {
+    if (empty($payload['activity'])) {
       echo '** canProcess(): activity not set.' . PHP_EOL;
       parent::reportErrorPayload();
 
@@ -218,15 +223,15 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
       'campaign_signup',
       'campaign_reportback',
     ];
-    if (!in_array($message['activity'], $allowedActivities)) {
+    if (!in_array($payload['activity'], $allowedActivities)) {
       echo '** canProcess(): activity is not supported: '
-        . $message['activity'] . '.' . PHP_EOL;
+        . $payload['activity'] . '.' . PHP_EOL;
 
       return false;
     }
 
     // Check campaign id presence.
-    if (empty($message['event_id'])) {
+    if (empty($payload['event_id'])) {
       echo '** canProcess(): campaign id is nor provided.' . PHP_EOL;
       parent::reportErrorPayload();
 
@@ -234,7 +239,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     }
 
     // Check that campaign is enabled on Gambit.
-    $campaignId = (int) $message['event_id'];
+    $campaignId = (int) $payload['event_id'];
 
     // Only if enabled on Gambit.
     if (!array_key_exists($campaignId, $this->gambitCampaignsCache)) {
@@ -260,16 +265,16 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     $mobileCommonsWrapper = $this->mbConfig->getProperty('mobileCommonsWrapper');
     $mobileCommonsAccountExists = $mobileCommonsWrapper->checkExisting(
       $mobileCommons,
-      $message['mobile']
+      $payload['mobile']
     );
 
     if (!$mobileCommonsAccountExists) {
-      $message = '** canProcess(): account is not MobileCommons subscriber: '
-        . $message['mobile'] . '.' . PHP_EOL;
-      echo $message;
+      $payload = '** canProcess(): account is not MobileCommons subscriber: '
+        . $payload['mobile'] . '.' . PHP_EOL;
+      echo $payload;
       parent::reportErrorPayload();
 
-      throw new Exception($message);
+      throw new Exception($payload);
     }
 
     echo '** canProcess(): passed.' . PHP_EOL;
@@ -279,7 +284,10 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
   /**
    * Data processing logic.
    */
-  protected function setter($payload) {
+  protected function setter($arguments) {
+    // Damn you, bad OOP design.
+    list($message, $payload) = $arguments;
+
     // 1. Index by user mobile.
     $phone = $payload['mobile'];
     $dataItem = &$this->preprocessedData[$phone];
@@ -306,8 +314,11 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     // 3. Index by campaign id and prepare Gambit request arguments.
     $campaignId = $payload['event_id'];
     $dataItem[$messageType][$campaignId] = [
-      'phone' => $phone,
-      'type' => $messageType,
+      'request' => [
+        'phone' => $phone,
+        'type' => $messageType,
+      ],
+      'message' => $message,
     ];
 
     // Done. The priority will be determined after all data is processed.
@@ -317,7 +328,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
   /**
    * Forwards results to gambit.
    */
-  protected function process($data) {
+  protected function process($preprocessedData) {
 
   }
 
