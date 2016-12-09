@@ -30,7 +30,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
    *
    * @var boolean|string
    */
-  private $gambitCampaign = false;
+  private $gambit = false;
 
   /**
    * Preprocessed data.
@@ -47,8 +47,8 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     parent::__construct($targetMBconfig);
 
     // Cache gambit campaigns,
-    $gambit = $this->mbConfig->getProperty('gambit');
-    $gambitCampaigns = $gambit->getAllCampaigns();
+    $this->gambit = $this->mbConfig->getProperty('gambit');
+    $gambitCampaigns = $this->gambit->getAllCampaigns();
 
     foreach ($gambitCampaigns as $campaign) {
       if ($campaign->campaignbot === true) {
@@ -296,13 +296,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 
     // 3. Index by campaign id and prepare Gambit request arguments.
     $campaignId = $payload['event_id'];
-    $dataItem[$messageType][$campaignId] = [
-      'request' => [
-        'phone' => $phone,
-        'type' => $messageType,
-      ],
-      'message' => $message,
-    ];
+    $dataItem[$messageType][$campaignId] = $message;
 
     // Done. The priority will be determined after all data is processed.
     return true;
@@ -312,46 +306,98 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
    * Forwards results to gambit.
    */
   protected function process($preprocessedData) {
-    foreach ($preprocessedData as $mobile => $messageTypes) {
+    foreach ($preprocessedData as $phone => $messageTypes) {
 
       // 1. Prioritize message types.
+      // 1.1 Check if there is an event of signup message type.
+      $campaignId = false;
+      $messageType = false;
       if (!empty($messageTypes[self::SIGNUP_MESSAGE_TYPE])) {
-        // We want to send relative to signup first, if they exist.
         $messageType = self::SIGNUP_MESSAGE_TYPE;
-      } elseif (!empty($messageTypes[self::REPORTBACK_MESSAGE_TYPE])) {
-        // Second choice is to send relative to reportback, if they exist.
+        $campaignId = $this->pickCampaign($messageTypes[$messageType]);
+      }
+
+      // 1.2. If there's not, check if there's a reportback event.
+      if (empty($campaignId) && !empty($messageTypes[self::REPORTBACK_MESSAGE_TYPE])) {
         $messageType = self::REPORTBACK_MESSAGE_TYPE;
-      } else {
-        // This code should never be executed.
-        throw new Exception('Integrity violation: inconsistent message types '
-          . json_encode(array_keys($gambitCampaignIds)));
+        $campaignId = $this->pickCampaign($messageTypes[$messageType]);
+      }
+
+      // 1.3. If there's still no data, that's an unexpected error.
+      if (empty($campaignId)) {
+        if (empty($messageType)) {
+          // Unknown message type.
+          throw new Exception('Integrity violation: inconsistent message types '
+            . json_encode(array_keys($gambitCampaignIds)));
+        }
+        // Unknown campaign.
+        throw new Exception('Integrity violation: can\'t cross-reference'
+         . ' event campaigns ' . json_encode($campaigns)
+          . ' and gambit cache' . json_encode($gambitCampaignIds));
         continue;
       }
+
+      echo '** process(): Sending message to '. $phone . ' type ' . $messageType
+        . ' campaign ' . $campaignId . PHP_EOL;
+
+      $message = $messageTypes[$messageType][$campaignId];
+      try {
+        // Send the message.
+        $this->gambit->createCampaignMessage($campaignId, $phone, $messageType);
+        echo '*** Success!' . PHP_EOL;
+        $this->ackAll($messageTypes);
+      } catch (Exception $e) {
+        echo '*** Gambit error: ' . $e->getMessage() . PHP_EOL;
+        $deadLetter = $messageTypes;
+        $deadLetter['original'] = $message;
+        parent::deadLetter($deadLetter, 'MessagingGroupsConsumer->process()', $e);
+        $this->nackAll($messageTypes);
+      }
+    }
+  }
+
+  /**
+   * Returns first campaign from the input array based on Gambit cache order.
+   *
+   * @param  array
+   *   Array of campaigns indexed by campaign id
+   *
+   * @return string|false
+   *   Campaign id or false
+   */
+  private function pickCampaign($campaigns) {
+    static $gambitCampaignIds = null;
+    if ($gambitCampaignIds === null) {
+       $gambitCampaignIds = array_keys($this->gambitCampaignsCache);
     }
 
-    $campaigns = &$messageTypes[$messageType];
-    echo '** process(): Processing user '. $mobile . ': type ' . $messageType . PHP_EOL;
-
-    // 2. Sort campaigns based on order in Gambit.
-    $data = false;
-    $gambitCampaignIds = array_keys($this->gambitCampaignsCache);
     foreach ($gambitCampaignIds as $gambitCampaignId) {
       if (!empty($campaigns[$gambitCampaignId])) {
         // Select first campaign found in Gambit cache.
-        $data = &$campaigns[$gambitCampaignId];
-        break;
+        return $gambitCampaignId;
       }
     }
+    return false;
+  }
 
-    if (!$data) {
-       throw new Exception('Integrity violation: can\'t cross-reference'
-        . ' event campaigns ' . json_encode($campaigns)
-         . ' and gambit cache' . json_encode($gambitCampaignIds));
+  private function ackAll($messageTypes) {
+    $this->resolveAll($messageTypes, 'ack');
+  }
+
+  private function nackAll($messageTypes) {
+    $this->resolveAll($messageTypes, 'nack');
+  }
+
+  private function resolveAll($messageTypes, $action) {
+    foreach ($messageTypes as $messageType) {
+      foreach ($messageType as $message) {
+        if ($action == 'ack') {
+          $this->messageBroker->sendAck($message);
+        } else {
+          $this->messageBroker->sendNack($message, false, false);
+        }
+      }
     }
-
-    var_dump($data, $gambitCampaignId, $gambitCampaignIds); die();
-
-
   }
 
 }
