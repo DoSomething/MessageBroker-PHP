@@ -14,7 +14,7 @@
     ],
   "require": {
     "php": ">= 5.5.0",
-    "DoSomething/messagebroker-phplib": "0.3.*",
+    "DoSomething/messagebroker-phplib": "~0.3.8",
     "dosomething/mb-toolbox": "^0.13.1",
     "dosomething/stathat": "2.*",
     "dosomething/gateway": "@dev",
