@@ -15,6 +15,8 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 {
 
   const TEXT_QUEUE_NAME = 'dispatchDelayedTextsQueue';
+  const SIGNUP_MESSAGE_TYPE = 'scheduled_relative_to_signup_date';
+  const REPORTBACK_MESSAGE_TYPE = 'scheduled_relative_to_reportback_date';
 
   /**
    * Gambit campaigns cache.
@@ -29,6 +31,13 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
    * @var boolean|string
    */
   private $gambitCampaign = false;
+
+  /**
+   * Preprocessed data.
+   *
+   * @var array
+   */
+  private $preprocessedData = [];
 
 
   /**
@@ -53,11 +62,6 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     }
   }
 
-  public function hasFinishedProcessing() {
-    $queueStatus = $this->mbRabbitMQManagementAPI->queueStatus(self::TEXT_QUEUE_NAME);
-    return $queueStatus['ready'] === 0 && $queueStatus['unacked'] == 0;
-  }
-
   /**
    * Initial method triggered by blocked call in mbc-registration-mobile.php.
    *
@@ -69,6 +73,8 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     $this->gambitCampaign = false;
 
     try {
+
+      $processData = [];
 
       foreach ($data as $message) {
         $body = $message->getBody();
@@ -90,6 +96,9 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
           continue;
         }
 
+
+        // Process data.
+        $this->setter($payload);
 
       }
 
@@ -161,13 +170,6 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     $queueStatus = parent::queueStatus(self::TEXT_QUEUE_NAME);
 
     echo  PHP_EOL . '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvents() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
-
-
-    if ($this->hasFinishedProcessing()) {
-      // Stop the thing.
-      echo  PHP_EOL . '------ delayed-events-consumer - No more data to process - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
-      // $this->messageBroker->stop();
-    }
   }
 
   /**
@@ -275,28 +277,47 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * Sets values for processing based on contents of message from consumed queue.
-   *
-   * @param array $message
-   *  The payload of the message being processed.
+   * Data processing logic.
    */
-  protected function setter($message) {
-    echo '** DEBUG * User: ' . $message['mobile'] . ', '
-      . 'activity: ' . $message['activity'] . ', '
-      . 'gambit campaign: ' . $this->gambitCampaign->id . ', '
-      . 'group doing: ' . $this->gambitCampaign->mobilecommons_group_doing . ', '
-      . 'group completed: ' . $this->gambitCampaign->mobilecommons_group_completed
-      . '.' . PHP_EOL;
-    return $message;
+  protected function setter($payload) {
+    // 1. Index by user mobile.
+    $phone = $payload['mobile'];
+    $dataItem = &$this->preprocessedData[$phone];
+
+    // 2. Index by message type.
+    $messageType = false;
+    switch ($payload['activity']) {
+
+      case 'campaign_signup':
+        $messageType = self::SIGNUP_MESSAGE_TYPE;
+        break;
+
+      case 'campaign_reportback':
+        $messageType = self::REPORTBACK_MESSAGE_TYPE;
+        break;
+
+      default:
+        throw new Exception('This should never be called.');
+        break;
+
+    }
+    $dataItem[$messageType] = [];
+
+    // 3. Index by campaign id and prepare Gambit request arguments.
+    $campaignId = $payload['event_id'];
+    $dataItem[$messageType][$campaignId] = [
+      'phone' => $phone,
+      'type' => $messageType,
+    ];
+
+    // Done. The priority will be determined after all data is processed.
+    return true;
   }
 
   /**
-   * Save all results to MoCo.
-   *
-   * @param array $payload
-   *   The contents of the queue entry
+   * Forwards results to gambit.
    */
-  protected function process($message) {
+  protected function process($data) {
 
   }
 
