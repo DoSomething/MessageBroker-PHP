@@ -329,6 +329,22 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
    * Forwards results to gambit.
    */
   protected function process($preprocessedData) {
+    foreach ($preprocessedData as $mobile => $messageTypes) {
+
+      // 1. Prioritize message types.
+      if (!empty($messageTypes[self::SIGNUP_MESSAGE_TYPE])) {
+        // We want to send relative to signup first, if they exist.
+        $campaigns = &$messageTypes[self::SIGNUP_MESSAGE_TYPE];
+      } else if (!empty($messageTypes[self::REPORTBACK_MESSAGE_TYPE])) {
+        // Second choice is to send relative to reportback, if they exist.
+        $campaigns = &$messageTypes[self::REPORTBACK_MESSAGE_TYPE];
+      } else {
+        // This code should never be executed.
+        continue;
+      }
+    }
+
+    // 2. Sort campaigns based on order in Gambit.
 
   }
 
