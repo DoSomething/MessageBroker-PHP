@@ -58,7 +58,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 
     if (count($this->gambitCampaignsCache) < 1) {
       // Basically, die.
-      throw new Exception('No gambit connetion.');
+      throw new Exception('No gambit connection.');
     }
   }
 
@@ -258,26 +258,9 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
-    // Check user on MoCo.
-    $mobileCommons = $this->mbConfig->getProperty('mobileCommons');
-
-    // Check existing wrapper.
-    $mobileCommonsWrapper = $this->mbConfig->getProperty('mobileCommonsWrapper');
-    $mobileCommonsAccountExists = $mobileCommonsWrapper->checkExisting(
-      $mobileCommons,
-      $payload['mobile']
-    );
-
-    if (!$mobileCommonsAccountExists) {
-      $payload = '** canProcess(): account is not MobileCommons subscriber: '
-        . $payload['mobile'] . '.' . PHP_EOL;
-      echo $payload;
-      parent::reportErrorPayload();
-
-      throw new Exception($payload);
-    }
-
-    echo '** canProcess(): passed.' . PHP_EOL;
+    echo '** canProcess(): passed for ' . $payload['mobile']
+      . ' event ' . $payload['activity']
+      . ' campaign id ' . $payload['event_id'] . PHP_EOL;
     return true;
   }
 
@@ -334,17 +317,40 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
       // 1. Prioritize message types.
       if (!empty($messageTypes[self::SIGNUP_MESSAGE_TYPE])) {
         // We want to send relative to signup first, if they exist.
-        $campaigns = &$messageTypes[self::SIGNUP_MESSAGE_TYPE];
-      } else if (!empty($messageTypes[self::REPORTBACK_MESSAGE_TYPE])) {
+        $messageType = self::SIGNUP_MESSAGE_TYPE;
+      } elseif (!empty($messageTypes[self::REPORTBACK_MESSAGE_TYPE])) {
         // Second choice is to send relative to reportback, if they exist.
-        $campaigns = &$messageTypes[self::REPORTBACK_MESSAGE_TYPE];
+        $messageType = self::REPORTBACK_MESSAGE_TYPE;
       } else {
         // This code should never be executed.
+        throw new Exception('Integrity violation: inconsistent message types '
+          . json_encode(array_keys($gambitCampaignIds)));
         continue;
       }
     }
 
+    $campaigns = &$messageTypes[$messageType];
+    echo '** process(): Processing user '. $mobile . ': type ' . $messageType . PHP_EOL;
+
     // 2. Sort campaigns based on order in Gambit.
+    $data = false;
+    $gambitCampaignIds = array_keys($this->gambitCampaignsCache);
+    foreach ($gambitCampaignIds as $gambitCampaignId) {
+      if (!empty($campaigns[$gambitCampaignId])) {
+        // Select first campaign found in Gambit cache.
+        $data = &$campaigns[$gambitCampaignId];
+        break;
+      }
+    }
+
+    if (!$data) {
+       throw new Exception('Integrity violation: can\'t cross-reference'
+        . ' event campaigns ' . json_encode($campaigns)
+         . ' and gambit cache' . json_encode($gambitCampaignIds));
+    }
+
+    var_dump($data, $gambitCampaignId, $gambitCampaignIds); die();
+
 
   }
 
