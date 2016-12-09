@@ -37,20 +37,20 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
   public function __construct($targetMBconfig = 'messageBroker') {
     parent::__construct($targetMBconfig);
 
-    // // Cache gambit campaigns,
-    // $gambit = $this->mbConfig->getProperty('gambit');
-    // $gambitCampaigns = $gambit->getAllCampaigns();
+    // Cache gambit campaigns,
+    $gambit = $this->mbConfig->getProperty('gambit');
+    $gambitCampaigns = $gambit->getAllCampaigns();
 
-    // foreach ($gambitCampaigns as $campaign) {
-    //   if ($campaign->campaignbot === true) {
-    //     $this->gambitCampaignsCache[$campaign->id] = $campaign;
-    //   }
-    // }
+    foreach ($gambitCampaigns as $campaign) {
+      if ($campaign->campaignbot === true) {
+        $this->gambitCampaignsCache[$campaign->id] = $campaign;
+      }
+    }
 
-    // if (count($this->gambitCampaignsCache) < 1) {
-    //   // Basically, die.
-    //   throw new Exception('No gambit connetion.');
-    // }
+    if (count($this->gambitCampaignsCache) < 1) {
+      // Basically, die.
+      throw new Exception('No gambit connetion.');
+    }
   }
 
   public function hasFinishedProcessing() {
@@ -241,14 +241,10 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 
       return false;
     }
+
     $this->gambitCampaign = $this->gambitCampaignsCache[$campaignId];
-
-    // If Campaignbot is not enabled for the campaign:
-    $groupsPresent = !empty($this->gambitCampaign->mobilecommons_group_doing)
-      && !empty($this->gambitCampaign->mobilecommons_group_completed);
-
-    if (!$groupsPresent) {
-      echo '** canProcess(): Groups are not set on Gambit for campaign: '
+    if (empty($this->gambitCampaign)) {
+      echo '** canProcess(): Campaign is not enabled on Campaignbot: '
         . $campaignId . ', ignoring.' . PHP_EOL;
       parent::reportErrorPayload();
 
