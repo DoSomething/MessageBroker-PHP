@@ -61,30 +61,51 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
   /**
    * Initial method triggered by blocked call in mbc-registration-mobile.php.
    *
-   * @param array $payload
+   * @param array $data
    *   The contents of the queue entry message being processed.
    */
-  public function consumeDelayedEvent($payload) {
-    echo '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvent() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
+  public function consumeDelayedEvents($data) {
+    echo '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvents() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
     $this->gambitCampaign = false;
-
-    parent::consumeQueue($payload);
 
     try {
 
-      if ($this->canProcess($this->message)) {
+      foreach ($data as $message) {
+        $body = $message->getBody();
+        if ($this->isSerialized($body)) {
+          $payload = unserialize($body);
+        } else {
+          $payload = json_decode($body, true);
+        }
+        if (!$payload) {
+          echo 'Corrupted message: ' . $message->getBody() . PHP_EOL;
+          $this->statHat->ezCount('MB_Toolbox: MB_Toolbox_BaseConsumer: consumeQueue Exception', 1);
+          continue;
+        }
 
-        $params = $this->setter($this->message);
-        $this->process($params);
+        $this->statHat->ezCount('MB_Toolbox: MB_Toolbox_BaseConsumer: consumeQueue', 1);
 
-        $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: process', 1);
-        // Ack in Service process() due to nested try/catch
+        if (!$this->canProcess($payload)) {
+          $this->messageBroker->sendNack($message, false, false);
+          continue;
+        }
+
+
       }
-      else {
-        echo '- canProcess() is not passed, removing from queue.', PHP_EOL;
-        $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: skipping', 1);
-        $this->messageBroker->sendAck($this->message['payload']);
-      }
+
+      // if ($this->canProcess($pay)) {
+
+      //   $params = $this->setter($this->message);
+      //   $this->process($params);
+
+      //   $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: process', 1);
+      //   // Ack in Service process() due to nested try/catch
+      // }
+      // else {
+      //   echo '- canProcess() is not passed, removing from queue.', PHP_EOL;
+      //   $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: skipping', 1);
+      //   $this->messageBroker->sendAck($this->message['payload']);
+      // }
     }
     catch(Exception $e) {
       /**
@@ -128,7 +149,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 
         // Uknown exception, save the message to deadLetter queue.
         $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: Exception: deadLetter', 1);
-        parent::deadLetter($this->message, 'DelayedEventsConsumer->consumeDelayedEvent() Error', $e);
+        parent::deadLetter($this->message, 'DelayedEventsConsumer->consumeDelayedEvents() Error', $e);
 
         // Send Negative Acknowledgment, don't requeue the message.
         $this->messageBroker->sendNack($this->message['payload'], false, false);
@@ -139,13 +160,13 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     // waiting to be processed start / stop consumers. Make "reactive"!
     $queueStatus = parent::queueStatus(self::TEXT_QUEUE_NAME);
 
-    echo  PHP_EOL . '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvent() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
+    echo  PHP_EOL . '------ delayed-events-consumer - DelayedEventsConsumer->consumeDelayedEvents() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
 
 
     if ($this->hasFinishedProcessing()) {
       // Stop the thing.
-      echo  PHP_EOL . '------ delayed-events-consumer - No nore data to process - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
-      $this->messageBroker->stop();
+      echo  PHP_EOL . '------ delayed-events-consumer - No more data to process - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
+      // $this->messageBroker->stop();
     }
   }
 

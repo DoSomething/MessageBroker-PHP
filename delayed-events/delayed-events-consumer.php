@@ -9,10 +9,6 @@ use DoSomething\DelayedEvents\DelayedEventsConsumer;
 
 date_default_timezone_set('America/New_York');
 define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
-// The number of messages for the consumer to reserve with each callback
-// See consumeMwessage for further details.
-// Necessary for parallel processing when more than one consumer is running on the same queue.
-define('QOS_SIZE', 1);
 
 
 // Manage enviroment setting
@@ -38,11 +34,7 @@ echo '------- delayed-events-consumer START: ' . date('j D M Y G:i:s T') . ' ---
 $mb = $mbConfig->getProperty('messageBroker');
 
 $consumer = new DelayedEventsConsumer();
-if (!$consumer->hasFinishedProcessing()) {
-  $mb->consume(array($consumer, 'consumeDelayedEvent'), QOS_SIZE);
-} else {
-  echo 'No new data to process.' . PHP_EOL;
-}
+$mb->getAllMessages(array($consumer, 'consumeDelayedEvents'));
 echo '------- delayed-events-consumer END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 
