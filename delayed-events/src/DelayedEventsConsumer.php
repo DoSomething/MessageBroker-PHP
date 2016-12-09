@@ -292,7 +292,11 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
         break;
 
     }
-    $dataItem[$messageType] = [];
+
+    // Declare message type.
+    if (!isset($dataItem[$messageType])) {
+      $dataItem[$messageType] = [];
+    }
 
     // 3. Index by campaign id and prepare Gambit request arguments.
     $campaignId = $payload['event_id'];
