@@ -1,0 +1,31 @@
+{
+  "name": "Delayed Events Management",
+  "type": "project",
+  "version": "0.1.0",
+  "description": "A consumer app to manage Messaging Groups on Mobile Commons.",
+  "homepage": "https://github.com/DoSomething/Quicksilver-PHP",
+  "license" : "MIT",
+  "authors":
+    [
+      {
+        "name": "DoSomething and contributors",
+        "homepage": "http://www.dosomething.org"
+      }
+    ],
+  "require": {
+    "php": ">= 5.5.0",
+    "DoSomething/messagebroker-phplib": "~0.3.8",
+    "dosomething/mb-toolbox": "^0.13.1",
+    "dosomething/stathat": "2.*",
+    "dosomething/gateway": "@dev",
+    "league/csv": "^8.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.0.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "DoSomething\\DelayedEvents\\": "src/"
+    }
+  }
+}
