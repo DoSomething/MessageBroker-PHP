@@ -22,6 +22,7 @@ if (isset($_GET['environment']) && allowedEnviroment($_GET['environment'])) {
   define('ENVIRONMENT', 'local');
 }
 
+define("DRY_RUN", in_array('--dry-run', $argv));
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
@@ -30,6 +31,9 @@ require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/delayed-events-consumer.config.inc';
 
 echo '------- delayed-events-consumer START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+if (DRY_RUN) {
+  echo '@@@@@@@@ DRY RUN MODE ON @@@@@@@@' . PHP_EOL;
+}
 // Kick off - blocking, waiting for messages in the queue
 $mb = $mbConfig->getProperty('messageBroker');
 
