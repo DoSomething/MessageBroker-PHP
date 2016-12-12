@@ -15,10 +15,22 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
   const TEXT_QUEUE_NAME = 'deadLetterQueue';
 
   /**
+   * Filter rules
+   *
+   * @var array
+   */
+  private $filter;
+
+  /**
    * Constructor compatible with MBC_BaseConsumer.
    */
-  public function __construct($targetMBconfig = 'messageBroker') {
+  public function __construct($targetMBconfig = 'messageBroker', $args) {
     parent::__construct($targetMBconfig);
+
+    $this->filter = [];
+    if (!empty($args['activity'])) {
+      $this->filter['activity'] = $args['activity'];
+    }
   }
 
   /**
@@ -48,6 +60,7 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
         continue;
       }
 
+      var_dump($payload); die();
       // Check that message is qualified for this consumer.
       // if (!$this->canProcess($payload)) {
       //   echo '- canProcess() is not passed, removing from queue:' . $body . PHP_EOL;
@@ -69,30 +82,12 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     echo  PHP_EOL . '------ dead-letter-filter - DelayedEventsConsumer->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
   }
 
-  /**
-   * Method to determine if message can / should be processed. Conditions based on business
-   * logic for submitted mobile numbers and related message values.
-   *
-   * @param array $message Values to determine if message can be processed.
-   *
-   * @retun boolean
-   */
-  protected function canProcess($payload) {
-
-  }
 
   /**
-   * Data processing logic.
+   * Bad OOP IS BAD.
    */
-  protected function setter($arguments) {
-
-  }
-
-  /**
-   * Forwards results to gambit.
-   */
-  protected function process($preprocessedData) {
-
-  }
+  protected function canProcess($payload) {}
+  protected function setter($arguments) {}
+  protected function process($preprocessedData) {}
 
 }

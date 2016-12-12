@@ -22,13 +22,23 @@ if (isset($_GET['environment']) && allowedEnviroment($_GET['environment'])) {
   define('ENVIRONMENT', 'local');
 }
 
-define("DRY_RUN", in_array('--dry-run', $argv));
-
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Load configuration settings specific to this application
 require_once __DIR__ . '/dead-letter-filter.config.inc';
+
+// ---  Options ---
+$opts = CLIOpts\CLIOpts::run("
+{self}
+-a, --activity <string> Filter out dead letters with given activity
+--dry-run Test run, doesn't actually changes data
+-h, --help Show this help
+");
+
+$args = (array) $opts;
+
+define("DRY_RUN", isset($argv['dry-run']));
 
 echo '------- dead-letter-filter START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 if (DRY_RUN) {
@@ -37,7 +47,7 @@ if (DRY_RUN) {
 // Kick off - blocking, waiting for messages in the queue
 $mb = $mbConfig->getProperty('messageBroker');
 
-$consumer = new DeadLetterFilter();
+$consumer = new DeadLetterFilter('messageBroker', $args);
 $mb->getAllMessages(array($consumer, 'filterDeadLetterQueue'));
 echo '------- dead-letter-filter END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
