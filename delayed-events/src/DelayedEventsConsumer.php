@@ -91,7 +91,9 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
           $this->statHat->ezCount('MB_Toolbox: MB_Toolbox_BaseConsumer: consumeQueue Exception', 1);
 
           unset($messages[$key]);
-          $this->messageBroker->sendNack($message, false, false);
+          if (!DRY_RUN) {
+            $this->messageBroker->sendNack($message, false, false);
+          }
           continue;
         }
 
@@ -101,7 +103,9 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
           $this->statHat->ezCount('delayed-events-consumer: DelayedEventsConsumer: skipping', 1);
 
           unset($messages[$key]);
-          $this->messageBroker->sendNack($message, false, false);
+          if (!DRY_RUN) {
+            $this->messageBroker->sendNack($message, false, false);
+          }
           continue;
         }
 
@@ -128,6 +132,11 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
        * | | |
        * V V V
        */
+
+      if (DRY_RUN) {
+        echo '@@@@@@@@ DRY RUN: got an exception: ' . $e->getMessage() . PHP_EOL;
+        return false;
+      }
 
       if (!(strpos($e->getMessage(), 'Connection timed out') === false)) {
         echo '** Connection timed out... waiting before retrying: ' . date('j D M Y G:i:s T') . ' - getMessage(): ' . $e->getMessage(), PHP_EOL;
@@ -347,14 +356,21 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
       $message = $messageTypes[$messageType][$campaignId];
       try {
         // Send the message.
-        $this->gambit->createCampaignMessage($campaignId, $phone, $messageType);
+        if (!DRY_RUN) {
+          $this->gambit->createCampaignMessage($campaignId, $phone, $messageType);
+        } else {
+          echo '@@@@@@@@ DRY RUN: sent message to '. $phone . ' type ' . $messageType
+            . ' campaign ' . $campaignId . PHP_EOL;
+        }
         echo '*** Success!' . PHP_EOL;
         $this->ackAll($messageTypes);
       } catch (Exception $e) {
+        if (!DRY_DUN) {
+          $deadLetter = $messageTypes;
+          $deadLetter['original'] = $message;
+          parent::deadLetter($deadLetter, 'MessagingGroupsConsumer->process()', $e);
+        }
         echo '*** Gambit error: ' . $e->getMessage() . PHP_EOL;
-        $deadLetter = $messageTypes;
-        $deadLetter['original'] = $message;
-        parent::deadLetter($deadLetter, 'MessagingGroupsConsumer->process()', $e);
         $this->nackAll($messageTypes);
       }
     }
@@ -393,6 +409,9 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
   }
 
   private function resolveAll($messageTypes, $action) {
+    if (DRY_RUN) {
+      return;
+    }
     foreach ($messageTypes as $messageType) {
       foreach ($messageType as $message) {
         if ($action == 'ack') {
