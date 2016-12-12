@@ -39,6 +39,9 @@ $messageBrokerConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchang
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $messageBrokerConfig));
 
+$messageBrokerConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchange', ['deadLetterQueue']);
+$mbConfig->setProperty('messageBroker_deadLetter', new MessageBroker($rabbitCredentials, $messageBrokerConfig));
+
 
 $mbConfig->setProperty('statHat', new StatHat([
   'ez_key' => getenv("STATHAT_EZKEY"),

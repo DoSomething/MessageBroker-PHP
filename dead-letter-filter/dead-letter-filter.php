@@ -5,7 +5,7 @@
  * A consumer app to manage delayed events.
  */
 
-use DoSomething\DelayedEvents\DelayedEventsConsumer;
+use DoSomething\DeadLetter\DeadLetterFilter;
 
 date_default_timezone_set('America/New_York');
 define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
@@ -37,8 +37,8 @@ if (DRY_RUN) {
 // Kick off - blocking, waiting for messages in the queue
 $mb = $mbConfig->getProperty('messageBroker');
 
-$consumer = new DelayedEventsConsumer();
-$mb->getAllMessages(array($consumer, 'filterDeadLetters'));
+$consumer = new DeadLetterFilter();
+$mb->getAllMessages(array($consumer, 'filterDeadLetterQueue'));
 echo '------- dead-letter-filter END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 
