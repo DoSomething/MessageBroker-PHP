@@ -1,6 +1,6 @@
 <?php
 /**
- * delayed-events-consumer.php
+ * dead-letter-filter.php
  *
  * A consumer app to manage delayed events.
  */
@@ -28,9 +28,9 @@ define("DRY_RUN", in_array('--dry-run', $argv));
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Load configuration settings specific to this application
-require_once __DIR__ . '/delayed-events-consumer.config.inc';
+require_once __DIR__ . '/dead-letter-filter.config.inc';
 
-echo '------- delayed-events-consumer START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+echo '------- dead-letter-filter START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 if (DRY_RUN) {
   echo '@@@@@@@@ DRY RUN MODE ON @@@@@@@@' . PHP_EOL;
 }
@@ -38,8 +38,8 @@ if (DRY_RUN) {
 $mb = $mbConfig->getProperty('messageBroker');
 
 $consumer = new DelayedEventsConsumer();
-$mb->getAllMessages(array($consumer, 'consumeDelayedEvents'));
-echo '------- delayed-events-consumer END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
+$mb->getAllMessages(array($consumer, 'filterDeadLetters'));
+echo '------- dead-letter-filter END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 
 /**

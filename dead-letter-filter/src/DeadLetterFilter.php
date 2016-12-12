@@ -14,9 +14,7 @@ use DoSomething\StatHat\Client as StatHat;
 class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
 {
 
-  const TEXT_QUEUE_NAME = 'dispatchDelayedTextsQueue';
-  const SIGNUP_MESSAGE_TYPE = 'scheduled_relative_to_signup_date';
-  const REPORTBACK_MESSAGE_TYPE = 'scheduled_relative_to_reportback_date';
+  const TEXT_QUEUE_NAME = 'deadLetterQueue';
 
   /**
    * Gambit campaigns cache.

@@ -31,17 +31,14 @@ $mbConfig->setProperty('rabbitapi_credentials', [
   'username' => getenv("MB_RABBITMQ_MANAGEMENT_API_USERNAME"),
   'password' => getenv("MB_RABBITMQ_MANAGEMENT_API_PASSWORD"),
 ]);
-$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', array('dispatchDelayedTextsQueue'));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchange', array('deadLetterQueue'));
 $mbConfig->setProperty('rabbit_config', $mbRabbitConfig);
 
-
 // Create untility objects for access anywhere within the application as a single instance
-$messageBrokerConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['dispatchDelayedTextsQueue']);
+$messageBrokerConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchange', ['deadLetterQueue']);
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $messageBrokerConfig));
 
-$messageBrokerConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchange', ['deadLetterQueue']);
-$mbConfig->setProperty('messageBroker_deadLetter', new MessageBroker($rabbitCredentials, $messageBrokerConfig));
 
 $mbConfig->setProperty('statHat', new StatHat([
   'ez_key' => getenv("STATHAT_EZKEY"),
@@ -49,15 +46,6 @@ $mbConfig->setProperty('statHat', new StatHat([
 ]));
 
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
-
-// Mobile commons.
-$mobileCommonsConfig = [
-  'username' => getenv("MOBILE_COMMONS_US_USER"),
-  'password' => getenv("MOBILE_COMMONS_US_PASSWORD"),
-  'company_key' => getenv("MOBILE_COMMONS_US_COMPANY_KEY"),
-];
-$mbConfig->setProperty('mobileCommons', new \MobileCommons($mobileCommonsConfig));
-$mbConfig->setProperty('mobileCommonsWrapper', new MB_MobileCommons());
 
 // Rabbit Management.
 $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
@@ -67,10 +55,3 @@ $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
   'username' => getenv('MB_RABBITMQ_MANAGEMENT_API_USERNAME'),
   'password' => getenv('MB_RABBITMQ_MANAGEMENT_API_PASSWORD')
 ]));
-
-// Gambit.
-$gambit = new Gambit([
-  'url'    => getenv('GAMBIT_API_URL'),
-  'apiKey' => getenv('GAMBIT_API_KEY'),
-]);
-$mbConfig->setProperty('gambit', $gambit);
