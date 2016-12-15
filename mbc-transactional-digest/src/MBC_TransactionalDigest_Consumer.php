@@ -115,9 +115,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
         $this->messageBroker->sendAck($this->message['payload']);
       }
       else {
-        echo '- Message can\'t be processed, sending to deadLetterQueue.', PHP_EOL;
-        // $this->statHat->ezCount('mbc-transactional-digest: MBC_LoggingGateway_Consumer: Exception: deadLetter', 1);
-        // parent::deadLetter($this->message, 'MBC_TransactionalDigest_Consumer->consumeQueue() Generation Error');
+        echo '- canProcess() is not passed, skipping the message.', PHP_EOL;
         $this->messageBroker->sendAck($this->message['payload']);
 
       }
