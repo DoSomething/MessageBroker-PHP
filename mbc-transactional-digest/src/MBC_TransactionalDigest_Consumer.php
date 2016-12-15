@@ -188,6 +188,13 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       echo $errorMessage, PHP_EOL;
       throw new Exception($errorMessage);
     }
+
+    $disabledCampaigns = [7423, 7433];
+    if (in_array($message['event_id'], $disabledCampaigns)) {
+      echo '- Campaign signup communication is disabled.' . PHP_EOL;
+      return false;
+    }
+
     return true;
   }
 
