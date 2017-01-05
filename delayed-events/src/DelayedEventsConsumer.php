@@ -358,6 +358,7 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
         // Send the message.
         if (!DRY_RUN) {
           $this->gambit->createCampaignMessage($campaignId, $phone, $messageType);
+          usleep(500000);
         } else {
           echo '@@@@@@@@ DRY RUN: sent message to '. $phone . ' type ' . $messageType
             . ' campaign ' . $campaignId . PHP_EOL;
