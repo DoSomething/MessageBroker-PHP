@@ -42,7 +42,9 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
   public function filterDeadLetterQueue($messages) {
     echo '------ dead-letter-filter - DelayedEventsConsumer->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
 
-    foreach ($messages as $key => $message) {
+    $this->messages = $messages;
+
+    foreach ($this->messages as $key => $message) {
       $body = $message->getBody();
       if ($this->isSerialized($body)) {
         $payload = unserialize($body);
@@ -50,17 +52,21 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
         $payload = json_decode($body, true);
       }
 
+      $original = &$payload['message'];
+
       // Check that message is decoded correctly.
       if (!$payload) {
-        echo 'Corrupted message: ' . $body . PHP_EOL;
-        unset($messages[$key]);
-        if (!DRY_RUN) {
-          $this->messageBroker->sendNack($message, false, false);
-        }
+        $this->log('Corrupted message: %s', $body);
+        $this->reject($key);
         continue;
       }
 
-      var_dump($payload); die();
+      if (!$this->canProcess($payload)) {
+        $this->log('Rejected: %s', json_encode($original));
+        $this->reject($key);
+        continue;
+      }
+
       // Check that message is qualified for this consumer.
       // if (!$this->canProcess($payload)) {
       //   echo '- canProcess() is not passed, removing from queue:' . $body . PHP_EOL;
@@ -77,16 +83,54 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     }
 
     // Process data.
-    $this->process([]);
+    // $this->process([]);
 
     echo  PHP_EOL . '------ dead-letter-filter - DelayedEventsConsumer->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
   }
 
+  protected function canProcess($payload) {
+    // deadLetter v2:
+    if (!empty($payload['message']) && !empty($payload['metadata'])) {
+      $original = &$payload['message'];
+
+      // Skip countries.
+      $disabledAppIds = ['CA'];
+      if (!empty($original['application_id'])
+          && in_array($original['application_id'], $disabledAppIds)) {
+        $this->log(
+          'Skipping disabled application id %s',
+          $original['application_id']
+        );
+        return false;
+      }
+
+    }
+
+    return true;
+  }
+
+  /**
+   * Log
+   */
+  static function log()
+  {
+    $args = func_get_args();
+    $message = array_shift($args);
+    echo '** ';
+    echo vsprintf($message, $args);
+    echo PHP_EOL;
+  }
+
+  private function reject($key) {
+    if (!DRY_RUN) {
+      $this->messageBroker->sendNack($this->messages[$key], false, false);
+    }
+    unset($this->messages[$key]);
+  }
 
   /**
    * Bad OOP IS BAD.
    */
-  protected function canProcess($payload) {}
   protected function setter($arguments) {}
   protected function process($preprocessedData) {}
 

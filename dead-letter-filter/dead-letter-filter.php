@@ -38,7 +38,7 @@ $opts = CLIOpts\CLIOpts::run("
 
 $args = (array) $opts;
 
-define("DRY_RUN", isset($argv['dry-run']));
+define("DRY_RUN", isset($args['dry-run']));
 
 echo '------- dead-letter-filter START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 if (DRY_RUN) {
