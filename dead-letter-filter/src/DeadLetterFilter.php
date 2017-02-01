@@ -61,25 +61,12 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
         continue;
       }
 
+    // Check that message is qualified for this consumer.
       if (!$this->canProcess($payload)) {
         $this->log('Rejected: %s', json_encode($original));
         $this->reject($key);
         continue;
       }
-
-      // Check that message is qualified for this consumer.
-      // if (!$this->canProcess($payload)) {
-      //   echo '- canProcess() is not passed, removing from queue:' . $body . PHP_EOL;
-      //   unset($messages[$key]);
-      //   if (!DRY_RUN) {
-      //     $this->messageBroker->sendNack($message, false, false);
-      //   }
-      //   continue;
-      // }
-
-      // Preprocess data.
-      // $this->setter([$message, $payload]);
-
     }
 
     // Process data.
