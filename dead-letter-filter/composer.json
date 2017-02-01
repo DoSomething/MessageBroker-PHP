@@ -1,8 +1,8 @@
 {
-  "name": "Delayed Events Management",
+  "name": "Dead Letter Filter",
   "type": "project",
   "version": "0.1.0",
-  "description": "A consumer app to manage Messaging Groups on Mobile Commons.",
+  "description": "A consumer app to filter deadLetter queue messages",
   "homepage": "https://github.com/DoSomething/Quicksilver-PHP",
   "license" : "MIT",
   "authors":

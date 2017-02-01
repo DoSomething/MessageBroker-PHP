@@ -1,6 +1,6 @@
 <?php
 /**
- * DelayedEventsConsumer
+ * DeadLetterFilter
  */
 
 namespace DoSomething\DeadLetter;
@@ -40,7 +40,7 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
    *   The contents of the queue entry message being processed.
    */
   public function filterDeadLetterQueue($messages) {
-    echo '------ dead-letter-filter - DelayedEventsConsumer->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
+    echo '------ dead-letter-filter - DeadLetterFilter->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
 
     $this->messages = $messages;
 
@@ -85,7 +85,7 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     // Process data.
     // $this->process([]);
 
-    echo  PHP_EOL . '------ dead-letter-filter - DelayedEventsConsumer->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
+    echo  PHP_EOL . '------ dead-letter-filter - DeadLetterFilter->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
   }
 
   protected function canProcess($payload) {

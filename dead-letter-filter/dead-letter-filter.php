@@ -2,7 +2,7 @@
 /**
  * dead-letter-filter.php
  *
- * A consumer app to manage delayed events.
+ * A consumer app to filter deadLetter queue messages.
  */
 
 use DoSomething\DeadLetter\DeadLetterFilter;
