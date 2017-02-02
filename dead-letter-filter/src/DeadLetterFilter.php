@@ -99,7 +99,12 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
 
 
     if ($isNicheDuplicatesError) {
-      return $this->handleNicheAlledgedDuplicates($payload['message'], $key);
+      try {
+        $this->handleNicheAlledgedDuplicates($payload['message'], $key);
+      } catch (Exception $e) {
+        self::log('Unexpected error: %s', $e->getMessage());
+      }
+      return;
     }
   }
 
