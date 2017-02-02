@@ -39,13 +39,13 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
    * @param array $messages
    *   The contents of the queue entry message being processed.
    */
-  public function filterDeadLetterQueue($messages) {
+  public function filterDeadLetterQueue($letters) {
     echo '------ dead-letter-filter - DeadLetterFilter->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
 
-    $this->messages = $messages;
+    $this->letters = $letters;
 
-    foreach ($this->messages as $key => $message) {
-      $body = $message->getBody();
+    foreach ($this->letters as $key => $letter) {
+      $body = $letter->getBody();
       if ($this->isSerialized($body)) {
         $payload = unserialize($body);
       } else {
@@ -61,16 +61,16 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
         continue;
       }
 
-    // Check that message is qualified for this consumer.
+      // Check that message is qualified for this consumer.
       if (!$this->canProcess($payload)) {
         $this->log('Rejected: %s', json_encode($original));
         $this->reject($key);
         continue;
       }
-    }
 
-    // Process data.
-    // $this->process([]);
+      // Process
+      $this->process($payload);
+    }
 
     echo  PHP_EOL . '------ dead-letter-filter - DeadLetterFilter->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
   }
@@ -96,6 +96,33 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     return true;
   }
 
+  protected function process($payload) {
+    // Resolve kind of the issue.
+    // 1. Handle Niche alleged duplicates
+    $isNicheDuplicatesError = !empty($payload['message']['tags'])
+      && in_array('current-user-welcome-niche', $payload['message']['tags'])
+      && !empty($payload['metadata'])
+      && !empty($payload['metadata']['error'])
+      && !empty($payload['metadata']['error']['locationText'])
+      && $payload['metadata']['error']['locationText'] === 'processOnGambit';
+
+
+    if ($isNicheDuplicatesError) {
+      return $this->handleNicheAlledgedDuplicates($payload['message']);
+    }
+  }
+
+  private function handleNicheAlledgedDuplicates($original) {
+    var_dump($original); die();
+  }
+
+  private function reject($key) {
+    if (!DRY_RUN) {
+      $this->messageBroker->sendNack($this->letters[$key], false, false);
+    }
+    unset($this->letters[$key]);
+  }
+
   /**
    * Log
    */
@@ -108,17 +135,9 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     echo PHP_EOL;
   }
 
-  private function reject($key) {
-    if (!DRY_RUN) {
-      $this->messageBroker->sendNack($this->messages[$key], false, false);
-    }
-    unset($this->messages[$key]);
-  }
-
   /**
    * Bad OOP IS BAD.
    */
   protected function setter($arguments) {}
-  protected function process($preprocessedData) {}
 
 }
