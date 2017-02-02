@@ -31,7 +31,6 @@ require_once __DIR__ . '/dead-letter-filter.config.inc';
 // ---  Options ---
 $opts = CLIOpts\CLIOpts::run("
 {self}
--a, --activity <string> Filter out dead letters with given activity
 --dry-run Test run, doesn't actually changes data
 -h, --help Show this help
 ");

@@ -15,22 +15,11 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
   const TEXT_QUEUE_NAME = 'deadLetterQueue';
 
   /**
-   * Filter rules
-   *
-   * @var array
-   */
-  private $filter;
-
-  /**
    * Constructor compatible with MBC_BaseConsumer.
    */
   public function __construct($targetMBconfig = 'messageBroker', $args) {
     parent::__construct($targetMBconfig);
-
-    $this->filter = [];
-    if (!empty($args['activity'])) {
-      $this->filter['activity'] = $args['activity'];
-    }
+    
   }
 
   /**
