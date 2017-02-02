@@ -15,22 +15,13 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
   const TEXT_QUEUE_NAME = 'deadLetterQueue';
 
   /**
-   * Filter rules
-   *
-   * @var array
-   */
-  private $filter;
-
-  /**
    * Constructor compatible with MBC_BaseConsumer.
    */
   public function __construct($targetMBconfig = 'messageBroker', $args) {
     parent::__construct($targetMBconfig);
 
-    $this->filter = [];
-    if (!empty($args['activity'])) {
-      $this->filter['activity'] = $args['activity'];
-    }
+    // Northstar.
+    $this->northstar = $this->mbConfig->getProperty('northstar');
   }
 
   /**
@@ -39,13 +30,13 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
    * @param array $messages
    *   The contents of the queue entry message being processed.
    */
-  public function filterDeadLetterQueue($messages) {
+  public function filterDeadLetterQueue($letters) {
     echo '------ dead-letter-filter - DeadLetterFilter->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
 
-    $this->messages = $messages;
+    $this->letters = $letters;
 
-    foreach ($this->messages as $key => $message) {
-      $body = $message->getBody();
+    foreach ($this->letters as $key => $letter) {
+      $body = $letter->getBody();
       if ($this->isSerialized($body)) {
         $payload = unserialize($body);
       } else {
@@ -61,16 +52,16 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
         continue;
       }
 
-    // Check that message is qualified for this consumer.
+      // Check that message is qualified for this consumer.
       if (!$this->canProcess($payload)) {
         $this->log('Rejected: %s', json_encode($original));
         $this->reject($key);
         continue;
       }
-    }
 
-    // Process data.
-    // $this->process([]);
+      // Process
+      $this->handleError($payload, $key);
+    }
 
     echo  PHP_EOL . '------ dead-letter-filter - DeadLetterFilter->filterDeadLetterQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
   }
@@ -96,6 +87,158 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     return true;
   }
 
+  private function handleError($payload, $key) {
+    // Resolve kind of the issue.
+    // 1. Handle Niche alleged duplicates
+    $isNicheDuplicatesError = !empty($payload['message']['tags'])
+      && in_array('current-user-welcome-niche', $payload['message']['tags'])
+      && !empty($payload['metadata'])
+      && !empty($payload['metadata']['error'])
+      && !empty($payload['metadata']['error']['locationText'])
+      && $payload['metadata']['error']['locationText'] === 'processOnGambit';
+
+
+    if ($isNicheDuplicatesError) {
+      try {
+        $this->handleNicheAlledgedDuplicates($payload['message'], $key);
+      } catch (Exception $e) {
+        self::log('Unexpected error: %s', $e->getMessage());
+      }
+      return;
+    }
+  }
+
+  private function handleNicheAlledgedDuplicates($original, $key) {
+    if (empty($original['email']) && empty($original['mobile'])) {
+      $this->log('NICHE: No email and mobile, skipping: %s', json_encode($original));
+      $this->resolve($key);
+      return;
+    }
+    echo '-- Fixing Northstar info for ' . json_encode($original) . PHP_EOL;
+
+    // Lookup on Northstar by email.
+    $identityByEmail = $this->northstar->getUser('email', $original['email']);
+    if (!empty($original['mobile'])) {
+      $identityByMobile = $this->northstar->getUser('mobile', $original['mobile']);
+    } else {
+      $identityByMobile = false;
+    }
+
+    // Process all possible cases and merge data based on identity load results:
+    if (empty($identityByEmail) && empty($identityByMobile)) {
+      // ****** New user ******
+      self::log('User not found, skipping: %s', json_encode($original));
+      $this->resolve($key);
+      return;
+    }
+
+    if (!empty($identityByEmail) && empty($identityByMobile)) {
+      // ****** Existing user: only email record exists ******
+      $identity = &$identityByEmail;
+      self::log(
+        'User identified by email %s as %s',
+        $original['email'],
+        $identity->id
+      );
+
+      // Save mobile number to record loaded by email.
+      if (!empty($original['mobile'])) {
+        self::log(
+          'Updating user %s mobile phone from "%s" to "%s"',
+          $identity->id,
+          ($identity->mobile ?: "NULL"),
+          $original['mobile']
+        );
+
+        $params = ['mobile' => $original['mobile']];
+        if (!DRY_RUN) {
+          $identity = $this->northstar->updateUser($identity->id, $params);
+        }
+      }
+
+      $this->resolve($key);
+      return;
+    }
+
+    if (!empty($identityByMobile) && empty($identityByEmail)) {
+      // ****** Existing user: only mobile record exists ******
+      $identity = &$identityByMobile;
+      self::log(
+        'User identified by mobile %s as %s',
+        $original['mobile'],
+        $identity->id
+      );
+
+      // Save email to record loaded by mobile.
+      self::log(
+        'Updating user %s email from "%s" to "%s"',
+        $identity->id,
+        ($identity->email ?: "NULL"),
+        $original['email']
+      );
+      $params = ['email' => $original['email']];
+      if (!DRY_RUN) {
+        $identity = $this->northstar->updateUser($identity->id, $params);
+      }
+      $this->resolve($key);
+      return;
+    }
+
+    if ($identityByEmail->id !== $identityByMobile->id) {
+      // ****** Existing users: loaded both by mobile and phone ******
+      // We presume that user account with mobile number generally have
+      // email address as well. For this reason we decided to use
+      // identity loaded by mobile rather than by email.
+      $identity = &$identityByMobile;
+
+      self::log(
+        'User identified by email %s as %s and by mobile %s as %s',
+        $original['mobile'],
+        $identityByMobile->id,
+        $original['email'],
+        $identityByEmail->id
+      );
+
+      $this->resolve($key);
+      return;
+    }
+
+    if ($identityByEmail->id === $identityByMobile->id) {
+      // ****** Existing user: same identity loaded both by mobile and phone ******
+      $identity = &$identityByEmail;
+
+      self::log(
+        'User identified by mobile %s and email %s: %s',
+        $original['mobile'],
+        $original['email'],
+        $identity->id
+      );
+
+      $this->resolve($key);
+      return;
+    }
+
+    self::log(
+      'This will only execute when user identity logic is broken, payload: %s',
+      json_encode($original)
+    );
+    return;
+  }
+
+  private function reject($key) {
+    if (!DRY_RUN) {
+      $this->messageBroker->sendNack($this->letters[$key], false, false);
+    }
+    unset($this->letters[$key]);
+  }
+
+  private function resolve($key) {
+    if (!DRY_RUN) {
+      $this->messageBroker->sendAck($this->letters[$key]);
+    }
+    unset($this->letters[$key]);
+  }
+
   /**
    * Log
    */
@@ -108,17 +251,10 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     echo PHP_EOL;
   }
 
-  private function reject($key) {
-    if (!DRY_RUN) {
-      $this->messageBroker->sendNack($this->messages[$key], false, false);
-    }
-    unset($this->messages[$key]);
-  }
-
   /**
    * Bad OOP IS BAD.
    */
   protected function setter($arguments) {}
-  protected function process($preprocessedData) {}
+  protected function process($payload) {}
 
 }
