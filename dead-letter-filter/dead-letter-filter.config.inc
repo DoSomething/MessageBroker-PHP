@@ -8,7 +8,9 @@ use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\MB_Toolbox\MB_MobileCommons;
 use DoSomething\MB_Toolbox\MB_RabbitMQManagementAPI;
-use DoSomething\Gateway\Gambit;
+use DoSomething\Gateway\Northstar;
+
+use DoSomething\DeadLetter\DeadLetterFilter_Northstar_OAuthBridge;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
@@ -58,3 +60,18 @@ $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
   'username' => getenv('MB_RABBITMQ_MANAGEMENT_API_USERNAME'),
   'password' => getenv('MB_RABBITMQ_MANAGEMENT_API_PASSWORD')
 ]));
+
+// Northstar
+$northstar = new Northstar([
+    'grant' => 'client_credentials', // Default OAuth grant to use: either 'authorization_code' or 'client_credentials'
+    'url' => getenv("NORTHSTAR_API_HOST"), // the environment you want to connect to
+    'bridge' => DeadLetterFilter_Northstar_OAuthBridge::class, // class which handles saving/retrieving tokens
+
+    // Then, configure client ID, client secret, and scopes per grant.
+    'client_credentials' => [
+        'client_id' => getenv("NORTHSTAR_API_ID"),
+        'client_secret' => getenv('NORTHSTAR_API_KEY'),
+        'scope' => ['user', 'admin'],
+    ],
+]);
+$mbConfig->setProperty('northstar', $northstar);
