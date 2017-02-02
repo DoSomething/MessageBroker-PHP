@@ -145,7 +145,9 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
         );
 
         $params = ['mobile' => $original['mobile']];
-        $identity = $this->northstar->updateUser($identity->id, $params);
+        if (!DRY_RUN) {
+          $identity = $this->northstar->updateUser($identity->id, $params);
+        }
       }
 
       $this->resolve($key);
@@ -169,7 +171,9 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
         $original['email']
       );
       $params = ['email' => $original['email']];
-      $identity = $this->northstar->updateUser($identity->id, $params);
+      if (!DRY_RUN) {
+        $identity = $this->northstar->updateUser($identity->id, $params);
+      }
       $this->resolve($key);
       return;
     }
@@ -199,8 +203,8 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
 
       self::log(
         'User identified by mobile %s and email %s: %s',
-        $this->user['mobile'],
-        $this->user['email'],
+        $original['mobile'],
+        $original['email'],
         $identity->id
       );
 
