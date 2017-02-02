@@ -109,6 +109,7 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
       $this->resolve($key);
       return;
     }
+    echo '-- Fixing Northstar info for ' . json_encode($original) . PHP_EOL;
 
     // Lookup on Northstar by email.
     $identityByEmail = $this->northstar->getUser('email', $original['email']);
