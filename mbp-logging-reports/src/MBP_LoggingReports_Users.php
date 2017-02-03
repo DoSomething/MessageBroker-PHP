@@ -24,7 +24,7 @@ class MBP_LoggingReports_Users
   // Monthly user budget (in imported users number).
   private static $NICHE_USER_BUDGET = [
     1 => 38333,
-    2 => 38333,
+    2 => 11111,
     3 => 38333,
     4 => 38333,
     5 => 38333,
