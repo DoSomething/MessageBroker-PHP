@@ -140,6 +140,10 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
             . '. Attempt ' . $this->message['payload']->get('delivery_tag') . PHP_EOL;
           $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Retry signal', 1);
         } else {
+          // Max attempt has reached, saving message to deadLetter queue.
+          parent::deadLetter($this->message, 'MessagingGroupsConsumer->consumeRegistrationMobileQueue() Error', $e);
+
+          // Nack without requeueing.
           $this->messageBroker->sendNack($this->message['payload'], false, false);
           echo '- Exception: Retry signal: Max attempt reached. ' . date('j D M Y G:i:s T') . PHP_EOL;
           $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Retry signal: Max attempt reached', 1);
@@ -149,7 +153,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
         echo '- Not timeout or connection error, message to deadLetterQueue: ' . date('j D M Y G:i:s T'), PHP_EOL;
         echo '- Error message: ' . $e->getMessage(), PHP_EOL;
 
-        // Uknown exception, save the message to deadLetter queue.
+        // Unknown exception, save the message to deadLetter queue.
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: deadLetter', 1);
         parent::deadLetter($this->message, 'MessagingGroupsConsumer->consumeRegistrationMobileQueue() Error', $e);
 
