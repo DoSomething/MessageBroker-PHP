@@ -73,7 +73,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
    *   The contents of the queue entry message being processed.
    */
   public function consumeMessagingGroupsQueue($payload) {
-    echo '------ messaging-groups-consumer - MessagingGroupsConsumer->consumeRegistrationMobileQueue() - ' . date('j D M Y G:i:s T') . ' START ------', PHP_EOL . PHP_EOL;
+    echo '------ ' . date(DATE_ISO8601) . ' messaging-groups-consumer - MessagingGroupsConsumer->consumeRegistrationMobileQueue() START ------' . PHP_EOL . PHP_EOL;
     $this->gambitCampaign = false;
 
     parent::consumeQueue($payload);
@@ -89,7 +89,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
         // Ack in Service process() due to nested try/catch
       }
       else {
-        echo '- canProcess() is not passed, removing from queue.', PHP_EOL;
+        echo '- canProcess() is not passed, removing from queue.' . PHP_EOL;
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: skipping', 1);
         $this->messageBroker->sendAck($this->message['payload']);
       }
@@ -103,45 +103,44 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
        */
 
       if (!(strpos($e->getMessage(), 'Connection timed out') === false)) {
-        echo '** Connection timed out... waiting before retrying: ' . date('j D M Y G:i:s T') . ' - getMessage(): ' . $e->getMessage(), PHP_EOL;
+        echo '** ' . date(DATE_ISO8601) . ' Connection timed out... waiting before retrying: - getMessage(): ' . $e->getMessage() . PHP_EOL;
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Connection timed out', 1);
         sleep(self::RETRY_SECONDS);
         $this->messageBroker->sendNack($this->message['payload']);
-        echo '- Nack sent to requeue message: ' . date('j D M Y G:i:s T'), PHP_EOL . PHP_EOL;
+        echo '- ' . date(DATE_ISO8601) . ' Nack sent to requeue message: ' . PHP_EOL . PHP_EOL;
       }
       elseif (!(strpos($e->getMessage(), 'Operation timed out') === false)) {
-        echo '** Operation timed out... waiting before retrying: ' . date('j D M Y G:i:s T') . ' - getMessage(): ' . $e->getMessage(), PHP_EOL;
+        echo '** ' . date(DATE_ISO8601) . ' Operation timed out... waiting before retrying: - getMessage(): ' . $e->getMessage() . PHP_EOL;
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Operation timed out', 1);
         sleep(self::RETRY_SECONDS);
         $this->messageBroker->sendNack($this->message['payload']);
-        echo '- Nack sent to requeue message: ' . date('j D M Y G:i:s T'), PHP_EOL . PHP_EOL;
+        echo '- ' . date(DATE_ISO8601) . ' Nack sent to requeue message: ' . PHP_EOL . PHP_EOL;
       }
       elseif (!(strpos($e->getMessage(), 'Failed to connect') === false)) {
-        echo '** Failed to connect... waiting before retrying: ' . date('j D M Y G:i:s T') . ' - getMessage(): ' . $e->getMessage(), PHP_EOL;
+        echo '** ' . date(DATE_ISO8601) . ' Failed to connect... waiting before retrying: - getMessage(): ' . $e->getMessage() . PHP_EOL;
         sleep(self::RETRY_SECONDS);
         $this->messageBroker->sendNack($this->message['payload']);
-        echo '- Nack sent to requeue message: ' . date('j D M Y G:i:s T'), PHP_EOL . PHP_EOL;
+        echo '- ' . date(DATE_ISO8601) . ' Nack sent to requeue message: ' . PHP_EOL . PHP_EOL;
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Failed to connect', 1);
       }
       elseif (!(strpos($e->getMessage(), 'Bad response - HTTP Code:500') === false)) {
-        echo '** Connection error, http code 500... waiting before retrying: ' . date('j D M Y G:i:s T') . ' - getMessage(): ' . $e->getMessage(), PHP_EOL;
+        echo '** ' . date(DATE_ISO8601) . ' Connection error, http code 500... waiting before retrying: - getMessage(): ' . $e->getMessage() . PHP_EOL;
         sleep(self::RETRY_SECONDS);
         $this->messageBroker->sendNack($this->message['payload']);
-        echo '- Nack sent to requeue message: ' . date('j D M Y G:i:s T'), PHP_EOL . PHP_EOL;
+        echo '- ' . date(DATE_ISO8601) . ' Nack sent to requeue message: ' . PHP_EOL . PHP_EOL;
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Bad response - HTTP Code:500', 1);
       }
       elseif ($e->getCode() === self::RETRY_SIGNAL) {
-        echo '** Retry signal caught, waiting before retrying: ' . date('j D M Y G:i:s T') . ' - getMessage(): '
+        echo '** ' . date(DATE_ISO8601) . ' Retry signal caught, waiting before retrying: - getMessage(): '
           . PHP_EOL . $e->getMessage() . PHP_EOL;
         sleep(self::RETRY_SECONDS);
         if ($this->message['payload']->get('delivery_tag') <= self::RETRY_SIGNAL_ATTEMPTS) {
           $this->messageBroker->sendNack($this->message['payload']);
-          echo '- Nack sent to requeue message: ' . date('j D M Y G:i:s T')
-            . '. Attempt ' . $this->message['payload']->get('delivery_tag') . PHP_EOL;
+          echo '- ' . date(DATE_ISO8601) . ' Nack sent to requeue message. Attempt ' . $this->message['payload']->get('delivery_tag') . PHP_EOL;
           $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Retry signal', 1);
         } else {
           // Max attempt has reached, saving message to deadLetterQueue.
-          echo '- Exception: Retry signal: Max attempt reached. Saving message to deadLetterQueue ' . date('j D M Y G:i:s T') . PHP_EOL;
+          echo '- ' . date(DATE_ISO8601) . ' Exception: Retry signal: Max attempt reached. Saving message to deadLetterQueue ' . PHP_EOL;
           parent::deadLetter($this->message, 'MessagingGroupsConsumer->consumeRegistrationMobileQueue() Error', $e);
 
           // Nack without requeueing.
@@ -150,8 +149,8 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
         }
       }
       else {
-        echo '- Not timeout or connection error, message to deadLetterQueue: ' . date('j D M Y G:i:s T'), PHP_EOL;
-        echo '- Error message: ' . $e->getMessage(), PHP_EOL;
+        echo '- ' . date(DATE_ISO8601) . ' Not timeout or connection error, message to deadLetterQueue: ' . PHP_EOL;
+        echo '- Error message: ' . $e->getMessage() . PHP_EOL;
 
         // Unknown exception, save the message to deadLetter queue.
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: deadLetter', 1);
@@ -166,7 +165,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
     // waiting to be processed start / stop consumers. Make "reactive"!
     $queueStatus = parent::queueStatus('messagingGroupsQueue');
 
-    echo  PHP_EOL . '------ messaging-groups-consumer - MessagingGroupsConsumer->consumeRegistrationMobileQueue() - ' . date('j D M Y G:i:s T') . ' END ------', PHP_EOL . PHP_EOL;
+    echo  PHP_EOL . '------ ' . date(DATE_ISO8601) . ' messaging-groups-consumer - MessagingGroupsConsumer->consumeRegistrationMobileQueue() END ------' . PHP_EOL . PHP_EOL;
   }
 
   /**
