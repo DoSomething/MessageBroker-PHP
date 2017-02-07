@@ -13,6 +13,23 @@ use DoSomething\StatHat\Client as StatHat;
 
 class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
 {
+
+  /**
+   * The amount of time for the application to sleep / wait when an exception is
+   * encountered.
+   */
+  const RETRY_SECONDS = 60;
+
+  /**
+   * Exception code signal to retry.
+   */
+  const RETRY_SIGNAL = 42042;
+
+  /**
+   * Retry count for retry code signal.
+   */
+  const RETRY_SIGNAL_ATTEMPTS = 10;
+
   /**
    * Gambit campaigns cache.
    *
@@ -112,6 +129,21 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
         $this->messageBroker->sendNack($this->message['payload']);
         echo '- Nack sent to requeue message: ' . date('j D M Y G:i:s T'), PHP_EOL . PHP_EOL;
         $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Bad response - HTTP Code:500', 1);
+      }
+      elseif ($e->getCode() === self::RETRY_SIGNAL) {
+        echo '** Retry signal caught, waiting before retrying: ' . date('j D M Y G:i:s T') . ' - getMessage(): '
+          . PHP_EOL . $e->getMessage() . PHP_EOL;
+        sleep(self::RETRY_SECONDS);
+        if ($this->message['payload']->get('delivery_tag') <= self::RETRY_SIGNAL_ATTEMPTS) {
+          $this->messageBroker->sendNack($this->message['payload']);
+          echo '- Nack sent to requeue message: ' . date('j D M Y G:i:s T')
+            . '. Attempt ' . $this->message['payload']->get('delivery_tag') . PHP_EOL;
+          $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Retry signal', 1);
+        } else {
+          $this->messageBroker->sendNack($this->message['payload'], false, false);
+          echo '- Exception: Retry signal: Max attempt reached. ' . date('j D M Y G:i:s T') . PHP_EOL;
+          $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Retry signal: Max attempt reached', 1);
+        }
       }
       else {
         echo '- Not timeout or connection error, message to deadLetterQueue: ' . date('j D M Y G:i:s T'), PHP_EOL;
@@ -234,7 +266,8 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
       echo $message;
       parent::reportErrorPayload();
 
-      throw new Exception($message);
+      // Retry in case of race condition.
+      throw new Exception($message, self::RETRY_SIGNAL);
     }
 
     echo '** canProcess(): passed.' . PHP_EOL;
