@@ -45,7 +45,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
 
     if (count($this->gambitCampaignsCache) < 1) {
       // Basically, die.
-      throw new Exception('No gambit connetion.');
+      throw new Exception('No gambit connection.');
     }
   }
 
