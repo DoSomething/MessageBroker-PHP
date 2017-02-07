@@ -18,7 +18,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
    * The amount of time for the application to sleep / wait when an exception is
    * encountered.
    */
-  const RETRY_SECONDS = 60;
+  const RETRY_SECONDS = 10;
 
   /**
    * Exception code signal to retry.
@@ -28,7 +28,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
   /**
    * Retry count for retry code signal.
    */
-  const RETRY_SIGNAL_ATTEMPTS = 10;
+  const RETRY_SIGNAL_ATTEMPTS = 6;
 
   /**
    * Retry attempts cache: [mobile => retry_count]
