@@ -31,6 +31,12 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
   const RETRY_SIGNAL_ATTEMPTS = 10;
 
   /**
+   * Retry attempts cache: [mobile => retry_count]
+   * @var array
+   */
+  private $retryCache = [];
+
+  /**
    * Gambit campaigns cache.
    *
    * @var array
@@ -134,9 +140,16 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
         echo '** ' . date(DATE_ISO8601) . ' Retry signal caught, waiting before retrying: - getMessage(): '
           . PHP_EOL . $e->getMessage() . PHP_EOL;
         sleep(self::RETRY_SECONDS);
-        if ($this->message['payload']->get('delivery_tag') <= self::RETRY_SIGNAL_ATTEMPTS) {
+
+        $mobile = $this->message['mobile'];
+        if (!isset($this->retryCache[$mobile])) {
+          $this->retryCache[$mobile] = 0;
+        }
+        $this->retryCache[$mobile]++;
+
+        if ($this->retryCache[$mobile] <= self::RETRY_SIGNAL_ATTEMPTS) {
           $this->messageBroker->sendNack($this->message['payload']);
-          echo '- ' . date(DATE_ISO8601) . ' Nack sent to requeue message. Attempt ' . $this->message['payload']->get('delivery_tag') . PHP_EOL;
+          echo '- ' . date(DATE_ISO8601) . ' Nack sent to requeue message. Attempt ' . $this->retryCache[$mobile] . PHP_EOL;
           $this->statHat->ezCount('messaging-groups-consumer: MessagingGroupsConsumer: Exception: Retry signal', 1);
         } else {
           // Max attempt has reached, saving message to deadLetterQueue.
