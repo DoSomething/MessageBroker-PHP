@@ -125,9 +125,17 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     $isGambitUnknownError = !empty($payload['metadata'])
       && !empty($payload['metadata']['error'])
       && !empty($payload['metadata']['error']['locationText'])
-      && $payload['metadata']['error']['locationText'] === 'processOnGambit'
-      && !empty($payload['metadata']['error']['message'])
+      && $payload['metadata']['error']['locationText'] === 'processOnGambit';
+
+    $gambitUnknownMessage = isset($payload['metadata']['error']['message'])
+      && is_string($payload['metadata']['error']['message'])
       && substr($payload['metadata']['error']['message'], 0, 23) === "-> Gambit unknown error";
+
+    $gambitEmptyMessage = isset($payload['metadata']['error']['message'])
+      && is_array($payload['metadata']['error']['message'])
+      && empty($payload['metadata']['error']['message']);
+
+    $isGambitUnknownError = $isGambitUnknownError && ($gambitUnknownMessage || $gambitEmptyMessage);
 
     if ($isGambitUnknownError) {
       $this->resolve($key);
