@@ -119,6 +119,19 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
     if ($isMessagingRaceConditionError) {
       $this->resolve($key);
     }
+
+    // 2. Cleanup gambit Unknown errors
+    // https://trello.com/c/bVsHT6v0/234-8-quicksilver-create-a-solution-to-the-moco-messaging-group-error
+    $isGambitUnknownError = !empty($payload['metadata'])
+      && !empty($payload['metadata']['error'])
+      && !empty($payload['metadata']['error']['locationText'])
+      && $payload['metadata']['error']['locationText'] === 'processOnGambit'
+      && !empty($payload['metadata']['error']['message'])
+      && substr($payload['metadata']['error']['message'], 0, 23) === "-> Gambit unknown error";
+
+    if ($isGambitUnknownError) {
+      $this->resolve($key);
+    }
   }
 
   private function handleNicheAlledgedDuplicates($original, $key) {
