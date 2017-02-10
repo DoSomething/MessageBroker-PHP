@@ -150,7 +150,17 @@ class DeadLetterFilter extends MB_Toolbox_BaseConsumer
       && !empty($payload['metadata']['error']['message'])
       && substr($payload['metadata']['error']['message'], 0, 34) === "Response: Bad response - HTTP Code";
 
-    if ($isMoCoHTTPError) {
+
+    // 5. Cleanup MessagingGroupsConsumer HTTP error responses
+    // https://trello.com/c/bVsHT6v0/234-8-quicksilver-create-a-solution-to-the-moco-messaging-group-error
+    $isMessagingGroupsHTTPError = !empty($payload['metadata'])
+      && !empty($payload['metadata']['error'])
+      && !empty($payload['metadata']['error']['locationText'])
+      && $payload['metadata']['error']['locationText'] === 'MessagingGroupsConsumer->consumeRegistrationMobileQueue() Error'
+      && !empty($payload['metadata']['error']['message'])
+      && substr($payload['metadata']['error']['message'], 0, 34) === "Response: Bad response - HTTP Code";
+
+    if ($isMessagingGroupsHTTPError) {
       $this->resolve($key);
     }
   }
