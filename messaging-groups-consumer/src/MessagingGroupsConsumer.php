@@ -213,6 +213,14 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
+    // Only US users are allowed.
+    if (!empty($message['user_country']) && $message['user_country'] !== 'US') {
+      echo '** canProcess(): Unsupported country: '
+        . $message['user_country'] . '.' . PHP_EOL;
+
+      return false;
+    }
+
 
     // Check activity presence.
     if (empty($message['activity'])) {
