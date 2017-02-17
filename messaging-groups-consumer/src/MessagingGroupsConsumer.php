@@ -61,7 +61,7 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
     $gambitCampaigns = $gambit->getAllCampaigns();
 
     foreach ($gambitCampaigns as $campaign) {
-      if ($campaign->campaignbot === true) {
+      if ($campaign->status != 'closed') {
         $this->gambitCampaignsCache[$campaign->id] = $campaign;
       }
     }
