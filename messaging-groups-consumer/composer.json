@@ -17,7 +17,7 @@
     "DoSomething/messagebroker-phplib": "0.3.*",
     "dosomething/mb-toolbox": "^0.13.1",
     "dosomething/stathat": "2.*",
-    "dosomething/gateway": "1.0.0-rc16",
+    "dosomething/gateway": "1.0.0-rc17",
     "league/csv": "^8.1"
   },
   "require-dev": {
