@@ -221,7 +221,6 @@ class MessagingGroupsConsumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
-
     // Check activity presence.
     if (empty($message['activity'])) {
       echo '** canProcess(): activity not set.' . PHP_EOL;
