@@ -181,7 +181,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
-    if (isset($this->users[$message['email']][$message['event_id']])) {
+    if (isset($this->users[$message['email']]['campaigns'][$message['event_id']])) {
       $errorMessage = 'MBC_TransactionalDigest_Consumer->canProcess(): Duplicate campaign signup for ' . $message['email'].' to campaign ID: ' . $message['event_id'];
       echo $errorMessage, PHP_EOL;
       throw new Exception($errorMessage);
