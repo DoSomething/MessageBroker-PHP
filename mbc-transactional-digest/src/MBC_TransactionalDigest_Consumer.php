@@ -181,7 +181,7 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
-    if (isset($this->users[$message['email']][$message['event_id']])) {
+    if (isset($this->users[$message['email']]['campaigns'][$message['event_id']])) {
       $errorMessage = 'MBC_TransactionalDigest_Consumer->canProcess(): Duplicate campaign signup for ' . $message['email'].' to campaign ID: ' . $message['event_id'];
       echo $errorMessage, PHP_EOL;
       throw new Exception($errorMessage);
@@ -194,6 +194,12 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       // DoSomething Rewards Challenge
       // https://www.dosomething.org/us/campaigns/dosomething-rewards-challenge
       7589,
+      // Suspended for WHAT?: AMPLIFY
+      // https://www.dosomething.org/us/campaigns/suspended-what-amplify
+      7661,
+      // Suspended for WHAT?: ADVOCATE
+      // https://www.dosomething.org/us/campaigns/suspended-what-advocate
+      7662,
     ];
     if (in_array($message['event_id'], $disabledCampaigns)) {
       echo '- Campaign signup communication is disabled.' . PHP_EOL;
