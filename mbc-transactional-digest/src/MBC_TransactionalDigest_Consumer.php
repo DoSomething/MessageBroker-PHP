@@ -200,6 +200,9 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       // Suspended for WHAT?: ADVOCATE
       // https://www.dosomething.org/us/campaigns/suspended-what-advocate
       7662,
+      // Car Sticky Note Challange
+      // https://www.dosomething.org/us/campaigns/car-sticky-note-challange
+      7675,
     ];
     if (in_array($message['event_id'], $disabledCampaigns)) {
       echo '- Campaign signup communication is disabled.' . PHP_EOL;
