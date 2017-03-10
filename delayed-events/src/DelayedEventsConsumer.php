@@ -50,8 +50,9 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     $this->gambit = $this->mbConfig->getProperty('gambit');
     $gambitCampaigns = $this->gambit->getAllCampaigns(['campaignbot' => true]);
 
+    $mutedCampaigns = ["7703"];
     foreach ($gambitCampaigns as $campaign) {
-      if ($campaign->status != 'closed') {
+      if ($campaign->status != 'closed' && !in_array($campaign->id, $mutedCampaigns)) {
         $this->gambitCampaignsCache[$campaign->id] = $campaign;
       }
     }
