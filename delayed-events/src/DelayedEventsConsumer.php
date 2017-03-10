@@ -50,9 +50,8 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     $this->gambit = $this->mbConfig->getProperty('gambit');
     $gambitCampaigns = $this->gambit->getAllCampaigns(['campaignbot' => true]);
 
-    $mutedCampaigns = ["7703"];
     foreach ($gambitCampaigns as $campaign) {
-      if ($campaign->status != 'closed' && !in_array($campaign->id, $mutedCampaigns)) {
+      if ($campaign->status != 'closed') {
         $this->gambitCampaignsCache[$campaign->id] = $campaign;
       }
     }
@@ -254,6 +253,18 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     // Only if enabled on Gambit.
     if (!array_key_exists($campaignId, $this->gambitCampaignsCache)) {
       echo '** canProcess(): Campaign is not available on Gambit: '
+        . $campaignId . ', skipping.' . PHP_EOL;
+
+      return false;
+    }
+
+    // Exclude manually muted campaigns.
+    $mutedCampaigns = [
+      // Niche SMS-game campaign.
+      7703,
+    ];
+    if (in_array($campaignId, $mutedCampaigns)) {
+      echo '** canProcess(): Campaign is muted: '
         . $campaignId . ', skipping.' . PHP_EOL;
 
       return false;
