@@ -258,6 +258,18 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
+    // Exclude manually muted campaigns.
+    $mutedCampaigns = [
+      // Niche SMS-game campaign.
+      7703,
+    ];
+    if (in_array($campaignId, $mutedCampaigns)) {
+      echo '** canProcess(): Campaign is muted: '
+        . $campaignId . ', skipping.' . PHP_EOL;
+
+      return false;
+    }
+
     $this->gambitCampaign = $this->gambitCampaignsCache[$campaignId];
     if (empty($this->gambitCampaign)) {
       echo '** canProcess(): Campaign is not enabled on Campaignbot: '
