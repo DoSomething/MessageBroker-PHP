@@ -168,6 +168,12 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
+    // Exclude generated emails adresses.
+    if (preg_match('/@.*\.import$/', $message['email'])) {
+      echo '- canProcess(), import placeholder address: ' . $message['email'], PHP_EOL;
+      return false;
+    }
+
     if (empty($message['activity'])) {
       return false;
     }
