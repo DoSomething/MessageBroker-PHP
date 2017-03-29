@@ -485,8 +485,8 @@ class MBP_LoggingReports_Users
         [
           'email' => [
             [
-              'address' => 'mranalli@dosomething.org',
-              'name' => 'Marissa',
+              'address' => 'jjensen@dosomething.org',
+              'name' => 'James',
             ],
           ],
           'slack' =>
@@ -502,8 +502,8 @@ class MBP_LoggingReports_Users
           'email' =>
             [
               [
-                'address' => 'mranalli@dosomething.org',
-                'name' => 'Marissa',
+                'address' => 'jjensen@dosomething.org',
+                'name' => 'James',
               ],
               [
                 'address' => 'mike@niche.com',
