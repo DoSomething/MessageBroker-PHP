@@ -262,6 +262,8 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
     $mutedCampaigns = [
       // Niche SMS-game campaign.
       7703,
+      // Give A Spit About Cancer: Share
+      7693,
     ];
     if (in_array($campaignId, $mutedCampaigns)) {
       echo '** canProcess(): Campaign is muted: '
