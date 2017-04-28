@@ -212,6 +212,12 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       // Sincerely, Us
       // https://www.dosomething.org/us/campaigns/sincerely-us
       7656,
+      // Unlock the Truth
+      // https://www.dosomething.org/us/campaigns/uncover-truth
+      7771,
+      // Mirror Messages
+      // https://www.dosomething.org/us/campaigns/mirror-messages
+      7,
     ];
     if (in_array($message['event_id'], $disabledCampaigns)) {
       echo '- Campaign signup communication is disabled.' . PHP_EOL;
