@@ -1,0 +1,16 @@
+# Ignore configuration files that may contain sensitive information.
+/messagebroker-config
+
+# Ignor composer working files
+composer.phar
+composer.lock
+/vendor/
+
+# Ignor testing working files
+tests/phpunit.xml
+
+# Ignor config settings with sensative account creds
+config.inc
+
+# Ignor OSX system files
+.DS_Store
