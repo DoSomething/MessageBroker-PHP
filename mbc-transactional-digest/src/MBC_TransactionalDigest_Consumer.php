@@ -218,6 +218,15 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       // Mirror Messages
       // https://www.dosomething.org/us/campaigns/mirror-messages
       7,
+      // All in We Win
+      // https://www.dosomething.org/us/campaigns/all-we-win
+      7831,
+      // Treat Yo Friends
+      // https://www.dosomething.org/us/campaigns/treat-yo-friends
+      5646,
+      // Steps for Soldiers
+      // https://www.dosomething.org/us/campaigns/steps-soldiers
+      7822,
     ];
     if (in_array($message['event_id'], $disabledCampaigns)) {
       echo '- Campaign signup communication is disabled.' . PHP_EOL;
