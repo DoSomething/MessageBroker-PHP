@@ -221,9 +221,6 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       // All in We Win
       // https://www.dosomething.org/us/campaigns/all-we-win
       7831,
-      // Treat Yo Friends
-      // https://www.dosomething.org/us/campaigns/treat-yo-friends
-      5646,
       // Steps for Soldiers
       // https://www.dosomething.org/us/campaigns/steps-soldiers
       7822,
