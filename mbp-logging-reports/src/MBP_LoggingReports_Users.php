@@ -19,7 +19,7 @@ class MBP_LoggingReports_Users
 
   const MB_LOGGING_API = '/api/v1';
   const AFTERSCHOOL_USER_BUDGET = 'Unlimited';
-  const AFTERSCHOOL_CAMPAIGN = 'Who Has Their Eye On You';
+  const AFTERSCHOOL_CAMPAIGN = 'Treat Yo Friends';
 
   // Monthly user budget (in imported users number).
   private static $NICHE_USER_BUDGET = [
