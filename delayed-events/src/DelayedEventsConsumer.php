@@ -264,6 +264,8 @@ class DelayedEventsConsumer extends MB_Toolbox_BaseConsumer
       7703,
       // Give A Spit About Cancer: Share
       7693,
+      // 5 Days, 5 Actions
+      7889,
     ];
     if (in_array($campaignId, $mutedCampaigns)) {
       echo '** canProcess(): Campaign is muted: '
