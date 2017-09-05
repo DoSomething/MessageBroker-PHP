@@ -230,6 +230,9 @@ class MBC_TransactionalDigest_Consumer extends MB_Toolbox_BaseConsumer
       // 5 Actions, 5 Days
       // https://www.dosomething.org/us/campaigns/5-actions-5-days
       7904,
+      // Defend Dreamers
+      // https://www.dosomething.org/us/campaigns/defend-dreamers
+      7927,
     ];
     if (in_array($message['event_id'], $disabledCampaigns)) {
       echo '- Campaign signup communication is disabled.' . PHP_EOL;
